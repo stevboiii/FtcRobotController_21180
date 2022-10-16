@@ -168,6 +168,7 @@ public class ConceptAutoDriveByGyro extends LinearOpMode {
         parameters.angleUnit            = BNO055IMU.AngleUnit.DEGREES;
         imu = hardwareMap.get(BNO055IMU.class, "imu");
         imu.initialize(parameters);
+        imu.
 
         // Ensure the robot is stationary.  Reset the encoders and set the motors to BRAKE mode
         leftFrontDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -180,6 +181,8 @@ public class ConceptAutoDriveByGyro extends LinearOpMode {
         rightBackDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         // Wait for the game to start (Display Gyro value while waiting)
         while (opModeInInit()) {
+            telemetry.addData("gyro Cali status", imu.isGyroCalibrated());
+            telemetry.addData("sys Cali status", imu.isSystemCalibrated());
             telemetry.addData(">", "Robot Heading = %4.0f", getRawHeading());
             telemetry.addData(">", "Robot Roll = %4.0f", getRawRoll());
             telemetry.addData(">", "Robot Pitch = %4.0f", getRawPitch());
