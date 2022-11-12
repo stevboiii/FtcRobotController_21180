@@ -611,66 +611,64 @@ public class AutonomousRight extends LinearOpMode {
             readColorSensor(sleeveColor); // reading sleeve signal
             Logging.log("Autonomous - complete Sleeve color read.");
             // push sleeve cone out, and reading background color for calibration
-            robotRunToPosition(36.0, true);
+            robotRunToPosition(39.0, true);
         }
         parkingLocation = calculateParkingLocation(sleeveColor, backgroundColor);
         Logging.log("Autonomous - parking lot aisle location: %.2f", parkingLocation);
 
         // lift slider during strafe to high junction
         setSliderPosition(HIGH_JUNCTION_POS);
-        robotRunToPosition(-4.0, true); // get rid of sleeve cone
+        robotRunToPosition(-7.0, true); // get rid of sleeve cone
 
 
-        robotRunToPosition(-12.0, false); // strafe robot half mat to left side
-        waitSliderRun(); // make sure slider has been lifted.
-
-        robotRunToPosition(7.5, true); // drive robot V to high junction
-        autoUnloadCone();
-        Logging.log("Autonomous - pre-load cone has been unloaded.");
-        // lower down slider after unloading cone
-        setSliderPosition(WALL_POSITION);
-
+       // turn robot 45 degrees left
         Orientation imuAngles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
+        rotate(45 - AngleUnit.DEGREES.normalize(imuAngles.firstAngle), AUTO_ROTATE_POWER);
+
+        //drive forward & drop
+        robotRunToPosition(13.1, true);
+        autoUnloadCone();
+        robotRunToPosition(13.1, true);
 
         for(int autoLoop = 0; autoLoop < 2; autoLoop++) {
             Logging.log("Autonomous - loop index: %d ", autoLoop);
 
-            // right turn 90 degree
+            // right turn 135 degree
             imuAngles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
             Logging.log("Autonomous - imu angle before right turn: %.2f", imuAngles.firstAngle);
-            rotate(-AngleUnit.DEGREES.normalize(imuAngles.firstAngle) - 90, AUTO_ROTATE_POWER);
+            rotate(-AngleUnit.DEGREES.normalize(imuAngles.firstAngle) - 135, AUTO_ROTATE_POWER);
             Logging.log("Autonomous - imu turn: %.2f degree", -AngleUnit.DEGREES.normalize(imuAngles.firstAngle) - 90);
             Logging.log("Autonomous - imu angle after turn: %.2f", lastAngles.firstAngle);
 
-            // strafe to the left a little bit to compensate for the shift from 90 degree rotation(currently 1 inch).
-            robotRunToPosition(-1.0, false);
+            // strafe to the left a little bit to compensate for the shift from 135 degree rotation(currently 1.5 inch).
+            robotRunToPosition(-1.5, false);
 
-            // adjust position and double rotation for accurate 90
+            // adjust position and double rotation for accurate 135
             imuAngles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
-            rotate(-AngleUnit.DEGREES.normalize(imuAngles.firstAngle) - 90, AUTO_ROTATE_POWER);
+            rotate(-AngleUnit.DEGREES.normalize(imuAngles.firstAngle) - 135, AUTO_ROTATE_POWER);
             Logging.log("Autonomous - imu angle after cone unloading correction: %.2f", lastAngles.firstAngle);
 
             // drive robot to loading area
-            robotRunToPosition(38.0, true);
+            robotRunToPosition(32.0, true);
 
             // load cone
             autoLoadCone(coneStack5th - coneLoadStackGap * autoLoop);
 
-            // lift cone by slider
+            // lift cone
             setSliderPosition(WALL_POSITION);
 
             // make sure robot is still in the same orientation
             imuAngles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
             Logging.log("Autonomous - imu angle after load cone: %.2f", imuAngles.firstAngle);
-            rotate(-AngleUnit.DEGREES.normalize(imuAngles.firstAngle) - 90, AUTO_ROTATE_POWER);
+            rotate(-AngleUnit.DEGREES.normalize(imuAngles.firstAngle) - 135, AUTO_ROTATE_POWER);
             Logging.log("Autonomous - imu angle after correction: %.2f", lastAngles.firstAngle);
             waitSliderRun(); // make sure slider has been lifted before moving out cone stack.
 
             // lift slider during rotation.
             setSliderPosition(MEDIUM_JUNCTION_POS);
 
-            // drive back robot to high junction
-            robotRunToPosition(-38.0 + 3.0, true); // adjust according to testing
+            // drive back to high junction
+            robotRunToPosition(-32.0, true); // adjust according to testing
             Logging.log("Autonomous - robot has arrived at high junction.");
 
             // lift slider during rotation.
@@ -679,19 +677,14 @@ public class AutonomousRight extends LinearOpMode {
             // left turn 90 degree facing to high junction
             imuAngles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
             Logging.log("Autonomous - imu angle before left turn: %.2f", imuAngles.firstAngle);
-            rotate(-AngleUnit.DEGREES.normalize(imuAngles.firstAngle), AUTO_ROTATE_POWER); // turn robot 90 degree to the left
+            rotate(-AngleUnit.DEGREES.normalize(imuAngles.firstAngle) - 135, AUTO_ROTATE_POWER); // turn robot 90 degree to the left
             Logging.log("Autonomous - imu angle after turn: %.2f", lastAngles.firstAngle);
-
-            // adjust for accuracy
-            imuAngles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
-            rotate(-AngleUnit.DEGREES.normalize(imuAngles.firstAngle), AUTO_ROTATE_POWER);
-            Logging.log("Autonomous - imu angle after correction: %.2f", lastAngles.firstAngle);
 
             waitSliderRun(); // make sure slider has been lifted
             Logging.log("Autonomous - slider is positioned to high junction.");
 
             // moving forward V to junction
-            robotRunToPosition(8.5, true); // adjust according to testing
+            robotRunToPosition(13.5, true); // adjust according to testing
 
             // unload cone & adjust
             autoUnloadCone();
