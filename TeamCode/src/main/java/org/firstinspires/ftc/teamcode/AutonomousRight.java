@@ -139,7 +139,7 @@ public class AutonomousRight extends LinearOpMode {
     static final int COUNTS_PER_INCH_DRIVE = 45; // robot drive 1 INCH. Back-forth moving
     static final int COUNTS_PER_INCH_STRAFE = 55; // robot strafe 1 INCH. Left-right moving. need test
     double robotAutoLoadMovingDistance = 1.0; // in INCH
-    double robotAutoUnloadMovingDistance = 3.5; // in INCH
+    double robotAutoUnloadMovingDistance = 3.0; // in INCH
     static final int SLOW_DOWN_DISTANCE = 10; // slow down in the final 10 inch
 
     // IMU related
