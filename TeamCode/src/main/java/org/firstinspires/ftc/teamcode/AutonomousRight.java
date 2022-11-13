@@ -692,7 +692,7 @@ public class AutonomousRight extends LinearOpMode {
             Logging.log("Autonomous - slider is positioned to high junction.");
 
             // moving forward V to junction
-            robotRunToPosition(13.5, true); // adjust according to testing
+            robotRunToPosition(13.1, true); // adjust according to testing
             sleep(200);
 
             // unload cone & adjust
