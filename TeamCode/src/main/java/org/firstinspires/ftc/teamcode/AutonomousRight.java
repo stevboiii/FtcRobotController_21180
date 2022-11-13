@@ -618,44 +618,46 @@ public class AutonomousRight extends LinearOpMode {
 
         // lift slider during strafe to high junction
         setSliderPosition(HIGH_JUNCTION_POS);
-        robotRunToPosition(-6.0, true); // get rid of sleeve cone
+        robotRunToPosition(-7.0, true); // get rid of sleeve cone
 
-        robotRunToPosition(-16.0, false); // strafe robot half mat to left side
-        waitSliderRun(); // make sure slider has been lifted.
 
-        robotRunToPosition(8, true); // drive robot V to high junction
-        autoUnloadCone();
-        Logging.log("Autonomous - pre-load cone has been unloaded.");
-        // lower down slider after unloading cone
-        setSliderPosition(WALL_POSITION);
-
+       // turn robot 45 degrees left
         Orientation imuAngles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
+        rotate(45 - AngleUnit.DEGREES.normalize(imuAngles.firstAngle), AUTO_ROTATE_POWER);
+        imuAngles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
+        rotate(45 - AngleUnit.DEGREES.normalize(imuAngles.firstAngle), AUTO_ROTATE_POWER);
+
+        //drive forward & drop
+        robotRunToPosition(13.1, true);
+        sleep(200);
+        autoUnloadCone();
+        robotRunToPosition(-13.1, true);
 
         for(int autoLoop = 0; autoLoop < 2; autoLoop++) {
             Logging.log("Autonomous - loop index: %d ", autoLoop);
 
-            // right turn 90 degree
+            // right turn 135 degree
             imuAngles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
             Logging.log("Autonomous - imu angle before right turn: %.2f", imuAngles.firstAngle);
-            rotate(-AngleUnit.DEGREES.normalize(imuAngles.firstAngle) - 90, AUTO_ROTATE_POWER);
+            rotate(-AngleUnit.DEGREES.normalize(imuAngles.firstAngle) - 135, AUTO_ROTATE_POWER);
             Logging.log("Autonomous - imu turn: %.2f degree", -AngleUnit.DEGREES.normalize(imuAngles.firstAngle) - 90);
             Logging.log("Autonomous - imu angle after turn: %.2f", lastAngles.firstAngle);
 
-            // strafe to the left a little bit to compensate for the shift from 90 degree rotation(currently 1 inch).
-            robotRunToPosition(-2.0, false);
+            // strafe to the left a little bit to compensate for the shift from 135 degree rotation(currently 1.5 inch).
+            robotRunToPosition(-1.5, false);
 
-            // adjust position and double rotation for accurate 90
+            // adjust position and double rotation for accurate 135
             imuAngles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
-            rotate(-AngleUnit.DEGREES.normalize(imuAngles.firstAngle) - 90, AUTO_ROTATE_POWER);
+            rotate( -AngleUnit.DEGREES.normalize(imuAngles.firstAngle) - 90, AUTO_ROTATE_POWER);
             Logging.log("Autonomous - imu angle after cone unloading correction: %.2f", lastAngles.firstAngle);
 
             // drive robot to loading area
-            robotRunToPosition(40.0, true);
+            robotRunToPosition(32.0, true);
 
             // load cone
             autoLoadCone(coneStack5th - coneLoadStackGap * autoLoop);
 
-            // lift cone by slider
+            // lift cone
             setSliderPosition(WALL_POSITION);
 
             // make sure robot is still in the same orientation
@@ -668,8 +670,8 @@ public class AutonomousRight extends LinearOpMode {
             // lift slider during rotation.
             setSliderPosition(MEDIUM_JUNCTION_POS);
 
-            // drive back robot to high junction
-            robotRunToPosition(-38.0 + 3.0, true); // adjust according to testing
+            // drive back to high junction
+            robotRunToPosition(-32.0, true); // adjust according to testing
             Logging.log("Autonomous - robot has arrived at high junction.");
 
             // lift slider during rotation.
@@ -678,19 +680,20 @@ public class AutonomousRight extends LinearOpMode {
             // left turn 90 degree facing to high junction
             imuAngles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
             Logging.log("Autonomous - imu angle before left turn: %.2f", imuAngles.firstAngle);
-            rotate(-AngleUnit.DEGREES.normalize(imuAngles.firstAngle), AUTO_ROTATE_POWER); // turn robot 90 degree to the left
+            rotate(-AngleUnit.DEGREES.normalize(imuAngles.firstAngle) - 135, AUTO_ROTATE_POWER); // turn robot 90 degree to the left
             Logging.log("Autonomous - imu angle after turn: %.2f", lastAngles.firstAngle);
 
-            // adjust for accuracy
+            //adjust for accuracy
             imuAngles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
-            rotate(-AngleUnit.DEGREES.normalize(imuAngles.firstAngle), AUTO_ROTATE_POWER);
+            rotate(45 - AngleUnit.DEGREES.normalize(imuAngles.firstAngle), AUTO_ROTATE_POWER);
             Logging.log("Autonomous - imu angle after correction: %.2f", lastAngles.firstAngle);
 
             waitSliderRun(); // make sure slider has been lifted
             Logging.log("Autonomous - slider is positioned to high junction.");
 
             // moving forward V to junction
-            robotRunToPosition(9, true); // adjust according to testing
+            robotRunToPosition(13.1, true); // adjust according to testing
+            sleep(200);
 
             // unload cone & adjust
             autoUnloadCone();
@@ -702,24 +705,24 @@ public class AutonomousRight extends LinearOpMode {
             setSliderPosition(WALL_POSITION);
         }
         Logging.log("Autonomous -  last cone has been unloaded.");
+        imuAngles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
+        rotate(-AngleUnit.DEGREES.normalize(imuAngles.firstAngle) - 45, AUTO_ROTATE_POWER);
 
-        // turn robot -90 degree to right
+        // correct robot orientation at 0 degrees
         rotate(-AngleUnit.DEGREES.normalize(imuAngles.firstAngle), AUTO_ROTATE_POWER);
         Logging.log("Autonomous - imu angle before parking and after correction: %.2f", lastAngles.firstAngle);
+
+        // lower slider in prep for tele-op
+        setSliderPosition(GROUND_POSITION);
+        Logging.log("Autonomous - slider lowered.");
 
         // drive to final parking lot
         robotRunToPosition(parkingLocation, false); // strafe robot to parking
         Logging.log("Autonomous - Arrived at parking lot aisle: %.2f", parkingLocation);
         Orientation imuAngles1 = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
         Logging.log("Autonomous - imu angle is: %.2f", imuAngles1.firstAngle);
-
-        // lower slider in prep for tele-op
-        setSliderPosition(GROUND_POSITION);
-
-        //drive robot to parking mat
-        robotRunToPosition(-21.0, true);
-        Logging.log("Autonomous -  finished parking.");
-        Logging.log("Autonomous - autonomous complete.");
+        waitSliderRun();
+        Logging.log("Autonomous - Autonomous complete.");
     }
 
     /**
@@ -736,20 +739,20 @@ public class AutonomousRight extends LinearOpMode {
         if(SleeveIdentification.sleeveSignal.UNKNOWN != mySleeveColor) { // camera
             switch (mySleeveColor) {
                 case RED: // red
-                    location = -1.0 * 12; // parking lot #1 (red), first mat
+                    location = -2.0 * 12; // parking lot #1 (red), first mat
                     color = "red";
                     break;
                 case GREEN: // green
-                    location = 1.0 * 12; // parking lot #2 (green), second mat
+                    location = 0; // parking lot #2 (green), second mat
                     color = "green";
                     break;
                 case BLUE: // blue
-                    location = 3.0 * 12; // parking lot #3 (blue), third mat
+                    location = 2.0 * 12; // parking lot #3 (blue), third mat
                     color = "blue";
                     break;
                 default:
                     location = 0.0;
-                    color = "Unknow";
+                    color = "Unknown";
             }
             Logging.log("Autonomous - Sleeve color from camera is %s", color);
         }
@@ -769,15 +772,15 @@ public class AutonomousRight extends LinearOpMode {
             }
             switch (channel) {
                 case 0: // red
-                    location = -1.0 * 12; // parking lot #1 (red), third mat
+                    location = -2.0 * 12; // parking lot #1 (red), third mat
                     color = "red";
                     break;
                 case 1: // green
-                    location = 1.0 * 12; // parking lot #2 (green), third mat
+                    location = 0; // parking lot #2 (green), third mat
                     color = "green";
                     break;
                 case 2: // blue
-                    location = 3.0 * 12 - 4; // parking lot #3 (blue), third mat
+                    location = 2.0 * 12; // parking lot #3 (blue), third mat
                     color = "blue";
                     break;
                 default:
