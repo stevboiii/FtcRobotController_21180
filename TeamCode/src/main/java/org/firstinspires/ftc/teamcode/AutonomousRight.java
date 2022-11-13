@@ -628,7 +628,8 @@ public class AutonomousRight extends LinearOpMode {
         //drive forward & drop
         robotRunToPosition(13.1, true);
         autoUnloadCone();
-        robotRunToPosition(13.1, true);
+        sleep(200);
+        robotRunToPosition(-13.1, true);
 
         for(int autoLoop = 0; autoLoop < 2; autoLoop++) {
             Logging.log("Autonomous - loop index: %d ", autoLoop);
@@ -645,7 +646,7 @@ public class AutonomousRight extends LinearOpMode {
 
             // adjust position and double rotation for accurate 135
             imuAngles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
-            rotate(-AngleUnit.DEGREES.normalize(imuAngles.firstAngle) - 135, AUTO_ROTATE_POWER);
+            rotate(-AngleUnit.DEGREES.normalize(imuAngles.firstAngle) - 90, AUTO_ROTATE_POWER);
             Logging.log("Autonomous - imu angle after cone unloading correction: %.2f", lastAngles.firstAngle);
 
             // drive robot to loading area
@@ -660,7 +661,7 @@ public class AutonomousRight extends LinearOpMode {
             // make sure robot is still in the same orientation
             imuAngles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
             Logging.log("Autonomous - imu angle after load cone: %.2f", imuAngles.firstAngle);
-            rotate(-AngleUnit.DEGREES.normalize(imuAngles.firstAngle) - 135, AUTO_ROTATE_POWER);
+            rotate(-AngleUnit.DEGREES.normalize(imuAngles.firstAngle) - 90, AUTO_ROTATE_POWER);
             Logging.log("Autonomous - imu angle after correction: %.2f", lastAngles.firstAngle);
             waitSliderRun(); // make sure slider has been lifted before moving out cone stack.
 
@@ -680,6 +681,11 @@ public class AutonomousRight extends LinearOpMode {
             rotate(-AngleUnit.DEGREES.normalize(imuAngles.firstAngle) - 135, AUTO_ROTATE_POWER); // turn robot 90 degree to the left
             Logging.log("Autonomous - imu angle after turn: %.2f", lastAngles.firstAngle);
 
+            //adjust for accuracy
+            imuAngles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
+            rotate(45 - AngleUnit.DEGREES.normalize(imuAngles.firstAngle), AUTO_ROTATE_POWER);
+            Logging.log("Autonomous - imu angle after correction: %.2f", lastAngles.firstAngle);
+
             waitSliderRun(); // make sure slider has been lifted
             Logging.log("Autonomous - slider is positioned to high junction.");
 
@@ -688,6 +694,7 @@ public class AutonomousRight extends LinearOpMode {
 
             // unload cone & adjust
             autoUnloadCone();
+            sleep(150);
             Logging.log("Autonomous - cone %d has been unloaded.", autoLoop + 2);
             imuAngles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
             Logging.log("Autonomous - imu angle after unload cone: %.2f", imuAngles.firstAngle);
@@ -696,6 +703,8 @@ public class AutonomousRight extends LinearOpMode {
             setSliderPosition(WALL_POSITION);
         }
         Logging.log("Autonomous -  last cone has been unloaded.");
+        imuAngles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
+        rotate(-AngleUnit.DEGREES.normalize(imuAngles.firstAngle) - 45, AUTO_ROTATE_POWER);
 
         // turn robot -90 degree to right
         rotate(-AngleUnit.DEGREES.normalize(imuAngles.firstAngle), AUTO_ROTATE_POWER);
