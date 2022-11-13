@@ -219,7 +219,7 @@ public class AutonomousRight extends LinearOpMode {
 
 
         // claw servo motor initial
-        clawServoPosition = CLAW_OPEN_POS;
+        clawServoPosition = CLAW_CLOSE_POS;
         clawServo.setPosition(clawServoPosition);
 
 
@@ -259,6 +259,7 @@ public class AutonomousRight extends LinearOpMode {
         // Wait for the game to start (driver presses PLAY)
         telemetry.addData("Mode", "waiting for start");
         telemetry.update();
+
         waitForStart();
         runtime.reset();
 
@@ -622,11 +623,9 @@ public class AutonomousRight extends LinearOpMode {
             mySleeveColor = mySleeve.captureSleeveSignal();
             Logging.log("Autonomous - complete color read from camera.");
         }
-        clawServo.setPosition(CLAW_CLOSE_POS);
         RightSliderMotor.setPower(SLIDER_MOTOR_POWER); // slider motor start power
         LeftSliderMotor.setPower(SLIDER_MOTOR_POWER);
-
-        sleep(200); // wait to make sure clawServo is at grip position
+        
         setSliderPosition(MEDIUM_JUNCTION_POS);
         if (SleeveIdentification.sleeveSignal.UNKNOWN != mySleeveColor) {
             robotRunToPosition(56.0, true);
