@@ -624,11 +624,13 @@ public class AutonomousRight extends LinearOpMode {
        // turn robot 45 degrees left
         Orientation imuAngles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
         rotate(45 - AngleUnit.DEGREES.normalize(imuAngles.firstAngle), AUTO_ROTATE_POWER);
+        imuAngles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
+        rotate(45 - AngleUnit.DEGREES.normalize(imuAngles.firstAngle), AUTO_ROTATE_POWER);
 
         //drive forward & drop
         robotRunToPosition(13.1, true);
-        autoUnloadCone();
         sleep(200);
+        autoUnloadCone();
         robotRunToPosition(-13.1, true);
 
         for(int autoLoop = 0; autoLoop < 2; autoLoop++) {
@@ -646,7 +648,7 @@ public class AutonomousRight extends LinearOpMode {
 
             // adjust position and double rotation for accurate 135
             imuAngles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
-            rotate(-AngleUnit.DEGREES.normalize(imuAngles.firstAngle) - 90, AUTO_ROTATE_POWER);
+            rotate( -AngleUnit.DEGREES.normalize(imuAngles.firstAngle) - 90, AUTO_ROTATE_POWER);
             Logging.log("Autonomous - imu angle after cone unloading correction: %.2f", lastAngles.firstAngle);
 
             // drive robot to loading area
@@ -691,10 +693,10 @@ public class AutonomousRight extends LinearOpMode {
 
             // moving forward V to junction
             robotRunToPosition(13.5, true); // adjust according to testing
+            sleep(200);
 
             // unload cone & adjust
             autoUnloadCone();
-            sleep(150);
             Logging.log("Autonomous - cone %d has been unloaded.", autoLoop + 2);
             imuAngles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
             Logging.log("Autonomous - imu angle after unload cone: %.2f", imuAngles.firstAngle);
@@ -706,22 +708,21 @@ public class AutonomousRight extends LinearOpMode {
         imuAngles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
         rotate(-AngleUnit.DEGREES.normalize(imuAngles.firstAngle) - 45, AUTO_ROTATE_POWER);
 
-        // turn robot -90 degree to right
+        // correct robot orientation at 0 degrees
         rotate(-AngleUnit.DEGREES.normalize(imuAngles.firstAngle), AUTO_ROTATE_POWER);
         Logging.log("Autonomous - imu angle before parking and after correction: %.2f", lastAngles.firstAngle);
+
+        // lower slider in prep for tele-op
+        setSliderPosition(GROUND_POSITION);
+        Logging.log("Autonomous - slider lowered.");
 
         // drive to final parking lot
         robotRunToPosition(parkingLocation, false); // strafe robot to parking
         Logging.log("Autonomous - Arrived at parking lot aisle: %.2f", parkingLocation);
         Orientation imuAngles1 = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
         Logging.log("Autonomous - imu angle is: %.2f", imuAngles1.firstAngle);
-
-        robotRunToPosition(-24.0, true); // drive robot to parking mat
-        Logging.log("Autonomous -  finished parking.");
-
-        // lower slider in prep for tele-op
-        setSliderPosition(GROUND_POSITION);
-        Logging.log("Autonomous - slider lowered, autonomous complete.");
+        waitSliderRun();
+        Logging.log("Autonomous - Autonomous complete.");
     }
 
     /**
@@ -738,20 +739,20 @@ public class AutonomousRight extends LinearOpMode {
         if(SleeveIdentification.sleeveSignal.UNKNOWN != mySleeveColor) { // camera
             switch (mySleeveColor) {
                 case RED: // red
-                    location = -1.0 * 12; // parking lot #1 (red), first mat
+                    location = -2.0 * 12; // parking lot #1 (red), first mat
                     color = "red";
                     break;
                 case GREEN: // green
-                    location = 1.0 * 12; // parking lot #2 (green), second mat
+                    location = 0; // parking lot #2 (green), second mat
                     color = "green";
                     break;
                 case BLUE: // blue
-                    location = 3.0 * 12; // parking lot #3 (blue), third mat
+                    location = 2.0 * 12; // parking lot #3 (blue), third mat
                     color = "blue";
                     break;
                 default:
                     location = 0.0;
-                    color = "Unknow";
+                    color = "Unknown";
             }
             Logging.log("Autonomous - Sleeve color from camera is %s", color);
         }
@@ -771,15 +772,15 @@ public class AutonomousRight extends LinearOpMode {
             }
             switch (channel) {
                 case 0: // red
-                    location = -1.0 * 12; // parking lot #1 (red), third mat
+                    location = -2.0 * 12; // parking lot #1 (red), third mat
                     color = "red";
                     break;
                 case 1: // green
-                    location = 1.0 * 12; // parking lot #2 (green), third mat
+                    location = 0; // parking lot #2 (green), third mat
                     color = "green";
                     break;
                 case 2: // blue
-                    location = 3.0 * 12; // parking lot #3 (blue), third mat
+                    location = 2.0 * 12; // parking lot #3 (blue), third mat
                     color = "blue";
                     break;
                 default:
