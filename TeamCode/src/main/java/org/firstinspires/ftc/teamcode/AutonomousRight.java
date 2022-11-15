@@ -625,7 +625,7 @@ public class AutonomousRight extends LinearOpMode {
         }
         RightSliderMotor.setPower(SLIDER_MOTOR_POWER); // slider motor start power
         LeftSliderMotor.setPower(SLIDER_MOTOR_POWER);
-        
+        sleep(200); // wait to make sure clawServo is at grip position
         setSliderPosition(MEDIUM_JUNCTION_POS);
         if (SleeveIdentification.sleeveSignal.UNKNOWN != mySleeveColor) {
             robotRunToPosition(56.0, true);
