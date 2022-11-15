@@ -23,7 +23,7 @@ AutonomousRight is tuned to using a custom signal sleeve with the color red as p
 ## Controller requirements
 
 This version of TeleopDualDrivers requires 2 identical controllers with at least:
-- 2 sticks on either side
+- 2 joysticks, one on either side
 - A D-pad to the left
 - A, B, X, and Y buttons on the right
 - A bumper and a trigger on both sides
