@@ -95,10 +95,10 @@ import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
  * Use Android Studios to Copy this Class, and Paste it into your team's code folder with a new name.
  * Remove or comment out the @Disabled line to add this opmode to the Driver Station OpMode list
  */
-
-@TeleOp(name="TeleopMotorGroup", group="Concept")
+ 
+@TeleOp(name="TeleopCalibration", group="Concept")
 //@Disabled
-public class TeleopMotorGroup extends LinearOpMode {
+public class TeleopCalibration extends LinearOpMode {
 
     // Declare OpMode members.
     static final double MAX_WAIT_TIME = 20; // in seconds
@@ -109,14 +109,13 @@ public class TeleopMotorGroup extends LinearOpMode {
     private DcMotor BackRightDrive = null;
     private BNO055IMU imu = null;
 
-
     // Driving motor variables
     static final double HIGH_SPEED_POWER = 0.6;  // used to adjust driving sensitivity.
-    static final double SLOW_DOWN_POWER = 0.2;
-    static final double CORRECTION_POWER = 0.1;
-    static final double MIN_ROTATE_POWER = 0.11;
-    static final double AUTO_DRIVE_POWER = 0.5; // used for auto driving
-    static final double AUTO_ROTATE_POWER = 0.5; // used for auto driving
+    static final double SLOW_DOWN_POWER = 0.3;
+    static final double CORRECTION_POWER = 0.12;
+    static final double MIN_ROTATE_POWER = 0.20;
+    static final double AUTO_DRIVE_POWER = 1.0; // used for auto driving
+    static final double AUTO_ROTATE_POWER = 1.0; // used for auto driving
 
     // slider motor variables
     private DcMotor RightSliderMotor = null;
@@ -848,65 +847,61 @@ public class TeleopMotorGroup extends LinearOpMode {
 
         telemetry.update();
 
-        /* code for autonomous driving, must starting from right position.    */
         if (gamepad2.a) {
-            //preload cone
+            robotRunToPosition(32, true);
             Orientation angles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
+            rotate(-angles.firstAngle, AUTO_ROTATE_POWER);
             Logging.log(String.format("Autonomous - imu angle a: %.2f", angles.firstAngle));
-
-            robotRunToPosition(48, true); // strafe testing 48 inch
-            angles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
-            Logging.log(String.format("Autonomous - imu angle a: %.2f", angles.firstAngle));
-            rotate(-angles.firstAngle, AUTO_ROTATE_POWER); // turn robot 90 degree to right
             Logging.log("Autonomous - Current Position, FL = %d, FR= %d, BL = %d, BR = %d",
                     FrontLeftDrive.getCurrentPosition(), FrontRightDrive.getCurrentPosition(),
                     BackLeftDrive.getCurrentPosition(), BackRightDrive.getCurrentPosition());
-            telemetry.addData("imu heading a:","%.2f", lastAngles.firstAngle);
-            telemetry.addData("global heading a:", "%.2f", globalAngle);
+            telemetry.addData("Autonomous","Current Position, FL = %d, FR= %d, BL = %d, BR = %d",
+                    FrontLeftDrive.getCurrentPosition(), FrontRightDrive.getCurrentPosition(),
+                    BackLeftDrive.getCurrentPosition(), BackRightDrive.getCurrentPosition());
             telemetry.update();
         }
 
         // move up slider
         if (gamepad2.b) {
+            robotRunToPosition(-32, true);
             Orientation angles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
-            Logging.log(String.format("Autonomous - imu angle b: %.2f", angles.firstAngle));
-
-            robotRunToPosition(-48, true); // strafe testing 48 inch
-            angles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
-            Logging.log(String.format("Autonomous - imu angle b: %.2f", angles.firstAngle));
-            telemetry.addData("imu heading b:","%.2f", lastAngles.firstAngle);
-            telemetry.addData("global heading b:", "%.2f", globalAngle);
-            telemetry.update();
+            rotate(-angles.firstAngle, AUTO_ROTATE_POWER);
+            Logging.log(String.format("Autonomous - imu angle a: %.2f", angles.firstAngle));
             Logging.log("Autonomous - Current Position, FL = %d, FR= %d, BL = %d, BR = %d",
                     FrontLeftDrive.getCurrentPosition(), FrontRightDrive.getCurrentPosition(),
                     BackLeftDrive.getCurrentPosition(), BackRightDrive.getCurrentPosition());
-            rotate(-angles.firstAngle, AUTO_ROTATE_POWER); // turn robot 90 degree to right
+            telemetry.addData("Autonomous","Current Position, FL = %d, FR= %d, BL = %d, BR = %d",
+                    FrontLeftDrive.getCurrentPosition(), FrontRightDrive.getCurrentPosition(),
+                    BackLeftDrive.getCurrentPosition(), BackRightDrive.getCurrentPosition());
+            telemetry.update();
         }
 
         if (gamepad2.x) {
+            robotRunToPosition(13, true);
             Orientation angles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
-            Logging.log(String.format("Autonomous - imu angle x: %.2f", angles.firstAngle));
-
-            robotRunToPosition(48, false); // strafe testing 48 inch
-            angles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
-            Logging.log(String.format("Autonomous - imu angle x: %.2f", angles.firstAngle));
-            telemetry.addData("imu heading x:","%.2f", lastAngles.firstAngle);
-            telemetry.addData("global heading x:", "%.2f", globalAngle);
+            rotate(-angles.firstAngle, AUTO_ROTATE_POWER);
+            Logging.log(String.format("Autonomous - imu angle a: %.2f", angles.firstAngle));
+            Logging.log("Autonomous - Current Position, FL = %d, FR= %d, BL = %d, BR = %d",
+                    FrontLeftDrive.getCurrentPosition(), FrontRightDrive.getCurrentPosition(),
+                    BackLeftDrive.getCurrentPosition(), BackRightDrive.getCurrentPosition());
+            telemetry.addData("Autonomous","Current Position, FL = %d, FR= %d, BL = %d, BR = %d",
+                    FrontLeftDrive.getCurrentPosition(), FrontRightDrive.getCurrentPosition(),
+                    BackLeftDrive.getCurrentPosition(), BackRightDrive.getCurrentPosition());
             telemetry.update();
-            rotate(-angles.firstAngle, AUTO_ROTATE_POWER); // turn robot 90 degree to right
         }
 
         if (gamepad2.y) {
+            robotRunToPosition(-13, true);
             Orientation angles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
-            Logging.log(String.format("Autonomous - imu angle y: %.2f", angles.firstAngle));
-
-            robotRunToPosition(-48, false); // strafe testing 48 inch
-            angles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
-            Logging.log(String.format("Autonomous - imu angle y: %.2f", angles.firstAngle));
-            telemetry.addData("imu heading y:","%.2f", lastAngles.firstAngle);
-            telemetry.addData("global heading y:", "%.2f", globalAngle);
+            rotate(-angles.firstAngle, AUTO_ROTATE_POWER);
+            Logging.log(String.format("Autonomous - imu angle a: %.2f", angles.firstAngle));
+            Logging.log("Autonomous - Current Position, FL = %d, FR= %d, BL = %d, BR = %d",
+                    FrontLeftDrive.getCurrentPosition(), FrontRightDrive.getCurrentPosition(),
+                    BackLeftDrive.getCurrentPosition(), BackRightDrive.getCurrentPosition());
+            telemetry.addData("Autonomous","Current Position, FL = %d, FR= %d, BL = %d, BR = %d",
+                    FrontLeftDrive.getCurrentPosition(), FrontRightDrive.getCurrentPosition(),
+                    BackLeftDrive.getCurrentPosition(), BackRightDrive.getCurrentPosition());
             telemetry.update();
-            rotate(-angles.firstAngle, AUTO_ROTATE_POWER); // turn robot 90 degree to right
         }
         if (gamepad2.right_bumper) {
             Orientation angles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
