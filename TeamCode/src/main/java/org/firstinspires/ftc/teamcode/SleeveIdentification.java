@@ -179,10 +179,10 @@ public class SleeveIdentification {
     private int getDominantColor(Bitmap bitmap) {
 
         // TODO : update below 4 variable values due to sleeve location in the view of image.
-        int cropStartX = bitmap.getWidth() / 4;
-        int cropStartY = bitmap.getHeight() / 4;
-        int cropWidth = bitmap.getWidth() / 2;
-        int cropHeight = bitmap.getHeight() / 2;
+        int cropStartX = bitmap.getWidth();
+        int cropStartY = bitmap.getHeight();
+        int cropWidth = bitmap.getWidth();
+        int cropHeight = bitmap.getHeight();
         Bitmap croppedBitmap = Bitmap.createBitmap(bitmap, cropStartX, cropStartY, cropWidth, cropHeight);
 
         Bitmap newBitmap = Bitmap.createScaledBitmap(croppedBitmap, 1, 1, true);
