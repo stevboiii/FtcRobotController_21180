@@ -169,6 +169,7 @@ public class AutonomousRight extends LinearOpMode {
 
     // variables for location shift
     double[] xyShift = {0.0, 0.0};
+    boolean debugFlag = false;
 
     @Override
     public void runOpMode() {
@@ -316,6 +317,7 @@ public class AutonomousRight extends LinearOpMode {
         sleep(100); // make sure cone has been unloaded
         robotRunToPosition(-backToMatCenterDistance, true); // move out from junction
         sliderTargetPosition = WALL_POSITION;
+        Logging.log("Auto unload - Cone has been unloaded.");
     }
 
     /**
@@ -335,6 +337,7 @@ public class AutonomousRight extends LinearOpMode {
         setSliderPosition(coneLocation);
         waitSliderRun();
         clawServo.setPosition(CLAW_CLOSE_POS);
+        Logging.log("Auto load - Cone has been loaded.");
         sleep(200); // wait to make sure clawServo is at grep position
     }
 
@@ -486,6 +489,7 @@ public class AutonomousRight extends LinearOpMode {
         if (Math.abs(degrees) > 359.99) {
             degrees = Math.floorMod(360, (int)degrees);
         }
+        Logging.log("Required turning degrees: %.2f.", degrees);
 
         // start pid controller. PID controller will monitor the turn angle with respect to the
         // target angle and reduce power as we approach the target angle. This is to prevent the
@@ -500,7 +504,7 @@ public class AutonomousRight extends LinearOpMode {
         pidRotate.setInputRange(0, degrees);
         pidRotate.setSetpoint(degrees); // be sure input range has been set before
         pidRotate.setOutputRange(MIN_ROTATE_POWER, power);
-        pidRotate.setTolerance(1);
+        pidRotate.setTolerance(1.5);
         pidRotate.enable();
 
         // getAngle() returns + when rotating counter clockwise (left) and - when rotating
@@ -516,8 +520,10 @@ public class AutonomousRight extends LinearOpMode {
             motorsPos[2] = BackLeftDrive.getCurrentPosition();
             motorsPos[3] = BackRightDrive.getCurrentPosition();
 
-            Logging.log("Autonomous - Positions: FL = %d, FR = %d, BL = %d, BR = %d",
-                    motorsPos[0], motorsPos[1], motorsPos[2], motorsPos[3]);
+            if (debugFlag) {
+                Logging.log("Autonomous - Positions: FL = %d, FR = %d, BL = %d, BR = %d",
+                        motorsPos[0], motorsPos[1], motorsPos[2], motorsPos[3]);
+            }
             calculateRotatePowerCorrection(motorsPos, motorsPowerCorrection);
 
             power = pidRotate.performPID(getAngle()); // power will be + on left turn.
@@ -526,10 +532,10 @@ public class AutonomousRight extends LinearOpMode {
                 motorPowers[i] = Range.clip(Math.abs(power) + motorsPowerCorrection[i], 0.0, Math.abs(power) * 1.1);
                 motorPowers[i] = Math.copySign(motorPowers[i], power);
             }
-
-            Logging.log("Autonomous - Powers: FL = %.2f, FR = %.2f, BL = %.2f, BR = %.2f",
-                    -motorPowers[0], motorPowers[1], -motorPowers[2], motorPowers[3]);
-
+            if (debugFlag) {
+                Logging.log("Autonomous - Powers: FL = %.2f, FR = %.2f, BL = %.2f, BR = %.2f",
+                        -motorPowers[0], motorPowers[1], -motorPowers[2], motorPowers[3]);
+            }
             FrontLeftDrive.setPower(-motorPowers[0]);
             FrontRightDrive.setPower(motorPowers[1]);
             BackLeftDrive.setPower(-motorPowers[2]);
@@ -542,9 +548,10 @@ public class AutonomousRight extends LinearOpMode {
         leftMotorSetPower(0);
 
         rotation = getAngle();
-        Logging.log("Autonomous - Rotation angle is %.2f.", rotation);
+        Logging.log("Autonomous - Rotated angle is %.2f.", rotation);
+
         // wait for rotation to stop.
-        sleep(300);
+        sleep(200);
 
         // reset angle tracking on new heading.
         resetAngle();
@@ -688,24 +695,20 @@ public class AutonomousRight extends LinearOpMode {
         // lift slider during strafe to high junction
         setSliderPosition(HIGH_JUNCTION_POS);
         robotRunToPosition(-14.5, true); // get rid of sleeve cone, and back to the center of mat
-
-        // make sure robot is still 0 degree.
+        
         Orientation imuAngles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
         Logging.log("Autonomous - imu angle before 45 turning: %.2f", imuAngles.firstAngle);
 
        // turn robot 45 degrees left
         rotate(45 - AngleUnit.DEGREES.normalize(imuAngles.firstAngle), AUTO_ROTATE_POWER);
-        imuAngles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
-        //rotate(45 - AngleUnit.DEGREES.normalize(imuAngles.firstAngle), AUTO_ROTATE_POWER);
-        Logging.log("Autonomous - imu angle after 45 turning: %.2f", imuAngles.firstAngle);
         logEncoderAfterRotate();
 
         //drive forward and let V to touch junction
         robotRunToPosition(matCenterToJunctionDistance, true);
+        Logging.log("Autonomous - Robot V reached junction.");
 
         // Compensate angle, and waiting junction shaking
         imuAngles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
-        //rotate(45 - AngleUnit.DEGREES.normalize(imuAngles.firstAngle), AUTO_ROTATE_POWER);
         Logging.log("Autonomous - imu angle before unloading cone: %.2f", imuAngles.firstAngle);
         // drop cone and back to the center of mat
         autoUnloadCone();
@@ -718,10 +721,9 @@ public class AutonomousRight extends LinearOpMode {
             // right turn 135 degree
             imuAngles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
             Logging.log("Autonomous - imu angle before right turn: %.2f", imuAngles.firstAngle);
+
             rotate(-AngleUnit.DEGREES.normalize(imuAngles.firstAngle) - 90, AUTO_ROTATE_POWER);
             logEncoderAfterRotate();
-            Logging.log("Autonomous - imu turn: %.2f degree", -AngleUnit.DEGREES.normalize(imuAngles.firstAngle) - 90);
-            Logging.log("Autonomous - imu angle after turn: %.2f", lastAngles.firstAngle);
 
             locationShiftCalculation(xyShift, frontLeftPos, frontRightPos, backLeftPos, backRightPos);
             // strafe to the left a little bit to compensate for the shift from 135 degree rotation(currently 1 inch).
@@ -730,10 +732,10 @@ public class AutonomousRight extends LinearOpMode {
             // adjust position and double rotation for accurate 135
             imuAngles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
             rotate( -AngleUnit.DEGREES.normalize(imuAngles.firstAngle) - 90, AUTO_ROTATE_POWER);
-            Logging.log("Autonomous - imu angle after cone unloading correction: %.2f", lastAngles.firstAngle);
 
             // drive robot to loading area
             robotRunToPosition(27.0 - xyShift[1], true);
+            Logging.log("Autonomous - Robot has arrived loading area.");
 
             // load cone
             autoLoadCone(coneStack5th - coneLoadStackGap * autoLoop);
@@ -746,7 +748,7 @@ public class AutonomousRight extends LinearOpMode {
             Logging.log("Autonomous - imu angle after load cone: %.2f", imuAngles.firstAngle);
             rotate(-AngleUnit.DEGREES.normalize(imuAngles.firstAngle) - 90, AUTO_ROTATE_POWER);
             logEncoderAfterRotate();
-            Logging.log("Autonomous - imu angle after correction: %.2f", lastAngles.firstAngle);
+
             waitSliderRun(); // make sure slider has been lifted before moving out cone stack.
 
             // lift slider during rotation.
@@ -754,31 +756,26 @@ public class AutonomousRight extends LinearOpMode {
 
             // drive back to high junction
             robotRunToPosition(-27.0 + xyShift[1], true); // adjust according to testing
-            Logging.log("Autonomous - robot has arrived at high junction.");
+            Logging.log("Autonomous - Robot arrived the mat center near high junction.");
 
             // lift slider during rotation.
             setSliderPosition(HIGH_JUNCTION_POS);
 
             // left turn 135 degree facing to high junction
             imuAngles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
-            Logging.log("Autonomous - imu angle before left turn: %.2f", imuAngles.firstAngle);
+            Logging.log("Autonomous - imu angle before 135 left turn: %.2f", imuAngles.firstAngle);
             rotate(-AngleUnit.DEGREES.normalize(imuAngles.firstAngle) + 45, AUTO_ROTATE_POWER);
             logEncoderAfterRotate();
-            Logging.log("Autonomous - imu angle after turn: %.2f", lastAngles.firstAngle);
 
             locationShiftCalculation(xyShift, frontLeftPos, frontRightPos, backLeftPos, backRightPos);
             robotRunToPosition(-xyShift[0], false);
-
-            //adjust for accuracy
-            imuAngles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
-            //rotate(- AngleUnit.DEGREES.normalize(imuAngles.firstAngle) + 45, AUTO_ROTATE_POWER);
-            Logging.log("Autonomous - imu angle after correction: %.2f", imuAngles.firstAngle);
 
             waitSliderRun(); // make sure slider has been lifted
             Logging.log("Autonomous - slider is positioned to high junction.");
 
             // moving forward V to junction
-            robotRunToPosition(matCenterToJunctionDistance + xyShift[1], true); // adjust according to testing
+            robotRunToPosition(matCenterToJunctionDistance + xyShift[1], true);
+
             // Compensate turning 45
             imuAngles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
             rotate(- AngleUnit.DEGREES.normalize(imuAngles.firstAngle) + 45, AUTO_ROTATE_POWER);
@@ -804,8 +801,7 @@ public class AutonomousRight extends LinearOpMode {
         // drive to final parking lot
         robotRunToPosition(-parkingLocation, true); // strafe robot to parking
         Logging.log("Autonomous - Arrived at parking lot aisle: %.2f", parkingLocation);
-        Orientation imuAngles1 = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
-        Logging.log("Autonomous - imu angle is: %.2f", imuAngles1.firstAngle);
+
         waitSliderRun();
         Logging.log("Autonomous - slider lowered to ground.");
         Logging.log("Autonomous - Autonomous complete.");
