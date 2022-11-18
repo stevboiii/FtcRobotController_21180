@@ -104,11 +104,10 @@ public class AutonomousRight extends LinearOpMode {
     private WebcamName mycameraName;
 
     // Driving motor variables
-    static final double HIGH_SPEED_POWER = 0.6;  // used to adjust driving sensitivity.
     static final double SLOW_POWER = 0.5;
-    static final double SLOWER_POWER = 0.25;
+    static final double SLOWER_POWER = 0.23;
     static final double CORRECTION_POWER = 0.12;
-    static final double MIN_ROTATE_POWER = 0.18;
+    static final double MIN_ROTATE_POWER = 0.21;
     static final double AUTO_DRIVE_POWER = 1.0; // used for auto driving
     static final double AUTO_ROTATE_POWER = 0.9; // used for auto driving
 
@@ -142,10 +141,10 @@ public class AutonomousRight extends LinearOpMode {
     // variables for auto load and unload cone
     static final int COUNTS_PER_INCH_DRIVE = 45; // robot drive 1 INCH. Back-forth moving
     static final int COUNTS_PER_INCH_STRAFE = 55; // robot strafe 1 INCH. Left-right moving. need test
-    double matCenterToJunctionDistance = 14.0;
+    double matCenterToJunctionDistance = 14.5;
     double robotAutoLoadMovingDistance = 1.0; // in INCH
-    double robotAutoUnloadMovingDistance = 3.0; // in INCH
-    double backToMatCenterDistance = matCenterToJunctionDistance - robotAutoUnloadMovingDistance; // in INCH
+    double robotAutoUnloadMovingDistance = 3.5; // in INCH
+    double backToMatCenterDistance = matCenterToJunctionDistance - robotAutoUnloadMovingDistance - 0.5; // in INCH
     static final int SLOW_DOWN_DISTANCE = 10; // slow down in the final 10 inch
     static final int SLOWER_DISTANCE = 5; // slow down in the final 10 inch
 
@@ -670,25 +669,25 @@ public class AutonomousRight extends LinearOpMode {
         setSliderPosition(MEDIUM_JUNCTION_POS);
         if (SleeveIdentification.sleeveSignal.UNKNOWN != mySleeveColor) {
             //move center of robot to the edge of 3rd mat
-            robotRunToPosition(64.0, true);
+            robotRunToPosition(65.5, true);
         }
         else {
             sleep(500); // wait for preloaded cone to lifted.
             readColorSensor(backgroundColor);
             Logging.log("Autonomous - complete background color read.");
             // drive robot to sleeve cone
-            robotRunToPosition(21.0, true);
+            robotRunToPosition(21.5, true);
             readColorSensor(sleeveColor); // reading sleeve signal
             Logging.log("Autonomous - complete Sleeve color read.");
             // push sleeve cone out, and reading background color for calibration
-            robotRunToPosition(43.0, true);
+            robotRunToPosition(44, true);
         }
         parkingLocation = calculateParkingLocation(sleeveColor, backgroundColor);
         Logging.log("Autonomous - parking lot aisle location: %.2f", parkingLocation);
 
         // lift slider during strafe to high junction
         setSliderPosition(HIGH_JUNCTION_POS);
-        robotRunToPosition(-12.0, true); // get rid of sleeve cone, and back to the center of mat
+        robotRunToPosition(-14.5, true); // get rid of sleeve cone, and back to the center of mat
 
         // make sure robot is still 0 degree.
         Orientation imuAngles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
