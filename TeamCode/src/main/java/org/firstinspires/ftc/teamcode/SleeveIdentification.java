@@ -110,22 +110,13 @@ public class SleeveIdentification {
      * if you're curious): no knowledge of multi-threading is needed here. */
     private Handler callbackHandler;
 
-    //----------------------------------------------------------------------------------------------
-    // Main OpMode entry
-    //----------------------------------------------------------------------------------------------
-
-    /* Constructor */
-    public SleeveIdentification(HardwareMap hardwareMap){
-        initCamera(hardwareMap);
-    }
-
-    public boolean initCamera(HardwareMap hardwareMap) {
+    public boolean initCamera(WebcamName mycameraName) {
 
         this.hardwareMap = hardwareMap;
         callbackHandler = CallbackLooper.getDefault().getHandler();
 
         cameraManager = ClassFactory.getInstance().getCameraManager();
-        cameraName = this.hardwareMap.get(WebcamName.class, "Webcam 1");
+        cameraName = mycameraName;
 
         initializeFrameQueue(2);
         AppUtil.getInstance().ensureDirectoryExists(captureDirectory);
@@ -179,10 +170,10 @@ public class SleeveIdentification {
     private int getDominantColor(Bitmap bitmap) {
 
         // TODO : update below 4 variable values due to sleeve location in the view of image.
-        int cropStartX = bitmap.getWidth();
-        int cropStartY = bitmap.getHeight();
-        int cropWidth = bitmap.getWidth();
-        int cropHeight = bitmap.getHeight();
+        int cropStartX = bitmap.getWidth()/10;
+        int cropStartY = bitmap.getHeight()/10;
+        int cropWidth = bitmap.getWidth()/10*8;
+        int cropHeight = bitmap.getHeight()/10*8;
         Bitmap croppedBitmap = Bitmap.createBitmap(bitmap, cropStartX, cropStartY, cropWidth, cropHeight);
 
         Bitmap newBitmap = Bitmap.createScaledBitmap(croppedBitmap, 1, 1, true);
