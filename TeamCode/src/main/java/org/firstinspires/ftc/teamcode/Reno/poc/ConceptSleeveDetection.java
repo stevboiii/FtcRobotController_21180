@@ -19,11 +19,12 @@ public class ConceptSleeveDetection extends OpenCvPipeline {
     public enum ParkingPosition {
         LEFT,
         CENTER,
-        RIGHT
+        RIGHT,
+        UNKNOWN
     }
 
     // TOPLEFT anchor point for the bounding box
-    private static Point SLEEVE_TOPLEFT_ANCHOR_POINT = new Point(145, 168);
+    public static Point SLEEVE_TOPLEFT_ANCHOR_POINT = new Point(145, 168);
 
     // Width and height for the bounding box
     public static int REGION_WIDTH = 30;
@@ -31,9 +32,9 @@ public class ConceptSleeveDetection extends OpenCvPipeline {
 
     // Color definitions
     private final Scalar
-            RED  = new Scalar(255, 0, 0),
-            GREEN    = new Scalar(0, 255, 0),
-            BLUE = new Scalar(0, 0, 255);
+            RED   = new Scalar(255, 0, 0),
+            GREEN = new Scalar(0, 255, 0),
+            BLUE  = new Scalar(0, 0, 255);
 
     // Anchor point definitions
     Point sleeve_pointA = new Point(
@@ -44,7 +45,7 @@ public class ConceptSleeveDetection extends OpenCvPipeline {
             SLEEVE_TOPLEFT_ANCHOR_POINT.y + REGION_HEIGHT);
 
     // Running variable storing the parking position
-    private volatile ParkingPosition position = ParkingPosition.LEFT;
+    private volatile ParkingPosition position = ParkingPosition.UNKNOWN;
 
     @Override
     public Mat processFrame(Mat input) {

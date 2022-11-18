@@ -73,7 +73,11 @@ import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
-
+import org.firstinspires.ftc.teamcode.Reno.poc.ConceptSleeveDetection;
+import org.opencv.core.Point;
+import org.openftc.easyopencv.OpenCvCamera;
+import org.openftc.easyopencv.OpenCvCameraFactory;
+import org.openftc.easyopencv.OpenCvCameraRotation;
 
 /**
  * This file contains an minimal example of a Linear "OpMode". An OpMode is a 'program' that runs in either
@@ -100,8 +104,6 @@ public class AutonomousRight extends LinearOpMode {
     private DcMotor BackLeftDrive = null;
     private DcMotor BackRightDrive = null;
     private BNO055IMU imu = null;
-    private SleeveIdentification mySleeve = new SleeveIdentification();
-    private WebcamName mycameraName;
 
     // Driving motor variables
     static final double SLOW_POWER = 0.5;
@@ -155,11 +157,16 @@ public class AutonomousRight extends LinearOpMode {
     double rotation = 0.0;
     PIDController pidRotate, pidDrive;
 
-    // sensors, camera
+    // sensors
     private DistanceSensor distanceSensor;
     private ColorSensor colorSensor;// best collected within 2cm of the target
-    boolean  isCameraInstalled = true;
-    SleeveIdentification.sleeveSignal mySleeveColor = SleeveIdentification.sleeveSignal.UNKNOWN;
+
+    // camera and sleeve color
+    ConceptSleeveDetection.ParkingPosition myParkingLot = ConceptSleeveDetection.ParkingPosition.UNKNOWN;
+    ConceptSleeveDetection sleeveDetection;
+    OpenCvCamera camera;
+    String webcamName = "Webcam 1";
+    boolean isCameraInstalled = true;
 
     // variables for reading current encoder positions just after a turn.
     int frontLeftPos;
@@ -193,7 +200,6 @@ public class AutonomousRight extends LinearOpMode {
         imu = hardwareMap.get(BNO055IMU.class, "imu");
         distanceSensor = hardwareMap.get(DistanceSensor.class, "DistanceSensor");
         colorSensor = hardwareMap.get(ColorSensor.class, "ColorSensor");
-        mycameraName = hardwareMap.get(WebcamName.class, "Webcam 1");
 
         // Most robots need the motor on one side to be reversed to drive forward
         // Reverse the motor that runs backwards when connected directly to the battery
@@ -261,10 +267,45 @@ public class AutonomousRight extends LinearOpMode {
         pidDrive.setOutputRange(0, CORRECTION_POWER);
         pidDrive.enable();
 
-        // camera init
+        // camera for sleeve color detect
+        int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier(
+                "cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
+
+        sleeveDetection = new ConceptSleeveDetection();
+
+        // Sleeve cone location in the image
+        Point sleeveTopLeftPoint = new Point(145, 168);
+
+        // Width and height for the bounding box of sleeve cone
+        ConceptSleeveDetection.REGION_WIDTH = 30;
+        ConceptSleeveDetection.REGION_HEIGHT = 50;
+        ConceptSleeveDetection.SLEEVE_TOPLEFT_ANCHOR_POINT = sleeveTopLeftPoint;
+
         if (isCameraInstalled) {
-            mySleeve.initCamera(mycameraName);
+            camera = OpenCvCameraFactory.getInstance().createWebcam(hardwareMap.get(
+                    WebcamName.class, webcamName), cameraMonitorViewId);
+
+            camera.setPipeline(sleeveDetection);
+
+            camera.openCameraDeviceAsync(new OpenCvCamera.AsyncCameraOpenListener() {
+                @Override
+                public void onOpened() {
+                    camera.startStreaming(320, 240, OpenCvCameraRotation.SIDEWAYS_LEFT);
+                }
+
+                @Override
+                public void onError(int errorCode) {
+                }
+            });
         }
+
+        myParkingLot = sleeveDetection.getPosition();
+
+        while (!isStarted()) {
+            telemetry.addData("Parking position: ", myParkingLot);
+            telemetry.update();
+        }
+
         // Wait for the game to start (driver presses PLAY)
         telemetry.addData("Mode", "waiting for start");
         telemetry.update();
@@ -666,15 +707,11 @@ public class AutonomousRight extends LinearOpMode {
         double[] sleeveColor = {1.0, 1.0, 1.0}; // cone color
         double parkingLocation; // distance between cone loading area to parking area, in inch
 
-        if (isCameraInstalled) {
-            mySleeveColor = mySleeve.captureSleeveSignal();
-            Logging.log("Autonomous - complete color read from camera.");
-        }
         RightSliderMotor.setPower(SLIDER_MOTOR_POWER); // slider motor start power
         LeftSliderMotor.setPower(SLIDER_MOTOR_POWER);
 
         setSliderPosition(MEDIUM_JUNCTION_POS);
-        if (SleeveIdentification.sleeveSignal.UNKNOWN != mySleeveColor) {
+        if (ConceptSleeveDetection.ParkingPosition.UNKNOWN != myParkingLot) {
             //move center of robot to the edge of 3rd mat
             robotRunToPosition(65.5, true);
         }
@@ -818,17 +855,17 @@ public class AutonomousRight extends LinearOpMode {
         double location;
         String color;
 
-        if(SleeveIdentification.sleeveSignal.UNKNOWN != mySleeveColor) { // camera
-            switch (mySleeveColor) {
-                case RED: // red
+        if(ConceptSleeveDetection.ParkingPosition.UNKNOWN != myParkingLot) { // camera
+            switch (myParkingLot) {
+                case LEFT: // red
                     location = -2.0 * 12; // parking lot #1 (red), first mat
                     color = "red";
                     break;
-                case GREEN: // green
-                    location = 0; // parking lot #2 (green), second mat
+                case CENTER: // green
+                    location = 0.0; // parking lot #2 (green), second mat
                     color = "green";
                     break;
-                case BLUE: // blue
+                case RIGHT: // blue
                     location = 2.0 * 12; // parking lot #3 (blue), third mat
                     color = "blue";
                     break;
