@@ -56,6 +56,7 @@ package org.firstinspires.ftc.teamcode;
 
 import android.app.Activity;
 import android.graphics.Color;
+import android.util.Log;
 import android.view.View;
 
 import androidx.annotation.NonNull;
@@ -110,12 +111,14 @@ public class TeleopCalibration extends LinearOpMode {
     private BNO055IMU imu = null;
 
     // Driving motor variables
+    // Driving motor variables
     static final double HIGH_SPEED_POWER = 0.6;  // used to adjust driving sensitivity.
-    static final double SLOW_DOWN_POWER = 0.3;
+    static final double SLOW_POWER = 0.5;
+    static final double SLOWER_POWER = 0.25;
     static final double CORRECTION_POWER = 0.12;
-    static final double MIN_ROTATE_POWER = 0.20;
+    static final double MIN_ROTATE_POWER = 0.18;
     static final double AUTO_DRIVE_POWER = 1.0; // used for auto driving
-    static final double AUTO_ROTATE_POWER = 1.0; // used for auto driving
+    static final double AUTO_ROTATE_POWER = 0.9; // used for auto driving
 
     // slider motor variables
     private DcMotor RightSliderMotor = null;
@@ -173,12 +176,14 @@ public class TeleopCalibration extends LinearOpMode {
     PIDController pidRotate, pidDrive;
     boolean resetAngleFlag = false;
     static final int INERTIA_WAIT_TIME = 500; // in ms
+    boolean rotateCorrection = false;
 
     // sensors
     private DistanceSensor distanceSensor;
     static final double CLOSE_DISTANCE = 8.0; // Inch
     private ColorSensor colorSensor;// best collected within 2cm of the target
     double redRatioBg, greenRatioBg, blueRatioBg;
+    static final int SLOWER_DISTANCE = 5; // slow down in the final 10 inch
 
     @Override
     public void runOpMode() {
@@ -341,7 +346,7 @@ public class TeleopCalibration extends LinearOpMode {
             }
             telemetry.addData("distance sensor: ", distanceSensorEnabled? "On" : "Off");
             telemetry.addData("Dual driver mode: ", dualDriverMode? "On" : "Off");
-
+            telemetry.addData("Rotate correction mode: ", rotateCorrection? "On" : "Off");
 
             // Setup a variable for each drive wheel to save power level for telemetry
             double FrontLeftPower;
@@ -353,42 +358,9 @@ public class TeleopCalibration extends LinearOpMode {
             //distance sensor control
             if ((distanceSensor.getDistance(DistanceUnit.INCH) < CLOSE_DISTANCE) &&
                     distanceSensorEnabled) {
-                maxDrivePower = SLOW_DOWN_POWER;
+                maxDrivePower = SLOW_POWER;
             }
 
-            //color sensor control
-            /*
-            if (distanceSensor.getDistance(DistanceUnit.INCH) > CLOSE_DISTANCE) {
-                redBackground = colorSensor.red();
-                greenBackground = colorSensor.green();
-                blueBackground = colorSensor.blue();
-            }
-            redRatioBg = (double)redBackground / (redBackground + greenBackground + blueBackground);
-            greenRatioBg = (double)greenBackground / (redBackground + greenBackground + blueBackground);
-            blueRatioBg = (double)blueBackground / (redBackground + greenBackground + blueBackground);
-
-            double tmp = (double)colorSensor.red() + colorSensor.green() + colorSensor.blue();
-            double redRatioSleeve = colorSensor.red() / tmp;
-            double greenRatioSleeve = colorSensor.green() / tmp;
-            double blueRatioSleeve = colorSensor.blue() / tmp;
-
-            // send the info back to driver station using telemetry function.
-            telemetry.addLine()
-                    .addData("Clear", colorSensor.alpha())
-                    .addData("Red  ", colorSensor.red())
-                    .addData("Green", colorSensor.green())
-                    .addData("Blue ", colorSensor.blue());
-
-            telemetry.addData("red ratios bg = ", "%.2f", redRatioBg);
-            telemetry.addData("red ratios sleeve = ", "%.2f", redRatioSleeve);
-            telemetry.addData("green ratios bg = ", "%.2f", greenRatioBg);
-            telemetry.addData("green ratios sleeve = ", "%.2f", greenRatioSleeve);
-            telemetry.addData("blue ratios bg = ", "%.2f", blueRatioBg);
-            telemetry.addData("blue ratios sleeve =", "%.2f", blueRatioSleeve);
-            telemetry.addData("red ", (redRatioSleeve>redRatioBg)? "yes" : "no");
-            telemetry.addData("green ", (greenRatioSleeve>greenRatioBg)? "yes" : "no");
-            telemetry.addData("blue ", (blueRatioSleeve>blueRatioBg)? "yes" : "no");
-            */
             double drive = maxDrivePower * robotMovingBackForth;
             double turn  =  maxDrivePower * (-robotTurn);
             double strafe = maxDrivePower * (-robotMovingRightLeft);
@@ -418,10 +390,8 @@ public class TeleopCalibration extends LinearOpMode {
             telemetry.addData("imu heading ","%.2f", lastAngles.firstAngle);
             telemetry.addData("global heading ", "%.2f", globalAngle);
             telemetry.addData("Correction  ", "%.2f", correction);
-            telemetry.addData("Turn rotation ", "%.2f", rotation);
             telemetry.addData("Max driving poiwer ", "%.2f", maxDrivePower);
             telemetry.addData("Distance sensor = ", "%.2f", distanceSensor.getDistance(DistanceUnit.INCH));
-            telemetry.addData("Sleeve signal", "%.2f", parkingLocation);
 
             FrontLeftPower  = Range.clip(-drive - turn - strafe - correction, -1, 1);
             FrontRightPower = Range.clip(-drive + turn + strafe + correction, -1, 1);
@@ -479,7 +449,6 @@ public class TeleopCalibration extends LinearOpMode {
             }
             clawServoPosition = Range.clip(clawServoPosition, CLAW_MIN_POS, CLAW_MAX_POS);
             clawServo.setPosition(clawServoPosition);
-            telemetry.addData("Status", "Claw Servo position %.2f", clawServoPosition);
 
             // arm servo motor control. Keep stepping up until we hit the max value.
             if (armTurnLeft) {
@@ -490,7 +459,6 @@ public class TeleopCalibration extends LinearOpMode {
             }
             armServoPosition = Range.clip(armServoPosition, ARM_MIN_POS, ARM_MAX_POS);
             armServo.setPosition(armServoPosition);
-            telemetry.addData("Status", "Arm Servo position %.2f", armServoPosition);
 
             //  auto driving, grip cone, and lift slider
             if(autoLoadConeOn) {
@@ -730,6 +698,8 @@ public class TeleopCalibration extends LinearOpMode {
      * @param degrees Degrees to turn, + is left - is right
      */
     private void rotate(double degrees, double power) {
+        robotResetEncoder();
+        robotRunWithPositionModeOn(false); // make sure it is the mode of Run without encoder
         // restart imu angle tracking.
         float angleBeforeRotate = lastAngles.firstAngle;
         resetAngle();
@@ -759,9 +729,36 @@ public class TeleopCalibration extends LinearOpMode {
 
         // rotate until turn is completed.
         do {
+            int[] motorsPos = {0, 0, 0, 0};
+            double[] motorsPowerCorrection = {0.0, 0.0, 0.0, 0.0};
+            motorsPos[0] = FrontLeftDrive.getCurrentPosition();
+            motorsPos[1] = FrontRightDrive.getCurrentPosition();
+            motorsPos[2] = BackLeftDrive.getCurrentPosition();
+            motorsPos[3] = BackRightDrive.getCurrentPosition();
+            Logging.log("Autonomous - FL pos = %d, FR = %d, BL = %d, BR = %d",
+                    motorsPos[0], motorsPos[1], motorsPos[2], motorsPos[3]);
+
+            calculateRotatePowerCorrection(motorsPos, motorsPowerCorrection);
+
             power = pidRotate.performPID(getAngle()); // power will be + on left turn.
-            leftMotorSetPower(-power);
-            rightMotorSetPower(power);
+
+
+            if (!rotateCorrection) {
+                leftMotorSetPower(-power);
+                rightMotorSetPower(power);
+            }
+            else {
+                Logging.log("Autonomous - FL pw = %.2f, FR pw = %.2f, BL pw = %.2f, BR pw = %.2f",
+                        -Math.min(power + motorsPowerCorrection[0], 1.0),
+                        Math.min(power + motorsPowerCorrection[1], 1.0),
+                        -Math.min(power + motorsPowerCorrection[2], 1.0),
+                        Math.min(power + motorsPowerCorrection[3], 1.0));
+
+                FrontLeftDrive.setPower(-Math.min(power + motorsPowerCorrection[0], 1.0));
+                FrontRightDrive.setPower(Math.min(power + motorsPowerCorrection[1], 1.0));
+                BackLeftDrive.setPower(-Math.min(power + motorsPowerCorrection[2], 1.0));
+                BackRightDrive.setPower(Math.min(power + motorsPowerCorrection[3], 1.0));
+            }
         } while (opModeIsActive() && !pidRotate.onAbsTarget());
 
         // turn the motors off.
@@ -771,7 +768,7 @@ public class TeleopCalibration extends LinearOpMode {
         rotation = getAngle();
 
         // wait for rotation to stop.
-        sleep(500);
+        sleep(300);
 
         // reset angle tracking on new heading.
         resetAngle();
@@ -841,100 +838,102 @@ public class TeleopCalibration extends LinearOpMode {
      * 6. Move robot to parking area
      */
     private void autonomousTest() {
-        double backgroundColor[] = {1.0, 1.0, 1.0};
-        double sleeveColor[] = {1.0, 1.0, 1.0};
-        double parkingLocation = 0.0; // distance between cone loading area to parking area, in inch
 
-        telemetry.update();
-
+        // move forward 32 inch
         if (gamepad2.a) {
             robotRunToPosition(32, true);
             Orientation angles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
             rotate(-angles.firstAngle, AUTO_ROTATE_POWER);
-            Logging.log(String.format("Autonomous - imu angle a: %.2f", angles.firstAngle));
+            Logging.log("Autonomous - imu angle a: %.2f", angles.firstAngle);
             Logging.log("Autonomous - Current Position, FL = %d, FR= %d, BL = %d, BR = %d",
                     FrontLeftDrive.getCurrentPosition(), FrontRightDrive.getCurrentPosition(),
                     BackLeftDrive.getCurrentPosition(), BackRightDrive.getCurrentPosition());
-            telemetry.addData("Autonomous","Current Position, FL = %d, FR= %d, BL = %d, BR = %d",
-                    FrontLeftDrive.getCurrentPosition(), FrontRightDrive.getCurrentPosition(),
-                    BackLeftDrive.getCurrentPosition(), BackRightDrive.getCurrentPosition());
-            telemetry.update();
         }
 
-        // move up slider
+        // // move back 32 inch
         if (gamepad2.b) {
             robotRunToPosition(-32, true);
             Orientation angles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
             rotate(-angles.firstAngle, AUTO_ROTATE_POWER);
-            Logging.log(String.format("Autonomous - imu angle a: %.2f", angles.firstAngle));
+            Logging.log("Autonomous - imu angle a: %.2f", angles.firstAngle);
             Logging.log("Autonomous - Current Position, FL = %d, FR= %d, BL = %d, BR = %d",
                     FrontLeftDrive.getCurrentPosition(), FrontRightDrive.getCurrentPosition(),
                     BackLeftDrive.getCurrentPosition(), BackRightDrive.getCurrentPosition());
-            telemetry.addData("Autonomous","Current Position, FL = %d, FR= %d, BL = %d, BR = %d",
-                    FrontLeftDrive.getCurrentPosition(), FrontRightDrive.getCurrentPosition(),
-                    BackLeftDrive.getCurrentPosition(), BackRightDrive.getCurrentPosition());
-            telemetry.update();
         }
 
+        // drive forward 13 inch
         if (gamepad2.x) {
             robotRunToPosition(13, true);
             Orientation angles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
             rotate(-angles.firstAngle, AUTO_ROTATE_POWER);
-            Logging.log(String.format("Autonomous - imu angle a: %.2f", angles.firstAngle));
+            Logging.log("Autonomous - imu angle a: %.2f", angles.firstAngle);
             Logging.log("Autonomous - Current Position, FL = %d, FR= %d, BL = %d, BR = %d",
                     FrontLeftDrive.getCurrentPosition(), FrontRightDrive.getCurrentPosition(),
                     BackLeftDrive.getCurrentPosition(), BackRightDrive.getCurrentPosition());
-            telemetry.addData("Autonomous","Current Position, FL = %d, FR= %d, BL = %d, BR = %d",
-                    FrontLeftDrive.getCurrentPosition(), FrontRightDrive.getCurrentPosition(),
-                    BackLeftDrive.getCurrentPosition(), BackRightDrive.getCurrentPosition());
-            telemetry.update();
         }
 
+        // drive back 13 inch
         if (gamepad2.y) {
             robotRunToPosition(-13, true);
             Orientation angles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
             rotate(-angles.firstAngle, AUTO_ROTATE_POWER);
-            Logging.log(String.format("Autonomous - imu angle a: %.2f", angles.firstAngle));
+            Logging.log("Autonomous - imu angle a: %.2f", angles.firstAngle);
             Logging.log("Autonomous - Current Position, FL = %d, FR= %d, BL = %d, BR = %d",
                     FrontLeftDrive.getCurrentPosition(), FrontRightDrive.getCurrentPosition(),
                     BackLeftDrive.getCurrentPosition(), BackRightDrive.getCurrentPosition());
-            telemetry.addData("Autonomous","Current Position, FL = %d, FR= %d, BL = %d, BR = %d",
-                    FrontLeftDrive.getCurrentPosition(), FrontRightDrive.getCurrentPosition(),
-                    BackLeftDrive.getCurrentPosition(), BackRightDrive.getCurrentPosition());
-            telemetry.update();
-        }
-        if (gamepad2.right_bumper) {
-            Orientation angles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
-            rotate(-angles.firstAngle-90, AUTO_ROTATE_POWER); // turn robot 90 degree to right
-            rotate(-lastAngles.firstAngle-90, AUTO_ROTATE_POWER); // turn robot 90 degree to right
         }
 
+        // turn right 90 degrees
+        if (gamepad2.right_bumper) {
+            Orientation angles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
+            rotate(-90, AUTO_ROTATE_POWER); // turn robot 90 degree to right
+            Orientation angles1 = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
+            Logging.log("Autonomous - imu angle a: %.2f", angles1.firstAngle - angles.firstAngle);
+            Logging.log("Autonomous - Current Position, FL = %d, FR= %d, BL = %d, BR = %d",
+                    FrontLeftDrive.getCurrentPosition(), FrontRightDrive.getCurrentPosition(),
+                    BackLeftDrive.getCurrentPosition(), BackRightDrive.getCurrentPosition());
+        }
+
+        // turn right 135 degrees
         if (gamepad2.dpad_right) {
             Orientation angles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
-            rotate(-angles.firstAngle - 90, AUTO_ROTATE_POWER); // turn robot 90 degree to right
+            rotate(-135, AUTO_ROTATE_POWER); // turn robot 90 degree to right
+            Orientation angles1 = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
+            Logging.log("Autonomous - imu angle a: %.2f", angles1.firstAngle - angles.firstAngle);
+            Logging.log("Autonomous - Current Position, FL = %d, FR= %d, BL = %d, BR = %d",
+                    FrontLeftDrive.getCurrentPosition(), FrontRightDrive.getCurrentPosition(),
+                    BackLeftDrive.getCurrentPosition(), BackRightDrive.getCurrentPosition());
         }
 
         if (gamepad2.dpad_down) {
-            robotRunToPosition(38.5, true); // drive robot to loading area
-        }
-        if (gamepad2.left_bumper) {
-            Orientation angles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
-            rotate(-angles.firstAngle, AUTO_ROTATE_POWER); // turn robot 90 degree to right
-            rotate(-lastAngles.firstAngle, AUTO_ROTATE_POWER); // turn robot 90 degree to right
-        }
-
-        if (gamepad2.dpad_left) {
-            Orientation angles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
-            rotate(-angles.firstAngle, AUTO_ROTATE_POWER); // turn robot 90 degree to left
+            rotateCorrection =false;
         }
 
         if (gamepad2.dpad_up) {
-            robotRunToPosition(parkingLocation, true); // drive robot to parking
-            robotRunToPosition(24.0, false); // strafe robot to parking mat
+            rotateCorrection =true;
         }
 
+        // turn left 90 degrees
+        if (gamepad2.left_bumper) {
+            Orientation angles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
+            rotate(90, AUTO_ROTATE_POWER); // turn robot 90 degree to right
+            Orientation angles1 = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
+            Logging.log("Autonomous - imu angle a: %.2f", angles1.firstAngle - angles.firstAngle);
+            Logging.log("Autonomous - Current Position, FL = %d, FR= %d, BL = %d, BR = %d",
+                    FrontLeftDrive.getCurrentPosition(), FrontRightDrive.getCurrentPosition(),
+                    BackLeftDrive.getCurrentPosition(), BackRightDrive.getCurrentPosition());
+        }
 
-
+        // turn left 135 degrees
+        if (gamepad2.dpad_left) {
+            Orientation angles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
+            rotate(135, AUTO_ROTATE_POWER); // turn robot 90 degree to right
+            Orientation angles1 = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
+            Logging.log("Autonomous - imu angle a: %.2f", angles1.firstAngle - angles.firstAngle);
+            Logging.log("Autonomous - Current Position, FL = %d, FR= %d, BL = %d, BR = %d",
+                    FrontLeftDrive.getCurrentPosition(), FrontRightDrive.getCurrentPosition(),
+                    BackLeftDrive.getCurrentPosition(), BackRightDrive.getCurrentPosition());
+        }
     }
 
     /**
@@ -1041,6 +1040,40 @@ public class TeleopCalibration extends LinearOpMode {
         int r = RightSliderMotor.getCurrentPosition();
         int l = LeftSliderMotor.getCurrentPosition();
         return (r+l)/2;
+    }
+
+    /**
+     * Calculate the motors power adjustment during rotation to make sure each motor has same
+     * position counts, in order to avoid robot center shift during turning.
+     * @param pos the input of current positions for driving motors.
+     * @param motorsPowerCorrection the output of power correction.
+     */
+    private void calculateRotatePowerCorrection(int[] pos, double [] motorsPowerCorrection) {
+        int posAve = 0;
+        for (int t = 0; t < 4; t++) {
+            pos[t] = Math.abs(pos[t]);
+            posAve += pos[t];
+        }
+        posAve = posAve/4;
+
+        if (posAve < 10) {
+            return;
+        }
+
+        for (int i = 0; i < 4; i++) {
+            motorsPowerCorrection[i] = (posAve - pos[i]) * 4.0 / posAve * AUTO_ROTATE_POWER;
+            Logging.log("Calibration - Rotate power correction: %.2f ", motorsPowerCorrection[i]);
+        }
+    }
+
+    /**
+     * resets encoder for motors
+     */
+    private void robotResetEncoder() {
+        BackRightDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        BackLeftDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        FrontRightDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        FrontLeftDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
     }
 
 }

@@ -65,7 +65,9 @@ import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
+import com.qualcomm.robotcore.util.Range;
 
+import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
@@ -98,15 +100,17 @@ public class AutonomousRight extends LinearOpMode {
     private DcMotor BackLeftDrive = null;
     private DcMotor BackRightDrive = null;
     private BNO055IMU imu = null;
-    private SleeveIdentification mySleeve = null;
+    private SleeveIdentification mySleeve = new SleeveIdentification();
+    private WebcamName mycameraName;
 
     // Driving motor variables
     static final double HIGH_SPEED_POWER = 0.6;  // used to adjust driving sensitivity.
-    static final double SLOW_DOWN_POWER = 0.3;
+    static final double SLOW_POWER = 0.5;
+    static final double SLOWER_POWER = 0.25;
     static final double CORRECTION_POWER = 0.12;
-    static final double MIN_ROTATE_POWER = 0.20;
+    static final double MIN_ROTATE_POWER = 0.18;
     static final double AUTO_DRIVE_POWER = 1.0; // used for auto driving
-    static final double AUTO_ROTATE_POWER = 1.0; // used for auto driving
+    static final double AUTO_ROTATE_POWER = 0.9; // used for auto driving
 
     // slider motor variables
     private DcMotor RightSliderMotor = null;
@@ -138,11 +142,12 @@ public class AutonomousRight extends LinearOpMode {
     // variables for auto load and unload cone
     static final int COUNTS_PER_INCH_DRIVE = 45; // robot drive 1 INCH. Back-forth moving
     static final int COUNTS_PER_INCH_STRAFE = 55; // robot strafe 1 INCH. Left-right moving. need test
-    double matCenterToJunctionDistance = 16.1;
+    double matCenterToJunctionDistance = 14.0;
     double robotAutoLoadMovingDistance = 1.0; // in INCH
     double robotAutoUnloadMovingDistance = 3.0; // in INCH
     double backToMatCenterDistance = matCenterToJunctionDistance - robotAutoUnloadMovingDistance; // in INCH
     static final int SLOW_DOWN_DISTANCE = 10; // slow down in the final 10 inch
+    static final int SLOWER_DISTANCE = 5; // slow down in the final 10 inch
 
     // IMU related
     Orientation lastAngles = new Orientation();
@@ -188,6 +193,7 @@ public class AutonomousRight extends LinearOpMode {
         imu = hardwareMap.get(BNO055IMU.class, "imu");
         distanceSensor = hardwareMap.get(DistanceSensor.class, "DistanceSensor");
         colorSensor = hardwareMap.get(ColorSensor.class, "ColorSensor");
+        mycameraName = hardwareMap.get(WebcamName.class, "Webcam 1");
 
         // Most robots need the motor on one side to be reversed to drive forward
         // Reverse the motor that runs backwards when connected directly to the battery
@@ -257,7 +263,7 @@ public class AutonomousRight extends LinearOpMode {
 
         // camera init
         if (isCameraInstalled) {
-            mySleeve.initCamera(hardwareMap);
+            mySleeve.initCamera(mycameraName);
         }
         // Wait for the game to start (driver presses PLAY)
         telemetry.addData("Mode", "waiting for start");
@@ -341,7 +347,7 @@ public class AutonomousRight extends LinearOpMode {
      */
     private void robotRunToPosition(double targetDistance, boolean isBackForth) {
         Logging.log("Autonomous - Required moving distance %.2f.", targetDistance);
-        if (targetDistance < 0.4){
+        if (Math.abs(targetDistance) < 0.4){
             return;
         }
         int countsPerInch = isBackForth? COUNTS_PER_INCH_DRIVE : COUNTS_PER_INCH_STRAFE;
@@ -353,7 +359,7 @@ public class AutonomousRight extends LinearOpMode {
         robotRunWithPositionModeOn(true); // turn on encoder mode,and reset encoders
 
         if (Math.abs(targetDistance) < SLOW_DOWN_DISTANCE) {
-            drivePower = SLOW_DOWN_POWER; // low speed for short moving
+            drivePower = SLOW_POWER; // low speed for short moving
         }
         Logging.log("Autonomous - PID = %d, power = %.2f", tSign, drivePower);
         robotDriveWithPIDControl(drivePower, tSign, isBackForth);
@@ -503,9 +509,33 @@ public class AutonomousRight extends LinearOpMode {
 
         // rotate until turn is completed.
         do {
+            int[] motorsPos = {0, 0, 0, 0};
+            double[] motorsPowerCorrection = {0.0, 0.0, 0.0, 0.0};
+            double[] motorPowers = {power, power, power, power};
+            motorsPos[0] = FrontLeftDrive.getCurrentPosition();
+            motorsPos[1] = FrontRightDrive.getCurrentPosition();
+            motorsPos[2] = BackLeftDrive.getCurrentPosition();
+            motorsPos[3] = BackRightDrive.getCurrentPosition();
+
+            Logging.log("Autonomous - Positions: FL = %d, FR = %d, BL = %d, BR = %d",
+                    motorsPos[0], motorsPos[1], motorsPos[2], motorsPos[3]);
+            calculateRotatePowerCorrection(motorsPos, motorsPowerCorrection);
+
             power = pidRotate.performPID(getAngle()); // power will be + on left turn.
-            leftMotorSetPower(-power);
-            rightMotorSetPower(power);
+
+            for (int i = 0; i <4; i++) {
+                motorPowers[i] = Range.clip(Math.abs(power) + motorsPowerCorrection[i], 0.0, Math.abs(power) * 1.1);
+                motorPowers[i] = Math.copySign(motorPowers[i], power);
+            }
+
+            Logging.log("Autonomous - Powers: FL = %.2f, FR = %.2f, BL = %.2f, BR = %.2f",
+                    -motorPowers[0], motorPowers[1], -motorPowers[2], motorPowers[3]);
+
+            FrontLeftDrive.setPower(-motorPowers[0]);
+            FrontRightDrive.setPower(motorPowers[1]);
+            BackLeftDrive.setPower(-motorPowers[2]);
+            BackRightDrive.setPower(motorPowers[3]);
+
         } while (opModeIsActive() && !pidRotate.onAbsTarget());
 
         // turn the motors off.
@@ -513,6 +543,7 @@ public class AutonomousRight extends LinearOpMode {
         leftMotorSetPower(0);
 
         rotation = getAngle();
+        Logging.log("Autonomous - Rotation angle is %.2f.", rotation);
         // wait for rotation to stop.
         sleep(300);
 
@@ -522,6 +553,7 @@ public class AutonomousRight extends LinearOpMode {
         frontRightPos = FrontRightDrive.getCurrentPosition();
         backLeftPos = BackLeftDrive.getCurrentPosition();
         backRightPos = BackRightDrive.getCurrentPosition();
+        Logging.log("Autonomous - IMU angle after turn is %.2f.", lastAngles.firstAngle);
     }
 
     /**
@@ -589,7 +621,9 @@ public class AutonomousRight extends LinearOpMode {
 
             //slow down when close to destination around 10 inch.
             if (Math.abs(currPosition - targetPosition) < (SLOW_DOWN_DISTANCE * COUNTS_PER_INCH_DRIVE)) {
-                p = SLOW_DOWN_POWER;
+                p = SLOW_POWER;
+                if (Math.abs(currPosition - targetPosition) < (SLOWER_DISTANCE * COUNTS_PER_INCH_DRIVE))
+                    p = SLOWER_POWER;
             }
 
             if (isBF) { // left motors have same power
@@ -652,20 +686,19 @@ public class AutonomousRight extends LinearOpMode {
         parkingLocation = calculateParkingLocation(sleeveColor, backgroundColor);
         Logging.log("Autonomous - parking lot aisle location: %.2f", parkingLocation);
 
-        // make sure robot is still 0 degree.
-        Orientation imuAngles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
-        rotate(-AngleUnit.DEGREES.normalize(imuAngles.firstAngle), AUTO_ROTATE_POWER);
-
         // lift slider during strafe to high junction
         setSliderPosition(HIGH_JUNCTION_POS);
         robotRunToPosition(-12.0, true); // get rid of sleeve cone, and back to the center of mat
 
+        // make sure robot is still 0 degree.
+        Orientation imuAngles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
+        Logging.log("Autonomous - imu angle before 45 turning: %.2f", imuAngles.firstAngle);
 
        // turn robot 45 degrees left
-        imuAngles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
         rotate(45 - AngleUnit.DEGREES.normalize(imuAngles.firstAngle), AUTO_ROTATE_POWER);
         imuAngles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
-        rotate(45 - AngleUnit.DEGREES.normalize(imuAngles.firstAngle), AUTO_ROTATE_POWER);
+        //rotate(45 - AngleUnit.DEGREES.normalize(imuAngles.firstAngle), AUTO_ROTATE_POWER);
+        Logging.log("Autonomous - imu angle after 45 turning: %.2f", imuAngles.firstAngle);
         logEncoderAfterRotate();
 
         //drive forward and let V to touch junction
@@ -673,13 +706,15 @@ public class AutonomousRight extends LinearOpMode {
 
         // Compensate angle, and waiting junction shaking
         imuAngles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
-        rotate(45 - AngleUnit.DEGREES.normalize(imuAngles.firstAngle), AUTO_ROTATE_POWER);
-
+        //rotate(45 - AngleUnit.DEGREES.normalize(imuAngles.firstAngle), AUTO_ROTATE_POWER);
+        Logging.log("Autonomous - imu angle before unloading cone: %.2f", imuAngles.firstAngle);
         // drop cone and back to the center of mat
         autoUnloadCone();
 
         for(int autoLoop = 0; autoLoop < 2; autoLoop++) {
             Logging.log("Autonomous - loop index: %d ", autoLoop);
+
+            setSliderPosition(WALL_POSITION);
 
             // right turn 135 degree
             imuAngles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
@@ -691,7 +726,7 @@ public class AutonomousRight extends LinearOpMode {
 
             locationShiftCalculation(xyShift, frontLeftPos, frontRightPos, backLeftPos, backRightPos);
             // strafe to the left a little bit to compensate for the shift from 135 degree rotation(currently 1 inch).
-            robotRunToPosition(-xyShift[0], false);
+            robotRunToPosition(xyShift[0], false);
 
             // adjust position and double rotation for accurate 135
             imuAngles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
@@ -699,7 +734,7 @@ public class AutonomousRight extends LinearOpMode {
             Logging.log("Autonomous - imu angle after cone unloading correction: %.2f", lastAngles.firstAngle);
 
             // drive robot to loading area
-            robotRunToPosition(32.0 - xyShift[1], true);
+            robotRunToPosition(27.0 - xyShift[1], true);
 
             // load cone
             autoLoadCone(coneStack5th - coneLoadStackGap * autoLoop);
@@ -719,7 +754,7 @@ public class AutonomousRight extends LinearOpMode {
             setSliderPosition(MEDIUM_JUNCTION_POS);
 
             // drive back to high junction
-            robotRunToPosition(-32.0, true); // adjust according to testing
+            robotRunToPosition(-27.0 + xyShift[1], true); // adjust according to testing
             Logging.log("Autonomous - robot has arrived at high junction.");
 
             // lift slider during rotation.
@@ -737,14 +772,14 @@ public class AutonomousRight extends LinearOpMode {
 
             //adjust for accuracy
             imuAngles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
-            rotate(- AngleUnit.DEGREES.normalize(imuAngles.firstAngle) + 45, AUTO_ROTATE_POWER);
-            Logging.log("Autonomous - imu angle after correction: %.2f", lastAngles.firstAngle);
+            //rotate(- AngleUnit.DEGREES.normalize(imuAngles.firstAngle) + 45, AUTO_ROTATE_POWER);
+            Logging.log("Autonomous - imu angle after correction: %.2f", imuAngles.firstAngle);
 
             waitSliderRun(); // make sure slider has been lifted
             Logging.log("Autonomous - slider is positioned to high junction.");
 
             // moving forward V to junction
-            robotRunToPosition(matCenterToJunctionDistance - xyShift[1], true); // adjust according to testing
+            robotRunToPosition(matCenterToJunctionDistance + xyShift[1], true); // adjust according to testing
             // Compensate turning 45
             imuAngles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
             rotate(- AngleUnit.DEGREES.normalize(imuAngles.firstAngle) + 45, AUTO_ROTATE_POWER);
@@ -762,7 +797,7 @@ public class AutonomousRight extends LinearOpMode {
 
         //rotate 45 degrees to keep orientation at 90
         imuAngles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
-        rotate(-AngleUnit.DEGREES.normalize(imuAngles.firstAngle + 90), AUTO_ROTATE_POWER);
+        rotate(-AngleUnit.DEGREES.normalize(imuAngles.firstAngle) + 90, AUTO_ROTATE_POWER);
 
         // lower slider in prep for tele-op
         setSliderPosition(GROUND_POSITION);
@@ -909,6 +944,9 @@ public class AutonomousRight extends LinearOpMode {
      * @param shift output array address. The array is for robot center shift in horizontal and
      *             portrait direction related to robot position after turning. shift[0] is for the
      *             shift in horizontal direction, shift[1] is for the shift in portrait direction.
+     *              After turning, the robot need to strafe shift[0] inch, and drive shift[1] inch to
+     *              move the robot center back. Strafing to left when shift[0] less than zero. Driving
+     *              back when shift[1] less than zero.
      * @param flpos the position value read from front left motor encoder.
      * @param frpos the position value read from front right motor encoder.
      * @param blpos the position value read from back left motor encoder.
@@ -919,8 +957,35 @@ public class AutonomousRight extends LinearOpMode {
         /*
         * TODO: add the shift calculation according to the algorithm.
         */
-        shift[0] = 0.0;
-        shift[1] = 0.0;
+        //shift[0] = -1.5;
+        //shift[1] = -1.0;
         return;
     }
+
+
+    /**
+     * Calculate the motors power adjustment during rotation to make sure each motor has same
+     * position counts, in order to avoid robot center shift during turning.
+     * @param pos the input of current positions for driving motors.
+     * @param motorsPowerCorrection the output of power correction.
+     */
+    private void calculateRotatePowerCorrection(int[] pos, double [] motorsPowerCorrection) {
+        int posAve = 0;
+        for (int t = 0; t < 4; t++) {
+            pos[t] = Math.abs(pos[t]);
+            posAve += pos[t];
+        }
+        posAve = posAve/4;
+
+        // Do not correct power at the beginning when positions are small to avoid big impact on power.
+        if (posAve < 50) {
+            return;
+        }
+
+        for (int i = 0; i < 4; i++) {
+            // the factor 4.0 below is according to test results. It can be adjust for sensitivity.
+            motorsPowerCorrection[i] = (posAve - pos[i]) * 4.0 / posAve * AUTO_ROTATE_POWER;
+        }
+    }
+
 }
