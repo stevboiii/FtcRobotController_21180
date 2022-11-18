@@ -298,11 +298,11 @@ public class AutonomousRight extends LinearOpMode {
      * 1. Robot moving back to aim at junction for unloading cone
      * 2. Slider moving down a little bit to put cone in junction pole
      * 3. Open claw to fall down cone
-     * 4. Lift slider from junction pole
-     * 5. Robot moving back to leave junction
+     * 4. Lift slider from junction pole during the robot moving back to leave junction
      * 6. Slider moving down to get ready to grip another cone
+     * @param backDistanceAfterUnloading: the moving distance after unloading the cone.
      */
-    private void autoUnloadCone() {
+    private void autoUnloadCone(double backDistanceAfterUnloading) {
         robotRunToPosition(-robotAutoUnloadMovingDistance, true); // moving back in inch
 
         // move down slider a little bit to unload cone
@@ -315,7 +315,7 @@ public class AutonomousRight extends LinearOpMode {
         clawServo.setPosition(CLAW_OPEN_POS); // unload cone
         setSliderPosition(sliderTargetPosition);
         sleep(100); // make sure cone has been unloaded
-        robotRunToPosition(-backToMatCenterDistance, true); // move out from junction
+        robotRunToPosition(-backDistanceAfterUnloading, true); // move out from junction
         sliderTargetPosition = WALL_POSITION;
         Logging.log("Auto unload - Cone has been unloaded.");
     }
@@ -711,7 +711,7 @@ public class AutonomousRight extends LinearOpMode {
         imuAngles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
         Logging.log("Autonomous - imu angle before unloading cone: %.2f", imuAngles.firstAngle);
         // drop cone and back to the center of mat
-        autoUnloadCone();
+        autoUnloadCone(backToMatCenterDistance);
 
         for(int autoLoop = 0; autoLoop < 2; autoLoop++) {
             Logging.log("Autonomous - loop index: %d ", autoLoop);
@@ -743,7 +743,7 @@ public class AutonomousRight extends LinearOpMode {
             // lift cone
             setSliderPosition(WALL_POSITION);
 
-            // make sure robot is still in the same orientation
+            // make sure robot is still in the same orientation before back to junction
             imuAngles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
             Logging.log("Autonomous - imu angle after load cone: %.2f", imuAngles.firstAngle);
             rotate(-AngleUnit.DEGREES.normalize(imuAngles.firstAngle) - 90, AUTO_ROTATE_POWER);
@@ -776,12 +776,12 @@ public class AutonomousRight extends LinearOpMode {
             // moving forward V to junction
             robotRunToPosition(matCenterToJunctionDistance + xyShift[1], true);
 
-            // Compensate turning 45
+            // Make sure it is 45 degree before V leaving junction
             imuAngles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
             rotate(- AngleUnit.DEGREES.normalize(imuAngles.firstAngle) + 45, AUTO_ROTATE_POWER);
 
             // unload cone & adjust
-            autoUnloadCone();
+            autoUnloadCone(backToMatCenterDistance - 0.5); // 0.5 is for the cone has been in junction
             Logging.log("Autonomous - cone %d has been unloaded.", autoLoop + 2);
             imuAngles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
             Logging.log("Autonomous - imu angle after unload cone: %.2f", imuAngles.firstAngle);
