@@ -279,6 +279,7 @@ public class TeleopDualDrivers extends LinearOpMode {
         float robotMovingRightLeft;
         float robotTurn;
         float sliderUpDown;
+        boolean sliderGroundPsition;
         boolean sliderWallPosition;
         boolean sliderLowJunctionPosition;
         boolean sliderMediumJunctionPosition;
@@ -339,6 +340,7 @@ public class TeleopDualDrivers extends LinearOpMode {
             armTurnLeft                 = myGamePad.dpad_left;
             armTurnRight                = myGamePad.dpad_right;
             autoUnloadConeOn            = myGamePad.right_bumper;
+            sliderGroundPsition         = myGamePad.dpad_left;
 
             // sensors
             if (distanceSensorOn) {
@@ -458,6 +460,10 @@ public class TeleopDualDrivers extends LinearOpMode {
             // use X button to move the slider for ground junction position
             if (sliderWallPosition) {
                 sliderTargetPosition = WALL_POSITION;
+            }
+
+            if (sliderGroundPsition) {
+                sliderTargetPosition = SLIDER_MIN_POS;
             }
 
             // use right stick_Y to lift or down slider continuously

@@ -143,7 +143,7 @@ public class AutonomousRight extends LinearOpMode {
     // variables for auto load and unload cone
     static final int COUNTS_PER_INCH_DRIVE = 45; // robot drive 1 INCH. Back-forth moving
     static final int COUNTS_PER_INCH_STRAFE = 55; // robot strafe 1 INCH. Left-right moving. need test
-    double matCenterToJunctionDistance = 14.5;
+    double matCenterToJunctionDistance = 15;
     double robotAutoLoadMovingDistance = 1.0; // in INCH
     double robotAutoUnloadMovingDistance = 3.5; // in INCH
     double backToMatCenterDistance = matCenterToJunctionDistance - robotAutoUnloadMovingDistance - 0.5; // in INCH
@@ -175,7 +175,7 @@ public class AutonomousRight extends LinearOpMode {
     int backRightPos;
 
     // variables for location shift
-    double[] xyShift = {0.0, 0.0};
+    double[] xyShift = {0.0, -0.5};
     boolean debugFlag = false;
 
     @Override
@@ -552,6 +552,7 @@ public class AutonomousRight extends LinearOpMode {
         // clockwise (right).
 
         // rotate until turn is completed.
+        double whileLoopTime = runtime.milliseconds();
         do {
             int[] motorsPos = {0, 0, 0, 0};
             double[] motorsPowerCorrection = {0.0, 0.0, 0.0, 0.0};
@@ -582,7 +583,7 @@ public class AutonomousRight extends LinearOpMode {
             BackLeftDrive.setPower(-motorPowers[2]);
             BackRightDrive.setPower(motorPowers[3]);
 
-        } while (opModeIsActive() && !pidRotate.onAbsTarget());
+        } while (opModeIsActive() && (!pidRotate.onAbsTarget()) && ((runtime.milliseconds() - whileLoopTime) < 1500));
 
         // turn the motors off.
         rightMotorSetPower(0);
@@ -729,16 +730,22 @@ public class AutonomousRight extends LinearOpMode {
         parkingLocation = calculateParkingLocation(sleeveColor, backgroundColor);
         Logging.log("Autonomous - parking lot aisle location: %.2f", parkingLocation);
 
-        // lift slider during strafe to high junction
-        setSliderPosition(HIGH_JUNCTION_POS);
-        robotRunToPosition(-14.5, true); // get rid of sleeve cone, and back to the center of mat
-        
         Orientation imuAngles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
+        Logging.log("Autonomous - imu angle before 45 turning: %.2f", imuAngles.firstAngle);
+
+        // turn robot 0 degrees
+        rotate(-AngleUnit.DEGREES.normalize(imuAngles.firstAngle), AUTO_ROTATE_POWER);
+
+        // lift slider during strafe to high junction
+        robotRunToPosition(-14.5, true); // get rid of sleeve cone, and back to the center of mat
+        setSliderPosition(HIGH_JUNCTION_POS);
+        imuAngles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
         Logging.log("Autonomous - imu angle before 45 turning: %.2f", imuAngles.firstAngle);
 
        // turn robot 45 degrees left
         rotate(45 - AngleUnit.DEGREES.normalize(imuAngles.firstAngle), AUTO_ROTATE_POWER);
         logEncoderAfterRotate();
+        waitSliderRun();
 
         //drive forward and let V to touch junction
         robotRunToPosition(matCenterToJunctionDistance, true);
@@ -792,7 +799,7 @@ public class AutonomousRight extends LinearOpMode {
             setSliderPosition(MEDIUM_JUNCTION_POS);
 
             // drive back to high junction
-            robotRunToPosition(-27.0 + xyShift[1], true); // adjust according to testing
+            robotRunToPosition(-27.0 - xyShift[1], true); // adjust according to testing
             Logging.log("Autonomous - Robot arrived the mat center near high junction.");
 
             // lift slider during rotation.
@@ -817,6 +824,7 @@ public class AutonomousRight extends LinearOpMode {
             imuAngles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
             rotate(- AngleUnit.DEGREES.normalize(imuAngles.firstAngle) + 45, AUTO_ROTATE_POWER);
 
+            sleep(100);
             // unload cone & adjust
             autoUnloadCone(backToMatCenterDistance - 0.5); // 0.5 is for the cone has been in junction
             Logging.log("Autonomous - cone %d has been unloaded.", autoLoop + 2);
@@ -904,7 +912,7 @@ public class AutonomousRight extends LinearOpMode {
                     break;
                 default:
                     location = 0.0;
-                    color = "Unknow";
+                    color = "Unknown";
             }
             Logging.log("Autonomous - channel = %d, max value = %.3f", channel, maxV);
             Logging.log("Autonomous - Sleeve color from color sensor is %s", color);
