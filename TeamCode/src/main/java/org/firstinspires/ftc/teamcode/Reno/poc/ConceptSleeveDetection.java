@@ -54,20 +54,20 @@ public class ConceptSleeveDetection extends OpenCvPipeline {
         Scalar sumColors = Core.sumElems(areaMat);
 
         // Get the minimum RGB value from every single channel
-        double minColor = Math.min(sumColors.val[0], Math.min(sumColors.val[1], sumColors.val[2]));
+        double maxColor = Math.max(sumColors.val[0], Math.min(sumColors.val[1], sumColors.val[2]));
 
         // Change the bounding box color based on the sleeve color
-        if (sumColors.val[0] == minColor) {
-            position = ParkingPosition.CENTER;
+        if (sumColors.val[0] == maxColor) {
+            position = ParkingPosition.LEFT;
             Imgproc.rectangle(
                     input,
                     sleeve_pointA,
                     sleeve_pointB,
-                    BLUE,
+                    RED,
                     2
             );
-        } else if (sumColors.val[1] == minColor) {
-            position = ParkingPosition.RIGHT;
+        } else if (sumColors.val[1] == maxColor) {
+            position = ParkingPosition.CENTER;
             Imgproc.rectangle(
                     input,
                     sleeve_pointA,
@@ -76,12 +76,12 @@ public class ConceptSleeveDetection extends OpenCvPipeline {
                     2
             );
         } else {
-            position = ParkingPosition.LEFT;
+            position = ParkingPosition.RIGHT;
             Imgproc.rectangle(
                     input,
                     sleeve_pointA,
                     sleeve_pointB,
-                    RED,
+                    BLUE,
                     2
             );
         }
