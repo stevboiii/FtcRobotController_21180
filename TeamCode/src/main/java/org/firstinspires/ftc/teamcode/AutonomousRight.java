@@ -552,6 +552,7 @@ public class AutonomousRight extends LinearOpMode {
         // clockwise (right).
 
         // rotate until turn is completed.
+        double whileLoopTime = runtime.milliseconds();
         do {
             int[] motorsPos = {0, 0, 0, 0};
             double[] motorsPowerCorrection = {0.0, 0.0, 0.0, 0.0};
@@ -582,7 +583,7 @@ public class AutonomousRight extends LinearOpMode {
             BackLeftDrive.setPower(-motorPowers[2]);
             BackRightDrive.setPower(motorPowers[3]);
 
-        } while (opModeIsActive() && !pidRotate.onAbsTarget());
+        } while (opModeIsActive() && (!pidRotate.onAbsTarget()) && ((runtime.milliseconds() - whileLoopTime) < 1500));
 
         // turn the motors off.
         rightMotorSetPower(0);
