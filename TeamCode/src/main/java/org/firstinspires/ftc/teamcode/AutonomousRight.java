@@ -97,7 +97,7 @@ import org.openftc.easyopencv.OpenCvCameraRotation;
 public class AutonomousRight extends LinearOpMode {
 
     // Declare OpMode members.
-    static final double MAX_WAIT_TIME = 20; // in seconds
+    static final double MAX_WAIT_TIME = 5.0; // in seconds
     private ElapsedTime runtime = new ElapsedTime();
     private DcMotor FrontLeftDrive = null;
     private DcMotor FrontRightDrive = null;
@@ -106,24 +106,26 @@ public class AutonomousRight extends LinearOpMode {
     private BNO055IMU imu = null;
 
     // Driving motor variables
-    static final double SLOW_POWER = 0.5;
-    static final double SLOWER_POWER = 0.23;
-    static final double CORRECTION_POWER = 0.12;
+    static final double MAX_CORRECTION_POWER = 0.12;
+    static final double MAX_POWER = 1.0 - MAX_CORRECTION_POWER;
+    static final double RAMP_START_POWER = 0.2;
+    static final double RAMP_END_POWER = 0.2;
+    static final double SHORT_DISTANCE_POWER = 0.35;
+
     static final double MIN_ROTATE_POWER = 0.21;
-    static final double AUTO_DRIVE_POWER = 1.0; // used for auto driving
-    static final double AUTO_ROTATE_POWER = 0.9; // used for auto driving
+    static final double AUTO_ROTATE_POWER = 0.9;
 
     // slider motor variables
     private DcMotor RightSliderMotor = null;
     private DcMotor LeftSliderMotor = null;
     static final double SLIDER_MOTOR_POWER = 1.0; // slider string gets loose with too high speed
+
+    // slider position variables
     static final int COUNTS_PER_INCH = 120; // verified by testing.
     static final int FOUR_STAGE_SLIDER_MAX_POS = 4200;  // with 312 RPM motor.
     static final int SLIDER_MIN_POS = 0;
     static final int coneStack5th = (int)(COUNTS_PER_INCH * 5.2); // the 5th cone position in the cone stack. The lowest cone is the 1th one.
     static final int coneLoadStackGap = (int)(COUNTS_PER_INCH *  1.32);
-
-    // 10inch for low junction, 20inch for medium, and 30 for high
     static final int GROUND_POSITION = (int)(0); // Ground(0 inch)
     static final int WALL_POSITION = (int)(COUNTS_PER_INCH * 7.0);  // 7 inch
     static final int MEDIUM_JUNCTION_POS = (int)(COUNTS_PER_INCH * 23.5); //23.5 inch
@@ -140,15 +142,17 @@ public class AutonomousRight extends LinearOpMode {
     // arm servo variables, not used in current prototype version.
     private Servo armServo = null;
 
-    // variables for auto load and unload cone
+    // variables for autonomous
     static final int COUNTS_PER_INCH_DRIVE = 45; // robot drive 1 INCH. Back-forth moving
     static final int COUNTS_PER_INCH_STRAFE = 55; // robot strafe 1 INCH. Left-right moving. need test
     double matCenterToJunctionDistance = 15;
     double robotAutoLoadMovingDistance = 1.0; // in INCH
     double robotAutoUnloadMovingDistance = 3.5; // in INCH
     double backToMatCenterDistance = matCenterToJunctionDistance - robotAutoUnloadMovingDistance - 0.5; // in INCH
-    static final int SLOW_DOWN_DISTANCE = 10; // slow down in the final 10 inch
-    static final int SLOWER_DISTANCE = 5; // slow down in the final 10 inch
+    static final double RAMP_DISTANCE = 10.0; // slow down in the final 10 inch
+    static final double SHORT_DISTANCE = 6.0; // slow down in the final 10 inch
+    static final double matCenterToConeStack = 27.0; // inch
+
 
     // IMU related
     Orientation lastAngles = new Orientation();
@@ -176,7 +180,7 @@ public class AutonomousRight extends LinearOpMode {
 
     // variables for location shift
     double[] xyShift = {0.0, -0.5};
-    boolean debugFlag = false;
+    boolean debugFlag = true;
 
     @Override
     public void runOpMode() {
@@ -256,7 +260,8 @@ public class AutonomousRight extends LinearOpMode {
         pidDrive = new PIDController(.04, 0, 0);
 
         // make sure the imu gyro is calibrated before continuing.
-        while (!isStopRequested() && !imu.isGyroCalibrated()) {
+        double loopStartTime = runtime.seconds();
+        while (!isStopRequested() && !imu.isGyroCalibrated() && (runtime.seconds() - loopStartTime) < MAX_WAIT_TIME) {
             idle();
         }
         telemetry.addData("imu calib status", imu.getCalibrationStatus().toString());
@@ -264,7 +269,7 @@ public class AutonomousRight extends LinearOpMode {
         // Set up parameters for driving in a straight line.
         pidDrive.setInputRange(-90, 90);
         pidDrive.setSetpoint(0); // be sure input range has been set before
-        pidDrive.setOutputRange(0, CORRECTION_POWER);
+        pidDrive.setOutputRange(0, MAX_CORRECTION_POWER);
         pidDrive.enable();
 
         // camera for sleeve color detect
@@ -320,7 +325,7 @@ public class AutonomousRight extends LinearOpMode {
 
             Logging.log("Autonomous - total Run Time: " + runtime.toString());
             telemetry.addData("Status", "Run Time: " + runtime.toString());
-            telemetry.update(); // update message at the end of while loop
+            telemetry.update(); // update message at the end of loop
         }
 
         // The motor stop on their own but power is still applied. Turn off motor.
@@ -354,8 +359,8 @@ public class AutonomousRight extends LinearOpMode {
         waitSliderRun();
 
         clawServo.setPosition(CLAW_OPEN_POS); // unload cone
-        setSliderPosition(sliderTargetPosition);
         sleep(100); // make sure cone has been unloaded
+        setSliderPosition(sliderTargetPosition);
         robotRunToPosition(-backDistanceAfterUnloading, true); // move out from junction
         sliderTargetPosition = WALL_POSITION;
         Logging.log("Auto unload - Cone has been unloaded.");
@@ -396,16 +401,13 @@ public class AutonomousRight extends LinearOpMode {
         int countsPerInch = isBackForth? COUNTS_PER_INCH_DRIVE : COUNTS_PER_INCH_STRAFE;
         int targetPosition = (int)(targetDistance * countsPerInch);
         int tSign = (int)Math.copySign(1, targetDistance);
-        double drivePower = AUTO_DRIVE_POWER;
         setTargetPositionsToWheels(targetPosition, isBackForth);
         Logging.log("Autonomous - Target Position = %d", targetPosition);
         robotRunWithPositionModeOn(true); // turn on encoder mode,and reset encoders
 
-        if (Math.abs(targetDistance) < SLOW_DOWN_DISTANCE) {
-            drivePower = SLOW_POWER; // low speed for short moving
-        }
-        Logging.log("Autonomous - PID = %d, power = %.2f", tSign, drivePower);
-        robotDriveWithPIDControl(drivePower, tSign, isBackForth);
+        Logging.log("Autonomous - PID = %d", tSign);
+        robotDriveWithPIDControl(targetDistance, tSign, isBackForth);
+
         robotRunWithPositionModeOn(false); // turn off encoder mode
         Logging.log("Autonomous - Current Position after moving, FL = %d, FR= %d, BL = %d, BR = %d",
                 FrontLeftDrive.getCurrentPosition(), FrontRightDrive.getCurrentPosition(),
@@ -552,7 +554,7 @@ public class AutonomousRight extends LinearOpMode {
         // clockwise (right).
 
         // rotate until turn is completed.
-        double whileLoopTime = runtime.milliseconds();
+        double maxLoopDuration = runtime.milliseconds();
         do {
             int[] motorsPos = {0, 0, 0, 0};
             double[] motorsPowerCorrection = {0.0, 0.0, 0.0, 0.0};
@@ -572,7 +574,7 @@ public class AutonomousRight extends LinearOpMode {
 
             for (int i = 0; i <4; i++) {
                 motorPowers[i] = Range.clip(Math.abs(power) + motorsPowerCorrection[i], 0.0, Math.abs(power) * 1.1);
-                motorPowers[i] = Math.copySign(motorPowers[i], power);
+                motorPowers[i] = Math.copySign(Math.min(motorPowers[i], 1.0), power);
             }
             if (debugFlag) {
                 Logging.log("Autonomous - Powers: FL = %.2f, FR = %.2f, BL = %.2f, BR = %.2f",
@@ -583,7 +585,7 @@ public class AutonomousRight extends LinearOpMode {
             BackLeftDrive.setPower(-motorPowers[2]);
             BackRightDrive.setPower(motorPowers[3]);
 
-        } while (opModeIsActive() && (!pidRotate.onAbsTarget()) && ((runtime.milliseconds() - whileLoopTime) < 1500));
+        } while (opModeIsActive() && (!pidRotate.onAbsTarget()) && ((runtime.milliseconds() - maxLoopDuration) < 1500));
 
         // turn the motors off.
         rightMotorSetPower(0);
@@ -648,43 +650,68 @@ public class AutonomousRight extends LinearOpMode {
 
     /**
      * Set motors power and drive or strafe robot straightly with run_to_position mode by PID control.
-     * @param p the power set to the robot motors
+     * @param tDistance the target distance in inch
      * @param targetSign: Input value for the target distance sign to indicate drive directions. Disable PID if it is zero.
      * @param isBF: flag for back-forth (true) moving, or left-right moving (false)
      */
-    private void robotDriveWithPIDControl(double p, int targetSign, boolean isBF ) {
+    private void robotDriveWithPIDControl(double tDistance, int targetSign, boolean isBF ) {
         double curTime = runtime.seconds();
+        boolean speedRampOn = false;
+        double drivePower = SHORT_DISTANCE_POWER;
+
+        if (tDistance > SHORT_DISTANCE) {
+            speedRampOn = true;
+        }
         correction = 0.0;
-        setPowerToWheels(p); // p is always positive for RUN_TO POSITION mode.
+        setPowerToWheels(RAMP_START_POWER); // p is always positive for RUN_TO_POSITION mode.
         sleep(50); // let motors to start moving before checking isBusy.
 
-        Logging.log("Autonomous -power = %.2f, global angle = %.3f", p, getAngle());
         while(robotIsBusy() && ((runtime.seconds() - curTime) < MAX_WAIT_TIME)) {
             if (0 != targetSign) { // no pid if sign = 0;
                 correction = pidDrive.performPID(getAngle());
             }
 
-            int currPosition = FrontLeftDrive.getCurrentPosition();
-            int targetPosition = FrontLeftDrive.getTargetPosition();
+            if (speedRampOn) {
+                int currDistance = Math.abs(FrontLeftDrive.getCurrentPosition()) / COUNTS_PER_INCH_DRIVE;
+                drivePower = MAX_POWER;
+                double rampUpPower = MAX_POWER;
+                double rampDownPower = MAX_POWER;
+                //speed ramp up.
+                if (currDistance < RAMP_DISTANCE) {
+                    rampUpPower = (MAX_POWER - RAMP_START_POWER) * currDistance / RAMP_DISTANCE + RAMP_START_POWER;
+                    rampUpPower = Range.clip(rampUpPower, RAMP_START_POWER, drivePower);
+                }
 
-            //slow down when close to destination around 10 inch.
-            if (Math.abs(currPosition - targetPosition) < (SLOW_DOWN_DISTANCE * COUNTS_PER_INCH_DRIVE)) {
-                p = SLOW_POWER;
-                if (Math.abs(currPosition - targetPosition) < (SLOWER_DISTANCE * COUNTS_PER_INCH_DRIVE))
-                    p = SLOWER_POWER;
+                // speed ramp down
+                if ((tDistance - currDistance) < RAMP_DISTANCE) {
+                    rampDownPower = (MAX_POWER - RAMP_END_POWER) * (tDistance - currDistance) / RAMP_DISTANCE + RAMP_END_POWER;
+                    rampDownPower = Range.clip(rampDownPower, RAMP_END_POWER, drivePower);
+                }
+
+                drivePower = Math.min(rampDownPower, rampDownPower);
+
+                if(debugFlag) {
+                    Logging.log("Autonomous - tDistance = %.2f, currLocation = %.2", tDistance, currDistance);
+                    Logging.log("Autonomous - rampUpPower = %.2f, rampDownPower = %.2", rampUpPower, rampDownPower);
+                }
+            }
+
+            if(debugFlag) {
+                Logging.log("Autonomous - power = %.2f, correction = %.2f, global angle = %.3f",
+                        drivePower, correction, getAngle());
             }
 
             if (isBF) { // left motors have same power
-                leftMotorSetPower(p - correction * targetSign);
-                rightMotorSetPower(p + correction * targetSign);
+                leftMotorSetPower(drivePower - correction * targetSign);
+                rightMotorSetPower(drivePower + correction * targetSign);
             }
             else { // front motors have same power
-                frontMotorSetPower(p - correction * targetSign);
-                backMotorSetPower(p + correction * targetSign);
+                frontMotorSetPower(drivePower - correction * targetSign);
+                backMotorSetPower(drivePower + correction * targetSign);
             }
         }
         setPowerToWheels(0.0); //stop moving
-        Logging.log("Autonomous -power = %.2f, global angle = %.3f", p, getAngle());
+        Logging.log("Autonomous -power = %.2f, global angle = %.3f", drivePower, getAngle());
     }
 
     /**
@@ -731,7 +758,7 @@ public class AutonomousRight extends LinearOpMode {
         Logging.log("Autonomous - parking lot aisle location: %.2f", parkingLocation);
 
         Orientation imuAngles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
-        Logging.log("Autonomous - imu angle before 45 turning: %.2f", imuAngles.firstAngle);
+        Logging.log("Autonomous - imu angle before back to mat center: %.2f", imuAngles.firstAngle);
 
         // turn robot 0 degrees
         rotate(-AngleUnit.DEGREES.normalize(imuAngles.firstAngle), AUTO_ROTATE_POWER);
@@ -777,8 +804,8 @@ public class AutonomousRight extends LinearOpMode {
             imuAngles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
             rotate( -AngleUnit.DEGREES.normalize(imuAngles.firstAngle) - 90, AUTO_ROTATE_POWER);
 
-            // drive robot to loading area
-            robotRunToPosition(27.0 - xyShift[1], true);
+            // drive robot to loading area. xyShift is according to testing from 135 degrees turning.
+            robotRunToPosition(matCenterToConeStack - xyShift[1], true);
             Logging.log("Autonomous - Robot has arrived loading area.");
 
             // load cone
@@ -798,8 +825,8 @@ public class AutonomousRight extends LinearOpMode {
             // lift slider during rotation.
             setSliderPosition(MEDIUM_JUNCTION_POS);
 
-            // drive back to high junction
-            robotRunToPosition(-27.0 - xyShift[1], true); // adjust according to testing
+            // drive back to high junction. 1.0 has been moved back during autoLoadCone()
+            robotRunToPosition(-(matCenterToConeStack - 1.0), true);
             Logging.log("Autonomous - Robot arrived the mat center near high junction.");
 
             // lift slider during rotation.
@@ -953,8 +980,8 @@ public class AutonomousRight extends LinearOpMode {
     private void waitSliderRun() {
         double curTime = runtime.seconds();
 
-        while ((Math.abs(RightSliderMotor.getCurrentPosition() - RightSliderMotor.getTargetPosition()) > 10) &&
-                (Math.abs(LeftSliderMotor.getCurrentPosition() - LeftSliderMotor.getTargetPosition()) > 10) &&
+        while ((Math.abs(RightSliderMotor.getCurrentPosition() - RightSliderMotor.getTargetPosition()) > COUNTS_PER_INCH * 0.2) &&
+                (Math.abs(LeftSliderMotor.getCurrentPosition() - LeftSliderMotor.getTargetPosition()) > COUNTS_PER_INCH * 0.2) &&
                 ((runtime.seconds() - curTime) < MAX_WAIT_TIME)) {
             idle();
         }
