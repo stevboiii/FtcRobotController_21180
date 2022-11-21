@@ -114,9 +114,7 @@ public class TeleopDualDrivers extends LinearOpMode {
     static final double HIGH_SPEED_POWER = 0.6;  // used to adjust driving sensitivity.
     static final double SLOW_DOWN_POWER = 0.2;
     static final double CORRECTION_POWER = 0.1;
-    static final double MIN_ROTATE_POWER = 0.11;
     static final double AUTO_DRIVE_POWER = 0.5; // used for auto driving
-    static final double AUTO_ROTATE_POWER = 0.5; // used for auto driving
 
     // slider motor variables
     private DcMotor RightSliderMotor = null;
@@ -170,8 +168,7 @@ public class TeleopDualDrivers extends LinearOpMode {
     Orientation lastAngles = new Orientation();
     double globalAngle = 0.0;
     double correction = 0.0;
-    double rotation = 0.0;
-    PIDController pidRotate, pidDrive;
+    PIDController pidDrive;
     boolean resetAngleFlag = false;
     static final int INERTIA_WAIT_TIME = 500; // in ms
 
@@ -179,7 +176,6 @@ public class TeleopDualDrivers extends LinearOpMode {
     private DistanceSensor distanceSensor;
     static final double CLOSE_DISTANCE = 8.0; // Inch
     private ColorSensor colorSensor;// best collected within 2cm of the target
-    double redRatioBg, greenRatioBg, blueRatioBg;
 
     @Override
     public void runOpMode() {
@@ -251,11 +247,6 @@ public class TeleopDualDrivers extends LinearOpMode {
         parameters.loggingEnabled      = false;
         imu.initialize(parameters);
         double timeMS = 0.0;
-
-        // Set PID proportional value to start reducing power at about 50 degrees of rotation.
-        // P by itself may stall before turn completed so we add a bit of I (integral) which
-        // causes the PID controller to gently increase power if the turn is not completed.
-        pidRotate = new PIDController(.015, .0, 0);
 
         // Set PID proportional value to produce non-zero correction value when robot veers off
         // straight line. P value controls how sensitive the correction is.
@@ -363,39 +354,6 @@ public class TeleopDualDrivers extends LinearOpMode {
                 maxDrivePower = SLOW_DOWN_POWER;
             }
 
-            //color sensor control
-            /*
-            if (distanceSensor.getDistance(DistanceUnit.INCH) > CLOSE_DISTANCE) {
-                redBackground = colorSensor.red();
-                greenBackground = colorSensor.green();
-                blueBackground = colorSensor.blue();
-            }
-            redRatioBg = (double)redBackground / (redBackground + greenBackground + blueBackground);
-            greenRatioBg = (double)greenBackground / (redBackground + greenBackground + blueBackground);
-            blueRatioBg = (double)blueBackground / (redBackground + greenBackground + blueBackground);
-
-            double tmp = (double)colorSensor.red() + colorSensor.green() + colorSensor.blue();
-            double redRatioSleeve = colorSensor.red() / tmp;
-            double greenRatioSleeve = colorSensor.green() / tmp;
-            double blueRatioSleeve = colorSensor.blue() / tmp;
-
-            // send the info back to driver station using telemetry function.
-            telemetry.addLine()
-                    .addData("Clear", colorSensor.alpha())
-                    .addData("Red  ", colorSensor.red())
-                    .addData("Green", colorSensor.green())
-                    .addData("Blue ", colorSensor.blue());
-
-            telemetry.addData("red ratios bg = ", "%.2f", redRatioBg);
-            telemetry.addData("red ratios sleeve = ", "%.2f", redRatioSleeve);
-            telemetry.addData("green ratios bg = ", "%.2f", greenRatioBg);
-            telemetry.addData("green ratios sleeve = ", "%.2f", greenRatioSleeve);
-            telemetry.addData("blue ratios bg = ", "%.2f", blueRatioBg);
-            telemetry.addData("blue ratios sleeve =", "%.2f", blueRatioSleeve);
-            telemetry.addData("red ", (redRatioSleeve>redRatioBg)? "yes" : "no");
-            telemetry.addData("green ", (greenRatioSleeve>greenRatioBg)? "yes" : "no");
-            telemetry.addData("blue ", (blueRatioSleeve>blueRatioBg)? "yes" : "no");
-            */
             double drive = maxDrivePower * robotMovingBackForth;
             double turn  =  maxDrivePower * (-robotTurn);
             double strafe = maxDrivePower * (-robotMovingRightLeft);
@@ -425,7 +383,6 @@ public class TeleopDualDrivers extends LinearOpMode {
             telemetry.addData("imu heading ","%.2f", lastAngles.firstAngle);
             telemetry.addData("global heading ", "%.2f", globalAngle);
             telemetry.addData("Correction  ", "%.2f", correction);
-            telemetry.addData("Turn rotation ", "%.2f", rotation);
             telemetry.addData("Max driving poiwer ", "%.2f", maxDrivePower);
             telemetry.addData("Distance sensor = ", "%.2f", distanceSensor.getDistance(DistanceUnit.INCH));
             telemetry.addData("Sleeve signal", "%.2f", parkingLocation);
@@ -522,7 +479,6 @@ public class TeleopDualDrivers extends LinearOpMode {
             }
 
             // Show the elapsed game time and wheel power, positions.
-
             telemetry.addData("Motors power", "Frontleft (%.2f), Frontright (%.2f)," +
                             " Backleft (%.2f), Backright (%.2f)", FrontLeftPower, FrontRightPower,
                     BackLeftPower,BackRightPower);
@@ -532,10 +488,6 @@ public class TeleopDualDrivers extends LinearOpMode {
                     FrontLeftDrive.getCurrentPosition(), FrontRightDrive.getCurrentPosition(),
                     BackLeftDrive.getCurrentPosition(), BackRightDrive.getCurrentPosition());
 
-            // use gamepad2 to test autonomous code
-            if (!dualDriverMode) {
-                autonomousCore();
-            }
             telemetry.addData("Status", "Run Time: " + runtime.toString());
             telemetry.update(); // update message at the end of while loop
         }
@@ -732,76 +684,6 @@ public class TeleopDualDrivers extends LinearOpMode {
     }
 
     /**
-     * Rotate left or right the number of degrees. Does not support turning more than 359 degrees.
-     * @param degrees Degrees to turn, + is left - is right
-     */
-    private void rotate(double degrees, double power) {
-        resetAngle();
-
-        // if degrees > 359 we cap at 359 with same sign as original degrees.
-        if (Math.abs(degrees) > 359.99)
-            degrees = Math.copySign(359.99, degrees);
-
-        // start pid controller. PID controller will monitor the turn angle with respect to the
-        // target angle and reduce power as we approach the target angle. This is to prevent the
-        // robots momentum from overshooting the turn after we turn off the power. The PID controller
-        // reports onTarget() = true when the difference between turn angle and target angle is within
-        // 1% of target (tolerance) which is about 1 degree. This helps prevent overshoot. Overshoot is
-        // dependant on the motor and gearing configuration, starting power, weight of the robot and the
-        // on target tolerance. If the controller overshoots, it will reverse the sign of the output
-        // turning the robot back toward the setpoint value.
-
-        pidRotate.reset();
-        pidRotate.setInputRange(0, degrees);
-        pidRotate.setSetpoint(degrees); // be sure input range has been set before
-        pidRotate.setOutputRange(MIN_ROTATE_POWER, power);
-        pidRotate.setTolerance(1);
-        pidRotate.enable();
-
-        // getAngle() returns + when rotating counter clockwise (left) and - when rotating
-        // clockwise (right).
-
-        // rotate until turn is completed.
-
-        if (degrees < 0) {
-            // On right turn we have to get off zero first.
-            while (opModeIsActive() && getAngle() == 0) {
-                leftMotorSetPower(power);
-                rightMotorSetPower(-power);
-                sleep(100);
-            }
-
-            do {
-                power = pidRotate.performPID(getAngle()); // power will be - on right turn.
-                leftMotorSetPower(-power);
-                rightMotorSetPower(power);
-                telemetry.addData("Rotate", "rotate power: %.4f", power);
-                telemetry.update();
-            } while (opModeIsActive() && !pidRotate.onAbsTarget());
-        }
-        else    // left turn.
-            do {
-                power = pidRotate.performPID(getAngle()); // power will be + on left turn.
-                leftMotorSetPower(-power);
-                rightMotorSetPower(power);
-                telemetry.addData("Rotate", "rotate power: %.4f", power);
-                telemetry.update();
-            } while (opModeIsActive() && !pidRotate.onAbsTarget());
-
-        // turn the motors off.
-        rightMotorSetPower(0);
-        leftMotorSetPower(0);
-
-        rotation = getAngle();
-
-        // wait for rotation to stop.
-        sleep(500);
-
-        // reset angle tracking on new heading.
-        resetAngle();
-    }
-
-    /**
      * Set left side motors power.
      * @param p the power set to front left motor and back left motor
      */
@@ -852,162 +734,8 @@ public class TeleopDualDrivers extends LinearOpMode {
      * Check if robot motors are busy. Return ture if yes, false otherwise.
      */
     private boolean robotIsBusy() {
-        return (FrontRightDrive.isBusy() || FrontLeftDrive.isBusy() ||
-                BackLeftDrive.isBusy() || BackRightDrive.isBusy());
-    }
-
-    /** code for autonomous
-     * 1. take a picture, recognize the color on sleeve signal
-     * 2. Move robot the high junction
-     * 3. Unload cone on high junction
-     * 4. Move robot to cone loading area
-     * 5. Load cone
-     * 6. Move robot to parking area
-     */
-    private void autonomousCore() {
-        double backgroundColor[] = {1.0, 1.0, 1.0};
-        double sleeveColor[] = {1.0, 1.0, 1.0};
-        double parkingLocation = 0.0; // distance between cone loading area to parking area, in inch
-
-        telemetry.update();
-
-        /* code for autonomous driving, must starting from right position.    */
-        if (gamepad2.a) {
-            //preload cone
-            clawServo.setPosition(CLAW_CLOSE_POS);
-            sleep(200); // wait 0.4 sec to make sure clawServo is at grep position
-            setSliderPosition(LOW_JUNCTION_POS);
-            waitSliderRun();
-            sliderTargetPosition = getSliderPosition(); // set target position to current position
-            clawServoPosition = clawServo.getPosition(); // keep claw position
-            readColorSensor(backgroundColor);
-            // drive robot to sleeve cone
-            robotRunToPosition(20.0, true);
-            readColorSensor(sleeveColor); // reading sleeve signal
-            robotRunToPosition(36.0, true); // drive robot to the center of 3rd mat
-            robotRunToPosition(-4.0, true); // throw off sleeve cone
-            parkingLocation = calculateParkingLocation(sleeveColor, backgroundColor);
-
-            telemetry.addData("Sleeve","moving distance (%.1f) inch", parkingLocation);
-            telemetry.update();
-        }
-
-        // move up slider
-        if (gamepad2.b) {
-            robotRunToPosition(-12.0, false); // strafe robot half mat to left side
-            setSliderPosition(HIGH_JUNCTION_POS);
-            waitSliderRun();
-            sliderTargetPosition = getSliderPosition(); // set target position to current position
-        }
-
-        if (gamepad2.y) {
-            robotRunToPosition(8.0, true); // drive robot half mat to high junction
-        }
-        if (gamepad2.right_bumper) {
-            autoUnloadCone();
-            setSliderPosition(WALL_POSITION);
-            waitSliderRun(); // make sure left and right motor are complete actions
-            sliderTargetPosition = getSliderPosition(); // set target position to current position
-        }
-
-        if (gamepad2.dpad_right) {
-            Orientation angles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
-            rotate(-angles.firstAngle - 90, AUTO_ROTATE_POWER); // turn robot 90 degree to right
-        }
-
-        if (gamepad2.dpad_down) {
-            robotRunToPosition(38.5, true); // drive robot to loading area
-        }
-        if (gamepad2.left_bumper) {
-            autoLoadCone(coneStack5th); // need update to input cone height position
-            setSliderPosition(LOW_JUNCTION_POS);
-            waitSliderRun();
-            sliderTargetPosition = getSliderPosition(); // set target position to current position
-        }
-
-        if (gamepad2.dpad_left) {
-            Orientation angles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
-            rotate(-angles.firstAngle + 90, AUTO_ROTATE_POWER); // turn robot 180 degree to right
-        }
-
-        if (gamepad2.dpad_up) {
-            robotRunToPosition(parkingLocation, true); // drive robot to parking
-            robotRunToPosition(24.0, false); // strafe robot to parking mat
-        }
-
-        if (gamepad2.x) {
-            robotRunToPosition(48, false); // strafe testing 48 inch
-        }
-
-    }
-
-    /**
-     * Calculate the destination parking area according to sleeve color.
-     * @param s three ratios values of sleeve signal color reading from color sensor
-     * @param b three ratios values of background color reading from color sensor
-     * return the distance between cone stack and parking area, in inch.
-     */
-    private double calculateParkingLocation(@NonNull double[] s, @NonNull double[] b) {
-        int channel = 0;
-        double location;
-        double ratio[] = {s[0]/b[0], s[1]/b[1], s[2]/b[2]};
-
-        // find the maximum value in ratio[]
-        double maxV = ratio[0];
-        for (int i = 1; i < 3; i++) {
-            if (ratio[i] > maxV) {
-                channel = i;
-                maxV = ratio[i];
-            }
-        }
-
-        String color = "";
-        switch (channel) {
-            case 0: // red
-                location = 5.0 * 12; // parking lot #1 (red), third mat
-                color = "red";
-                break;
-            case 1: // green
-                location = 3.0 * 12; // parking lot #2 (green), third mat
-                color = "green";
-                break;
-            case 2: // blue
-                location = 1.0 * 12; // parking lot #3 (blue), third mat
-                color = "blue";
-                break;
-            default:
-                location = 0.0;
-        }
-        telemetry.addLine()
-                .addData("channal ", channel)
-                .addData("Color is ", color)
-                .addData("location ", location);
-        telemetry.addData("color", "rgb ratio, %.2f, %.2f, %.2f", ratio[0], ratio[1], ratio[2]);
-        return location;
-    }
-
-    /**
-     * Read color from color sensor and translate three values to relative ratio.
-     * @param colorRatio three ratios values of color reading from color sensor
-     */
-    private void readColorSensor(@NonNull double[] colorRatio ) {
-        //color sensor control
-        int r = 1, g = 1, b = 1, total = 3;
-
-        r = colorSensor.red();
-        g = colorSensor.green();
-        b = colorSensor.blue();
-
-        total = r + g + b;
-        colorRatio[0] = (double)r / total;
-        colorRatio[1] = (double)g / total;
-        colorRatio[2] = (double)b / total;
-
-        telemetry.addLine()
-                .addData("Red  ", colorSensor.red())
-                .addData("Green", colorSensor.green())
-                .addData("Blue ", colorSensor.blue());
-        telemetry.addData("color", "rgb ratio, %.2f, %.2f, %.2f", colorRatio[0], colorRatio[1], colorRatio[2]);
+        return (FrontRightDrive.isBusy() && FrontLeftDrive.isBusy() &&
+                BackLeftDrive.isBusy() && BackRightDrive.isBusy());
     }
 
     /**
