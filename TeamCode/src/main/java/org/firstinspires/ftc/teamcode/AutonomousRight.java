@@ -691,7 +691,7 @@ public class AutonomousRight extends LinearOpMode {
                     rampDownPower = Range.clip(rampDownPower, RAMP_END_POWER, drivePower);
                 }
 
-                drivePower = Math.min(rampDownPower, rampDownPower);
+                drivePower = Math.min(rampUpPower, rampDownPower);
 
                 if(debugFlag) {
                     Logging.log("Autonomous - tDistance = %.2f, currLocation = %.2", tDistance, currDistance);
