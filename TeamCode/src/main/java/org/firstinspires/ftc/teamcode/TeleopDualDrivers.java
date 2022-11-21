@@ -101,7 +101,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 public class TeleopDualDrivers extends LinearOpMode {
 
     // Declare OpMode members.
-    static final double MAX_WAIT_TIME = 20; // in seconds
+    static final double MAX_WAIT_TIME = 8; // in seconds
     private ElapsedTime runtime = new ElapsedTime();
     private DcMotor FrontLeftDrive = null;
     private DcMotor FrontRightDrive = null;
@@ -149,13 +149,6 @@ public class TeleopDualDrivers extends LinearOpMode {
 
     // arm servo variables, not used in current prototype version.
     private Servo armServo = null;
-    static final double ARM_INCREMENT = 0.0015;     // amount to slew servo each CYCLE_MS cycle
-    static final double ARM_MAX_POS = 0.6;     // Maximum rotational position
-    static final double ARM_MIN_POS = 0.1;     // Minimum rotational position
-    static final double ARM_LOAD_POSITION = 0.3;
-    static final double ARM_UNLOAD_POSITION = 0.3;
-    double armServoPosition = ARM_LOAD_POSITION;
-
 
     // variables for auto load and unload cone
     static final int COUNTS_PER_INCH_DRIVE = 45; // robot drive 1 INCH. Back-forth moving
@@ -176,6 +169,9 @@ public class TeleopDualDrivers extends LinearOpMode {
     private DistanceSensor distanceSensor;
     static final double CLOSE_DISTANCE = 8.0; // Inch
     private ColorSensor colorSensor;// best collected within 2cm of the target
+
+    // debug flags, turn it off for formal version to save time of logging
+    boolean debugFlag = true;
 
     @Override
     public void runOpMode() {
@@ -253,8 +249,8 @@ public class TeleopDualDrivers extends LinearOpMode {
         pidDrive = new PIDController(.03, 0, 0);
 
         // make sure the imu gyro is calibrated before continuing.
-        while (!isStopRequested() && !imu.isGyroCalibrated()) {
-            sleep(500);
+        double loopStartTime = runtime.seconds();
+        while (!isStopRequested() && !imu.isGyroCalibrated() && (runtime.seconds() - loopStartTime) < MAX_WAIT_TIME) {
             idle();
         }
         telemetry.addData("imu calib status", imu.getCalibrationStatus().toString());
@@ -277,17 +273,12 @@ public class TeleopDualDrivers extends LinearOpMode {
         boolean sliderHighJunctionPosition;
         boolean clawClose;
         boolean clawOpen;
-        boolean armTurnLeft;
-        boolean armTurnRight;
         boolean autoLoadConeOn;
         boolean autoUnloadConeOn;
         boolean distanceSensorOn;
 
         boolean dualDriverMode = true;
         Gamepad myGamePad;
-
-        // autonomous testing
-        double parkingLocation = 0.0; // distance between cone loading area to parking area, in inch
 
         // Wait for the game to start (driver presses PLAY)
         telemetry.addData("Mode", "waiting for start");
@@ -328,8 +319,6 @@ public class TeleopDualDrivers extends LinearOpMode {
             sliderHighJunctionPosition  = myGamePad.y;
             clawClose                   = myGamePad.dpad_up;
             clawOpen                    = myGamePad.dpad_down;
-            armTurnLeft                 = myGamePad.dpad_left;
-            armTurnRight                = myGamePad.dpad_right;
             autoUnloadConeOn            = myGamePad.right_bumper;
             sliderGroundPsition         = myGamePad.dpad_left;
 
@@ -337,9 +326,6 @@ public class TeleopDualDrivers extends LinearOpMode {
             if (distanceSensorOn) {
                 distanceSensorEnabled = !distanceSensorEnabled;
             }
-            telemetry.addData("distance sensor: ", distanceSensorEnabled? "On" : "Off");
-            telemetry.addData("Dual driver mode: ", dualDriverMode? "On" : "Off");
-
 
             // Setup a variable for each drive wheel to save power level for telemetry
             double FrontLeftPower;
@@ -380,12 +366,6 @@ public class TeleopDualDrivers extends LinearOpMode {
             else {
                 correction = 0.0;
             }
-            telemetry.addData("imu heading ","%.2f", lastAngles.firstAngle);
-            telemetry.addData("global heading ", "%.2f", globalAngle);
-            telemetry.addData("Correction  ", "%.2f", correction);
-            telemetry.addData("Max driving poiwer ", "%.2f", maxDrivePower);
-            telemetry.addData("Distance sensor = ", "%.2f", distanceSensor.getDistance(DistanceUnit.INCH));
-            telemetry.addData("Sleeve signal", "%.2f", parkingLocation);
 
             FrontLeftPower  = Range.clip(-drive - turn - strafe - correction, -1, 1);
             FrontRightPower = Range.clip(-drive + turn + strafe + correction, -1, 1);
@@ -414,7 +394,7 @@ public class TeleopDualDrivers extends LinearOpMode {
                 sliderTargetPosition = LOW_JUNCTION_POS;
             }
 
-            // use X button to move the slider for ground junction position
+            // use X button to move the slider for wall position
             if (sliderWallPosition) {
                 sliderTargetPosition = WALL_POSITION;
             }
@@ -427,44 +407,25 @@ public class TeleopDualDrivers extends LinearOpMode {
             sliderTargetPosition -= (int)((sliderUpDown) * motorPositionInc);
             sliderTargetPosition = Range.clip(sliderTargetPosition, SLIDER_MIN_POS,
                     FOUR_STAGE_SLIDER_MAX_POS);
-            telemetry.addData("Status", "slider motor Target position %d",
-                    sliderTargetPosition);
 
             setSliderPosition(sliderTargetPosition);
             RightSliderMotor.setPower(SLIDER_MOTOR_POWER); // slider motor start movement
             LeftSliderMotor.setPower(SLIDER_MOTOR_POWER);
-            telemetry.addData("Status", "Right slider motor current position %d",
-                    RightSliderMotor.getCurrentPosition());
-            telemetry.addData("Status", "Left slider motor current position %d",
-                    LeftSliderMotor.getCurrentPosition());
 
             // Keep stepping up until we hit the max value.
             if (clawClose) {
                 clawServoPosition += CLAW_INCREMENT;
             }
+
             if (clawOpen) {
                 clawServoPosition -= CLAW_INCREMENT;
             }
             clawServoPosition = Range.clip(clawServoPosition, CLAW_MIN_POS, CLAW_MAX_POS);
             clawServo.setPosition(clawServoPosition);
-            telemetry.addData("Status", "Claw Servo position %.2f", clawServoPosition);
-
-            // arm servo motor control. Keep stepping up until we hit the max value.
-            if (armTurnLeft) {
-                armServoPosition += ARM_INCREMENT;
-            }
-            if (armTurnRight) {
-                armServoPosition -= ARM_INCREMENT;
-            }
-            armServoPosition = Range.clip(armServoPosition, ARM_MIN_POS, ARM_MAX_POS);
-            armServo.setPosition(armServoPosition);
-            telemetry.addData("Status", "Arm Servo position %.2f", armServoPosition);
 
             //  auto driving, grip cone, and lift slider
             if(autoLoadConeOn) {
                 autoLoadCone(SLIDER_MIN_POS); // Always on ground during teleop mode
-                // set arm, claw, slider position after grep.
-                armServoPosition = armServo.getPosition();
                 // left motor has same position with right one
                 sliderTargetPosition = LOW_JUNCTION_POS;
             }
@@ -473,22 +434,47 @@ public class TeleopDualDrivers extends LinearOpMode {
             if(autoUnloadConeOn) {
                 autoUnloadCone();
                 // set arm, claw, slider position after grep.
-                armServoPosition = armServo.getPosition();
                 clawServoPosition = clawServo.getPosition();
                 sliderTargetPosition = getSliderPosition();
             }
 
-            // Show the elapsed game time and wheel power, positions.
-            telemetry.addData("Motors power", "Frontleft (%.2f), Frontright (%.2f)," +
-                            " Backleft (%.2f), Backright (%.2f)", FrontLeftPower, FrontRightPower,
-                    BackLeftPower,BackRightPower);
+            if (debugFlag) {
+                // config log
+                telemetry.addData("distance sensor: ", distanceSensorEnabled? "On" : "Off");
+                telemetry.addData("Dual driver mode: ", dualDriverMode? "On" : "Off");
 
-            telemetry.addData("Motors Positions:",
-                    "Frontleft (%d), Frontright (%d)," + " Backleft (%d), Backright (%d)",
-                    FrontLeftDrive.getCurrentPosition(), FrontRightDrive.getCurrentPosition(),
-                    BackLeftDrive.getCurrentPosition(), BackRightDrive.getCurrentPosition());
+                // imu log
+                telemetry.addData("imu heading ","%.2f", lastAngles.firstAngle);
+                telemetry.addData("global heading ", "%.2f", globalAngle);
+                telemetry.addData("Correction  ", "%.2f", correction);
 
-            telemetry.addData("Status", "Run Time: " + runtime.toString());
+                // sensor log
+                telemetry.addData("Distance sensor = ", "%.2f", distanceSensor.getDistance(DistanceUnit.INCH));
+
+                // claw servo log
+                telemetry.addData("Status", "Claw Servo position %.2f", clawServoPosition);
+
+                // slider motors log
+                telemetry.addData("Status", "slider motor Target position %d",
+                        sliderTargetPosition);
+                telemetry.addData("Status", "Right slider motor current position %d",
+                        RightSliderMotor.getCurrentPosition());
+                telemetry.addData("Status", "Left slider motor current position %d",
+                        LeftSliderMotor.getCurrentPosition());
+
+                // drive motors log
+                telemetry.addData("Max driving power ", "%.2f", maxDrivePower);
+                telemetry.addData("Motors power", "FL (%.2f), FR (%.2f)," +
+                                " BL (%.2f), BR (%.2f)", FrontLeftPower, FrontRightPower,
+                        BackLeftPower, BackRightPower);
+                telemetry.addData("Motors Positions:",
+                        "Frontleft (%d), Frontright (%d)," + " Backleft (%d), Backright (%d)",
+                        FrontLeftDrive.getCurrentPosition(), FrontRightDrive.getCurrentPosition(),
+                        BackLeftDrive.getCurrentPosition(), BackRightDrive.getCurrentPosition());
+
+                // running time
+                telemetry.addData("Status", "Run Time: " + runtime.toString());
+            }
             telemetry.update(); // update message at the end of while loop
         }
 
@@ -513,7 +499,6 @@ public class TeleopDualDrivers extends LinearOpMode {
      * 6. Slider moving down to get ready to grip another cone
      */
     private void autoUnloadCone() {
-        armServo.setPosition(ARM_UNLOAD_POSITION);
         robotRunToPosition(-robotAutoUnloadMovingDistance, true); // moving back in inch
 
         // move down slider a little bit to unload cone
@@ -524,14 +509,11 @@ public class TeleopDualDrivers extends LinearOpMode {
         waitSliderRun();
 
         clawServo.setPosition(CLAW_OPEN_POS); // unload  cone
-        sleep(100); // wait 0.4 sec to make sure clawServo is at grep position
+        sleep(100); // to make sure clawServo is at open position
+        setSliderPosition(sliderTargetPosition);
         clawServoPosition = clawServo.getPosition(); // keep claw position
-
         robotRunToPosition(-robotAutoUnloadMovingDistance, true); // move out from junction
-        armServo.setPosition(ARM_LOAD_POSITION);
-        waitRobotRun();
         sliderTargetPosition = WALL_POSITION;
-        //sleep(100);
     }
 
     /**
@@ -547,14 +529,12 @@ public class TeleopDualDrivers extends LinearOpMode {
      */
     private void autoLoadCone(int coneLocation) {
         clawServo.setPosition(CLAW_OPEN_POS);
-        armServo.setPosition(ARM_LOAD_POSITION);
         robotRunToPosition(-robotAutoLoadMovingDistance, true); // moving to loading position
         setSliderPosition(coneLocation);
         waitSliderRun();
         clawServo.setPosition(CLAW_CLOSE_POS);
-        sleep(400); // wait 0.4 sec to make sure clawServo is at grep position
+        sleep(200); // to make sure clawServo is at grep position
         clawServoPosition = clawServo.getPosition(); // keep claw position
-        armServo.setPosition(ARM_UNLOAD_POSITION);
     }
 
     /**
@@ -566,7 +546,6 @@ public class TeleopDualDrivers extends LinearOpMode {
     private void robotRunToPosition(double targetDistance, boolean isBackForth) {
         int countsPerInch = isBackForth? COUNTS_PER_INCH_DRIVE : COUNTS_PER_INCH_STRAFE;
         int targetPosition = (int)(targetDistance * countsPerInch);
-        telemetry.addData("Moving", "auto driving target position %d", targetPosition);
         setTargetPositionsToWheels(targetPosition, isBackForth);
         robotRunWithPositionModeOn(true); // turn on encoder mode
         int tSign = (int)Math.copySign(1, targetDistance);
@@ -635,19 +614,6 @@ public class TeleopDualDrivers extends LinearOpMode {
         BackLeftDrive.setPower(p);
         BackRightDrive.setPower(p);
     }
-
-    /**
-     * Wait until the motor complete action.
-     * The MAXIMUM waiting time is MAX_WAIT_TIME to avoid death.
-     * @param mot: the motor which be checked if it is in active.
-     */
-    private void waitMotorActionComplete(@NonNull DcMotor mot) {
-        double curTime = runtime.seconds();
-        while((mot.isBusy()) && ((runtime.seconds() - curTime) < MAX_WAIT_TIME)) {
-            idle();
-        }
-    }
-
 
     /**
      * Resets the cumulative angle tracking to zero.
@@ -739,21 +705,16 @@ public class TeleopDualDrivers extends LinearOpMode {
     }
 
     /**
-     * Wait until robot wheel motors complete actions.
-     */
-    private void waitRobotRun() {
-        waitMotorActionComplete(FrontLeftDrive);
-        waitMotorActionComplete(FrontRightDrive);
-        waitMotorActionComplete(BackLeftDrive);
-        waitMotorActionComplete(BackRightDrive);
-    }
-
-    /**
      * Wait until slider motors complete actions.
      */
     private void waitSliderRun() {
-        waitMotorActionComplete(RightSliderMotor);
-        waitMotorActionComplete(LeftSliderMotor);
+        double curTime = runtime.seconds();
+
+        while ((Math.abs(RightSliderMotor.getCurrentPosition() - RightSliderMotor.getTargetPosition()) > COUNTS_PER_INCH * 0.2) &&
+                (Math.abs(LeftSliderMotor.getCurrentPosition() - LeftSliderMotor.getTargetPosition()) > COUNTS_PER_INCH * 0.2) &&
+                ((runtime.seconds() - curTime) < MAX_WAIT_TIME)) {
+            idle();
+        }
     }
 
     /**
