@@ -97,7 +97,7 @@ import org.openftc.easyopencv.OpenCvCameraRotation;
 public class AutonomousRight extends LinearOpMode {
 
     // Declare OpMode members.
-    static final double MAX_WAIT_TIME = 5.0; // in seconds
+    static final double MAX_WAIT_TIME = 8.0; // in seconds
     private ElapsedTime runtime = new ElapsedTime();
     private DcMotor FrontLeftDrive = null;
     private DcMotor FrontRightDrive = null;
@@ -394,7 +394,7 @@ public class AutonomousRight extends LinearOpMode {
      * @param isBackForth: flag for back-forth (true) moving, or left-right moving (false)
      */
     private void robotRunToPosition(double targetDistance, boolean isBackForth) {
-        Logging.log("Autonomous - Required moving distance %.2f.", targetDistance);
+
         if (Math.abs(targetDistance) < 0.4){
             return;
         }
@@ -402,16 +402,21 @@ public class AutonomousRight extends LinearOpMode {
         int targetPosition = (int)(targetDistance * countsPerInch);
         int tSign = (int)Math.copySign(1, targetDistance);
         setTargetPositionsToWheels(targetPosition, isBackForth);
-        Logging.log("Autonomous - Target Position = %d", targetPosition);
+
         robotRunWithPositionModeOn(true); // turn on encoder mode,and reset encoders
 
-        Logging.log("Autonomous - PID = %d", tSign);
         robotDriveWithPIDControl(targetDistance, tSign, isBackForth);
 
         robotRunWithPositionModeOn(false); // turn off encoder mode
-        Logging.log("Autonomous - Current Position after moving, FL = %d, FR= %d, BL = %d, BR = %d",
-                FrontLeftDrive.getCurrentPosition(), FrontRightDrive.getCurrentPosition(),
-                BackLeftDrive.getCurrentPosition(), BackRightDrive.getCurrentPosition());
+
+        if (debugFlag) {
+            Logging.log("Autonomous - Required moving distance %.2f.", targetDistance);
+            Logging.log("Autonomous - Target Position = %d", targetPosition);
+            Logging.log("Autonomous - PID = %d", tSign);
+            Logging.log("Autonomous - Current Position after moving, FL = %d, FR= %d, BL = %d, BR = %d",
+                    FrontLeftDrive.getCurrentPosition(), FrontRightDrive.getCurrentPosition(),
+                    BackLeftDrive.getCurrentPosition(), BackRightDrive.getCurrentPosition());
+        }
     }
 
     /**
@@ -532,7 +537,6 @@ public class AutonomousRight extends LinearOpMode {
         if (Math.abs(degrees) > 359.99) {
             degrees = Math.floorMod(360, (int)degrees);
         }
-        Logging.log("Required turning degrees: %.2f.", degrees);
 
         // start pid controller. PID controller will monitor the turn angle with respect to the
         // target angle and reduce power as we approach the target angle. This is to prevent the
@@ -564,10 +568,6 @@ public class AutonomousRight extends LinearOpMode {
             motorsPos[2] = BackLeftDrive.getCurrentPosition();
             motorsPos[3] = BackRightDrive.getCurrentPosition();
 
-            if (debugFlag) {
-                Logging.log("Autonomous - Positions: FL = %d, FR = %d, BL = %d, BR = %d",
-                        motorsPos[0], motorsPos[1], motorsPos[2], motorsPos[3]);
-            }
             calculateRotatePowerCorrection(motorsPos, motorsPowerCorrection);
 
             power = pidRotate.performPID(getAngle()); // power will be + on left turn.
@@ -577,6 +577,8 @@ public class AutonomousRight extends LinearOpMode {
                 motorPowers[i] = Math.copySign(Math.min(motorPowers[i], 1.0), power);
             }
             if (debugFlag) {
+                Logging.log("Autonomous - Positions: FL = %d, FR = %d, BL = %d, BR = %d",
+                        motorsPos[0], motorsPos[1], motorsPos[2], motorsPos[3]);
                 Logging.log("Autonomous - Powers: FL = %.2f, FR = %.2f, BL = %.2f, BR = %.2f",
                         -motorPowers[0], motorPowers[1], -motorPowers[2], motorPowers[3]);
             }
@@ -592,7 +594,6 @@ public class AutonomousRight extends LinearOpMode {
         leftMotorSetPower(0);
 
         rotation = getAngle();
-        Logging.log("Autonomous - Rotated angle is %.2f.", rotation);
 
         // wait for rotation to stop.
         sleep(200);
@@ -603,6 +604,8 @@ public class AutonomousRight extends LinearOpMode {
         frontRightPos = FrontRightDrive.getCurrentPosition();
         backLeftPos = BackLeftDrive.getCurrentPosition();
         backRightPos = BackRightDrive.getCurrentPosition();
+        Logging.log("Required turning degrees: %.2f.", degrees);
+        Logging.log("Autonomous - Rotated angle is %.2f.", rotation);
         Logging.log("Autonomous - IMU angle after turn is %.2f.", lastAngles.firstAngle);
     }
 
