@@ -109,7 +109,7 @@ public class AutonomousRight extends LinearOpMode {
     static final double MAX_CORRECTION_POWER = 0.12;
     static final double MAX_POWER = 1.0 - MAX_CORRECTION_POWER;
     static final double RAMP_START_POWER = 0.2;
-    static final double RAMP_END_POWER = 0.2;
+    static final double RAMP_END_POWER = 0.18;
     static final double SHORT_DISTANCE_POWER = 0.35;
 
     static final double MIN_ROTATE_POWER = 0.21;
@@ -684,7 +684,7 @@ public class AutonomousRight extends LinearOpMode {
 
                 // speed ramp down
                 if ((tDistance - currDistance) < RAMP_DISTANCE) {
-                    rampDownPower = (MAX_POWER - RAMP_END_POWER) * (tDistance - currDistance) / RAMP_DISTANCE + RAMP_END_POWER;
+                    rampDownPower = (MAX_POWER - RAMP_END_POWER) * (tDistance - currDistance) / 2.0 / RAMP_DISTANCE + RAMP_END_POWER;
                     rampDownPower = Range.clip(rampDownPower, RAMP_END_POWER, drivePower);
                 }
 
