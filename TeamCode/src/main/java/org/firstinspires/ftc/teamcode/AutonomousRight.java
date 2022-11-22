@@ -383,8 +383,8 @@ public class AutonomousRight extends LinearOpMode {
      */
     private void autoLoadCone(int coneLocation) {
         clawServo.setPosition(CLAW_OPEN_POS);
-        robotRunToPosition(-robotAutoLoadMovingDistance, true); // moving to loading position
         setSliderPosition(coneLocation);
+        robotRunToPosition(-robotAutoLoadMovingDistance, true); // back a little bit to avoid stuck.
         waitSliderRun();
         clawServo.setPosition(CLAW_CLOSE_POS);
         Logging.log("Auto load - Cone has been loaded.");
