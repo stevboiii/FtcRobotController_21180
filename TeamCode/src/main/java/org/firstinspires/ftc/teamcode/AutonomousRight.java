@@ -178,7 +178,6 @@ public class AutonomousRight extends LinearOpMode {
 
     @Override
     public void runOpMode() {
-        slider.init(hardwareMap);
         telemetry.addData("Status", "Initialized");
         Logging.log("Status - Initialized");
 
@@ -188,6 +187,7 @@ public class AutonomousRight extends LinearOpMode {
         // Retrieve and initialize the IMU. We expect the IMU to be attached to an I2C port
         // on a Core Device Interface Module, configured to be a sensor of type "AdaFruit IMU",
         // and named "imu".
+        slider.init(hardwareMap, "RightSlider", "LeftSlider");
         FrontLeftDrive  = hardwareMap.get(DcMotor.class, "FrontLeft");
         FrontRightDrive = hardwareMap.get(DcMotor.class, "FrontRight");
         BackLeftDrive = hardwareMap.get(DcMotor.class,"BackLeft");
