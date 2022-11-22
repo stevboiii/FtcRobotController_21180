@@ -47,7 +47,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
  */
 
 
-public class sliderWith2Motors
+public class SliderWith2Motors
 {
     //private
     HardwareMap hardwareMap =  null;
