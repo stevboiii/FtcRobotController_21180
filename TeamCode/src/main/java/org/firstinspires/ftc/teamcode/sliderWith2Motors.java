@@ -29,35 +29,11 @@
 
 package org.firstinspires.ftc.teamcode;
 
-import static org.firstinspires.ftc.robotcore.external.navigation.AngleUnit.DEGREES;
-import static org.firstinspires.ftc.robotcore.external.navigation.AxesOrder.XYZ;
-import static org.firstinspires.ftc.robotcore.external.navigation.AxesReference.EXTRINSIC;
-
-import com.qualcomm.hardware.bosch.BNO055IMU;
-import com.qualcomm.hardware.bosch.JustLoggingAccelerationIntegrator;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
-import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-import org.firstinspires.ftc.robotcore.external.ClassFactory;
-import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
-import org.firstinspires.ftc.robotcore.external.matrices.OpenGLMatrix;
-import org.firstinspires.ftc.robotcore.external.matrices.VectorF;
-import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
-import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
-import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
-import org.firstinspires.ftc.robotcore.external.navigation.Position;
-import org.firstinspires.ftc.robotcore.external.navigation.Velocity;
-import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer;
-import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackable;
-import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackableDefaultListener;
-import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackables;
-import org.firstinspires.ftc.teamcode.Reno.RobotLocation;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * This is NOT an opmode.
@@ -69,9 +45,97 @@ import java.util.List;
  * Motor channel:  Left slider DC motor:        "RightSlider"
  * Motor channel:  Right slider DC motor:        "RightSlider"
  */
+
+
 public class sliderWith2Motors
 {
+    //private
+    HardwareMap hardwareMap =  null;
+    private final ElapsedTime period  = new ElapsedTime();
 
+    // slider motor variables
+    private DcMotor RightSliderMotor = null;
+    private DcMotor LeftSliderMotor = null;
+    static final double SLIDER_MOTOR_POWER = 1.0; // slider string gets loose with too high speed
+
+    // slider position variables
+    static final int COUNTS_PER_INCH = 120; // verified by testing.
+    static final int FOUR_STAGE_SLIDER_MAX_POS = 4200;  // with 312 RPM motor.
+    static final int SLIDER_MIN_POS = 0;
+
+    /**
+     * Init slider motors hardware, and set their behaviors.
+     * @param hardwareMap the Hardware Mappings.
+     */
+    public void init(HardwareMap hardwareMap) {
+        // Save reference to Hardware map
+        this.hardwareMap = hardwareMap;
+        Logging.log("init slider motors.");
+        RightSliderMotor = hardwareMap.get(DcMotor.class, "RightSlider");
+        LeftSliderMotor = hardwareMap.get(DcMotor.class, "LeftSlider");
+
+        /* slider motor control */
+        RightSliderMotor.setDirection(DcMotorSimple.Direction.REVERSE);
+        LeftSliderMotor.setDirection(DcMotorSimple.Direction.FORWARD);
+
+        // Reset slider motor encoder counts kept by the motor
+        RightSliderMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        LeftSliderMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
+        setPosition(0);
+
+        // Set motor to run to target encoder position and top with brakes on.
+        RightSliderMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        LeftSliderMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+    }
+
+    /**
+     * Set slider motors position.
+     * @param sliderMotorPosition the target position for slider left motor and right motor.
+     */
+    public void setPosition(int sliderMotorPosition) {
+        RightSliderMotor.setTargetPosition(sliderMotorPosition);
+        LeftSliderMotor.setTargetPosition(sliderMotorPosition);
+    }
+
+    /**
+     * Read current slider motors position. Return the mean value of left and right motor positions.
+     * return slider motor position.
+     */
+    public int getPosition() {
+        int r = RightSliderMotor.getCurrentPosition();
+        int l = LeftSliderMotor.getCurrentPosition();
+        return (r+l)/2;
+    }
+
+    /**
+     * Wait until slider motors complete actions.
+     */
+    public void waitRunningComplete() {
+        double curTime = period.seconds();
+
+        while ((Math.abs(RightSliderMotor.getCurrentPosition() - RightSliderMotor.getTargetPosition()) > COUNTS_PER_INCH * 0.2) &&
+                (Math.abs(LeftSliderMotor.getCurrentPosition() - LeftSliderMotor.getTargetPosition()) > COUNTS_PER_INCH * 0.2) &&
+                ((period.seconds() - curTime) < AutonomousRight.MAX_WAIT_TIME)) {
+            Thread.yield(); // idle
+        }
+    }
+
+    /**
+     * Set slider motors power to zero.
+     */
+    public void stop() {
+        setPower(0.0);
+    }
+
+    /**
+     * Set slider motors power.
+     * @param p set motors power to p.
+     */
+    public void setPower(double p) {
+        RightSliderMotor.setPower(p);
+        LeftSliderMotor.setPower(p);
+    }
 
 }
 

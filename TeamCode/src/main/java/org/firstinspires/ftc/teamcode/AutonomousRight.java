@@ -111,27 +111,18 @@ public class AutonomousRight extends LinearOpMode {
     static final double RAMP_START_POWER = 0.2;
     static final double RAMP_END_POWER = 0.18;
     static final double SHORT_DISTANCE_POWER = 0.35;
-
     static final double MIN_ROTATE_POWER = 0.21;
     static final double AUTO_ROTATE_POWER = 0.9;
 
-    // slider motor variables
-    private DcMotor RightSliderMotor = null;
-    private DcMotor LeftSliderMotor = null;
-    static final double SLIDER_MOTOR_POWER = 1.0; // slider string gets loose with too high speed
-
     // slider position variables
-    static final int COUNTS_PER_INCH = 120; // verified by testing.
-    static final int FOUR_STAGE_SLIDER_MAX_POS = 4200;  // with 312 RPM motor.
-    static final int SLIDER_MIN_POS = 0;
-    static final int coneStack5th = (int)(COUNTS_PER_INCH * 5.2); // the 5th cone position in the cone stack. The lowest cone is the 1th one.
-    static final int coneLoadStackGap = (int)(COUNTS_PER_INCH *  1.32);
+    private sliderWith2Motors slider = new sliderWith2Motors();
+    static final int coneStack5th = (int)(sliderWith2Motors.COUNTS_PER_INCH * 5.2); // the 5th cone position in the cone stack. The lowest cone is the 1th one.
+    static final int coneLoadStackGap = (int)(sliderWith2Motors.COUNTS_PER_INCH *  1.32);
     static final int GROUND_POSITION = (int)(0); // Ground(0 inch)
-    static final int WALL_POSITION = (int)(COUNTS_PER_INCH * 7.0);  // 7 inch
-    static final int MEDIUM_JUNCTION_POS = (int)(COUNTS_PER_INCH * 23.5); //23.5 inch
-    static final int HIGH_JUNCTION_POS = (int)(COUNTS_PER_INCH * 33.5); //33.5 inch
-    static final int SLIDER_MOVE_DOWN_POSITION = COUNTS_PER_INCH * 3; // move down 6 inch to unload cone
-    int sliderTargetPosition = 0;
+    static final int WALL_POSITION = (int)(sliderWith2Motors.COUNTS_PER_INCH * 7.0);  // 7 inch
+    static final int MEDIUM_JUNCTION_POS = (int)(sliderWith2Motors.COUNTS_PER_INCH * 23.5); //23.5 inch
+    static final int HIGH_JUNCTION_POS = (int)(sliderWith2Motors.COUNTS_PER_INCH * 33.5); //33.5 inch
+    static final int SLIDER_MOVE_DOWN_POSITION = sliderWith2Motors.COUNTS_PER_INCH * 3; // move down 6 inch to unload cone
 
     // claw servo motor variables
     private Servo clawServo = null;
@@ -156,7 +147,6 @@ public class AutonomousRight extends LinearOpMode {
     static final double RAMP_DISTANCE = 10.0; // slow down in the final 10 inch
     static final double SHORT_DISTANCE = 6.0; // slow down in the final 10 inch
     static final double matCenterToConeStack = 27.0; // inch
-
 
     // IMU related
     Orientation lastAngles = new Orientation();
@@ -188,6 +178,7 @@ public class AutonomousRight extends LinearOpMode {
 
     @Override
     public void runOpMode() {
+        slider.init(hardwareMap);
         telemetry.addData("Status", "Initialized");
         Logging.log("Status - Initialized");
 
@@ -201,8 +192,6 @@ public class AutonomousRight extends LinearOpMode {
         FrontRightDrive = hardwareMap.get(DcMotor.class, "FrontRight");
         BackLeftDrive = hardwareMap.get(DcMotor.class,"BackLeft");
         BackRightDrive = hardwareMap.get(DcMotor.class,"BackRight");
-        RightSliderMotor = hardwareMap.get(DcMotor.class,"RightSlider");
-        LeftSliderMotor = hardwareMap.get(DcMotor.class,"LeftSlider");
         armServo = hardwareMap.get(Servo.class, "ArmServo");
         clawServo = hardwareMap.get(Servo.class, "ClawServo");
         imu = hardwareMap.get(BNO055IMU.class, "imu");
@@ -229,22 +218,9 @@ public class AutonomousRight extends LinearOpMode {
 
         robotRunWithPositionModeOn(false); // turn off encoder mode as default
 
-        /* slider motor control */
-        RightSliderMotor.setDirection(DcMotorSimple.Direction.REVERSE);
-        LeftSliderMotor.setDirection(DcMotorSimple.Direction.FORWARD);
-        setSliderPosition(sliderTargetPosition);
-        // Reset slider motor encoder counts kept by the motor
-        RightSliderMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        LeftSliderMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        // Set motor to run to target encoder position and top with brakes on.
-        RightSliderMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        LeftSliderMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-
-
         // claw servo motor initial
         clawServoPosition = CLAW_CLOSE_POS;
         clawServo.setPosition(clawServoPosition);
-
 
         // IMU
         BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
@@ -333,15 +309,12 @@ public class AutonomousRight extends LinearOpMode {
         }
 
         // The motor stop on their own but power is still applied. Turn off motor.
-        RightSliderMotor.setPower(0.0);
-        LeftSliderMotor.setPower(0.0);
+        slider.stop();
         setPowerToWheels(0.0);
         FrontLeftDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
         FrontRightDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
         BackLeftDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
         BackRightDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
-        RightSliderMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
-        LeftSliderMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
     }
 
     /**
@@ -356,15 +329,15 @@ public class AutonomousRight extends LinearOpMode {
         robotRunToPosition(-robotAutoUnloadMovingDistance, true); // moving back in inch
 
         // move down slider a little bit to unload cone
-        sliderTargetPosition = getSliderPosition();
+        int sliderTargetPosition = slider.getPosition();
         int moveSlider = sliderTargetPosition - SLIDER_MOVE_DOWN_POSITION;
-        moveSlider = Math.max(moveSlider, SLIDER_MIN_POS);
-        setSliderPosition(moveSlider);
-        waitSliderRun();
+        moveSlider = Math.max(moveSlider, sliderWith2Motors.SLIDER_MIN_POS);
+        slider.setPosition(moveSlider);
+        slider.waitRunningComplete();
 
         clawServo.setPosition(CLAW_OPEN_POS); // unload cone
         sleep(100); // make sure cone has been unloaded
-        setSliderPosition(sliderTargetPosition);
+        slider.setPosition(sliderTargetPosition);
         robotRunToPosition(-backDistanceAfterUnloading, true); // move out from junction
         sliderTargetPosition = WALL_POSITION;
         Logging.log("Auto unload - Cone has been unloaded.");
@@ -383,9 +356,9 @@ public class AutonomousRight extends LinearOpMode {
      */
     private void autoLoadCone(int coneLocation) {
         clawServo.setPosition(CLAW_OPEN_POS);
-        setSliderPosition(coneLocation);
+        slider.setPosition(coneLocation);
         robotRunToPosition(-robotAutoLoadMovingDistance, true); // back a little bit to avoid stuck.
-        waitSliderRun();
+        slider.waitRunningComplete();
         clawServo.setPosition(CLAW_CLOSE_POS);
         Logging.log("Auto load - Cone has been loaded.");
         sleep(200); // wait to make sure clawServo is at grep position
@@ -742,10 +715,9 @@ public class AutonomousRight extends LinearOpMode {
         double[] sleeveColor = {1.0, 1.0, 1.0}; // cone color
         double parkingLocation; // distance between cone loading area to parking area, in inch
 
-        RightSliderMotor.setPower(SLIDER_MOTOR_POWER); // slider motor start power
-        LeftSliderMotor.setPower(SLIDER_MOTOR_POWER);
+        slider.setPower(sliderWith2Motors.SLIDER_MOTOR_POWER);
 
-        setSliderPosition(MEDIUM_JUNCTION_POS);
+        slider.setPosition(MEDIUM_JUNCTION_POS);
         if (ConceptSleeveDetection.ParkingPosition.UNKNOWN != myParkingLot) {
             //move center of robot to the edge of 3rd mat
             robotRunToPosition(65.5, true);
@@ -772,14 +744,14 @@ public class AutonomousRight extends LinearOpMode {
 
         // lift slider during strafe to high junction
         robotRunToPosition(-14.5, true); // get rid of sleeve cone, and back to the center of mat
-        setSliderPosition(HIGH_JUNCTION_POS);
+        slider.setPosition(HIGH_JUNCTION_POS);
         imuAngles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
         Logging.log("Autonomous - imu angle before 45 turning: %.2f", imuAngles.firstAngle);
 
        // turn robot 45 degrees left
         rotate(45 - AngleUnit.DEGREES.normalize(imuAngles.firstAngle), AUTO_ROTATE_POWER);
         logEncoderAfterRotate();
-        waitSliderRun();
+        slider.waitRunningComplete();
 
         //drive forward and let V to touch junction
         robotRunToPosition(matCenterToJunctionDistance, true);
@@ -794,7 +766,7 @@ public class AutonomousRight extends LinearOpMode {
         for(int autoLoop = 0; autoLoop < 2; autoLoop++) {
             Logging.log("Autonomous - loop index: %d ", autoLoop);
 
-            setSliderPosition(WALL_POSITION);
+            slider.setPosition(WALL_POSITION);
 
             // right turn 135 degree
             imuAngles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
@@ -819,7 +791,7 @@ public class AutonomousRight extends LinearOpMode {
             autoLoadCone(coneStack5th - coneLoadStackGap * autoLoop);
 
             // lift cone
-            setSliderPosition(WALL_POSITION);
+            slider.setPosition(WALL_POSITION);
 
             // make sure robot is still in the same orientation before back to junction
             imuAngles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
@@ -827,17 +799,17 @@ public class AutonomousRight extends LinearOpMode {
             rotate(-AngleUnit.DEGREES.normalize(imuAngles.firstAngle) - 90, AUTO_ROTATE_POWER);
             logEncoderAfterRotate();
 
-            waitSliderRun(); // make sure slider has been lifted before moving out cone stack.
+            slider.waitRunningComplete(); // make sure slider has been lifted before moving out cone stack.
 
             // lift slider during rotation.
-            setSliderPosition(MEDIUM_JUNCTION_POS);
+            slider.setPosition(MEDIUM_JUNCTION_POS);
 
             // drive back to high junction. 1.0 has been moved back during autoLoadCone()
             robotRunToPosition(-(matCenterToConeStack - 1.0), true);
             Logging.log("Autonomous - Robot arrived the mat center near high junction.");
 
             // lift slider during rotation.
-            setSliderPosition(HIGH_JUNCTION_POS);
+            slider.setPosition(HIGH_JUNCTION_POS);
 
             // left turn 135 degree facing to high junction
             imuAngles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
@@ -848,7 +820,7 @@ public class AutonomousRight extends LinearOpMode {
             locationShiftCalculation(xyShift, frontLeftPos, frontRightPos, backLeftPos, backRightPos);
             robotRunToPosition(-xyShift[0], false);
 
-            waitSliderRun(); // make sure slider has been lifted
+            slider.waitRunningComplete(); // make sure slider has been lifted
             Logging.log("Autonomous - slider is positioned to high junction.");
 
             // moving forward V to junction
@@ -866,7 +838,7 @@ public class AutonomousRight extends LinearOpMode {
             Logging.log("Autonomous - imu angle after unload cone: %.2f", imuAngles.firstAngle);
 
             // lower slider and get ready to load cone
-            setSliderPosition(WALL_POSITION);
+            slider.setPosition(WALL_POSITION);
         }
         Logging.log("Autonomous -  last cone has been unloaded.");
 
@@ -875,13 +847,13 @@ public class AutonomousRight extends LinearOpMode {
         rotate(-AngleUnit.DEGREES.normalize(imuAngles.firstAngle) + 90, AUTO_ROTATE_POWER);
 
         // lower slider in prep for tele-op
-        setSliderPosition(GROUND_POSITION);
+        slider.setPosition(GROUND_POSITION);
 
         // drive to final parking lot
         robotRunToPosition(-parkingLocation, true); // strafe robot to parking
         Logging.log("Autonomous - Arrived at parking lot aisle: %.2f", parkingLocation);
 
-        waitSliderRun();
+        slider.waitRunningComplete();
         Logging.log("Autonomous - slider lowered to ground.");
         Logging.log("Autonomous - Autonomous complete.");
     }
@@ -982,38 +954,6 @@ public class AutonomousRight extends LinearOpMode {
     }
 
     /**
-     * Wait until slider motors complete actions.
-     */
-    private void waitSliderRun() {
-        double curTime = runtime.seconds();
-
-        while ((Math.abs(RightSliderMotor.getCurrentPosition() - RightSliderMotor.getTargetPosition()) > COUNTS_PER_INCH * 0.2) &&
-                (Math.abs(LeftSliderMotor.getCurrentPosition() - LeftSliderMotor.getTargetPosition()) > COUNTS_PER_INCH * 0.2) &&
-                ((runtime.seconds() - curTime) < MAX_WAIT_TIME)) {
-            idle();
-        }
-    }
-
-    /**
-     * Set slider motors position.
-     * @param sliderMotorPosition the target position for slider left motor and right motor.
-     */
-    private void setSliderPosition(int sliderMotorPosition) {
-        RightSliderMotor.setTargetPosition(sliderMotorPosition);
-        LeftSliderMotor.setTargetPosition(sliderMotorPosition);
-    }
-
-    /**
-     * Read current slider motors position. Return the mean value of left and right motor positions.
-     * return slider motor position.
-     */
-    private int getSliderPosition() {
-        int r = RightSliderMotor.getCurrentPosition();
-        int l = LeftSliderMotor.getCurrentPosition();
-        return (r+l)/2;
-    }
-
-    /**
      * Calculate the robot center shift due to a big angle turn.
      * @param shift output array address. The array is for robot center shift in horizontal and
      *             portrait direction related to robot position after turning. shift[0] is for the
@@ -1035,7 +975,6 @@ public class AutonomousRight extends LinearOpMode {
         //shift[1] = -1.0;
         return;
     }
-
 
     /**
      * Calculate the motors power adjustment during rotation to make sure each motor has same
