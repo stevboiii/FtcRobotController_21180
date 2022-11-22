@@ -529,8 +529,8 @@ public class TeleopDualDrivers extends LinearOpMode {
      */
     private void autoLoadCone(int coneLocation) {
         clawServo.setPosition(CLAW_OPEN_POS);
-        robotRunToPosition(-robotAutoLoadMovingDistance, true); // moving to loading position
         setSliderPosition(coneLocation);
+        robotRunToPosition(-robotAutoLoadMovingDistance, true); // moving to loading position
         waitSliderRun();
         clawServo.setPosition(CLAW_CLOSE_POS);
         sleep(200); // to make sure clawServo is at grep position
