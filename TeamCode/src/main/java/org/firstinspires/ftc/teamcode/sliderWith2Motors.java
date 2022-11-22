@@ -79,9 +79,7 @@ public class SliderWith2Motors
         LeftSliderMotor.setDirection(DcMotorSimple.Direction.FORWARD);
 
         // Reset slider motor encoder counts kept by the motor
-        RightSliderMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        LeftSliderMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-
+        resetEncorders();
         setPosition(0);
 
         // Set motor to run to target encoder position and top with brakes on.
@@ -98,6 +96,13 @@ public class SliderWith2Motors
         LeftSliderMotor.setTargetPosition(sliderMotorPosition);
     }
 
+    /**
+     * Reset slider motor encoder counts kept by the motor
+     */
+    public void resetEncorders() {
+        RightSliderMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        LeftSliderMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+    }
     /**
      * Read current slider motors position. Return the mean value of left and right motor positions.
      * return slider motor position.

@@ -133,7 +133,7 @@ public class TeleopDualDrivers extends LinearOpMode {
     static final int HIGH_JUNCTION_POS = (int)(COUNTS_PER_INCH * 33.5);
     static final int SLIDER_MOVE_DOWN_POSITION = COUNTS_PER_INCH * 3; // move down 6 inch to unload cone
     static final int POSITION_COUNTS_FOR_ONE_REVOLUTION = 538; // for 312 rpm motor
-    int motorPositionInc = POSITION_COUNTS_FOR_ONE_REVOLUTION / 3; // set value based on testing
+    int motorPositionInc = POSITION_COUNTS_FOR_ONE_REVOLUTION / 4; // set value based on testing
     int sliderTargetPosition = 0;
 
 
@@ -271,6 +271,8 @@ public class TeleopDualDrivers extends LinearOpMode {
         boolean sliderLowJunctionPosition;
         boolean sliderMediumJunctionPosition;
         boolean sliderHighJunctionPosition;
+        boolean sliderSkipLimitation = false;
+        boolean sliderResetPosition = false;
         boolean clawClose;
         boolean clawOpen;
         boolean autoLoadConeOn;
@@ -310,8 +312,9 @@ public class TeleopDualDrivers extends LinearOpMode {
             robotTurn            = gamepad1.right_stick_x;
             distanceSensorOn     = gamepad1.back;
             autoLoadConeOn       = gamepad1.left_bumper;
+            autoUnloadConeOn     = gamepad1.right_bumper;
 
-            // gamepad1 or gamepad2 buttons
+            // gamepad1(single driver) or gamepad2(dual driver) buttons
             sliderUpDown                = myGamePad.right_stick_y;
             sliderWallPosition          = myGamePad.x;
             sliderLowJunctionPosition   = myGamePad.a;
@@ -319,8 +322,14 @@ public class TeleopDualDrivers extends LinearOpMode {
             sliderHighJunctionPosition  = myGamePad.y;
             clawClose                   = myGamePad.dpad_up;
             clawOpen                    = myGamePad.dpad_down;
-            autoUnloadConeOn            = myGamePad.right_bumper;
-            sliderGroundPsition         = myGamePad.dpad_left;
+
+            sliderGroundPsition         = myGamePad.dpad_left || myGamePad.dpad_right;
+
+            if (dualDriverMode)
+            {
+                sliderSkipLimitation = gamepad2.left_bumper;
+                sliderResetPosition = (gamepad2.right_bumper && gamepad2.left_bumper);
+            }
 
             // sensors
             if (distanceSensorOn) {
@@ -405,9 +414,15 @@ public class TeleopDualDrivers extends LinearOpMode {
 
             // use right stick_Y to lift or down slider continuously
             sliderTargetPosition -= (int)((sliderUpDown) * motorPositionInc);
-            sliderTargetPosition = Range.clip(sliderTargetPosition, SLIDER_MIN_POS,
-                    FOUR_STAGE_SLIDER_MAX_POS);
+            if (sliderSkipLimitation) {
+                sliderTargetPosition = Range.clip(sliderTargetPosition, SLIDER_MIN_POS,
+                        FOUR_STAGE_SLIDER_MAX_POS);
+            }
 
+            if (sliderResetPosition) {
+                RightSliderMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+                LeftSliderMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+            }
             setSliderPosition(sliderTargetPosition);
             RightSliderMotor.setPower(SLIDER_MOTOR_POWER); // slider motor start movement
             LeftSliderMotor.setPower(SLIDER_MOTOR_POWER);
