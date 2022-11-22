@@ -67,12 +67,12 @@ public class SliderWith2Motors
      * Init slider motors hardware, and set their behaviors.
      * @param hardwareMap the Hardware Mappings.
      */
-    public void init(HardwareMap hardwareMap) {
+    public void init(HardwareMap hardwareMap, String rightMotorName, String leftMotorName) {
         // Save reference to Hardware map
         this.hardwareMap = hardwareMap;
         Logging.log("init slider motors.");
-        RightSliderMotor = hardwareMap.get(DcMotor.class, "RightSlider");
-        LeftSliderMotor = hardwareMap.get(DcMotor.class, "LeftSlider");
+        RightSliderMotor = hardwareMap.get(DcMotor.class, rightMotorName);
+        LeftSliderMotor = hardwareMap.get(DcMotor.class, leftMotorName);
 
         /* slider motor control */
         RightSliderMotor.setDirection(DcMotorSimple.Direction.REVERSE);
