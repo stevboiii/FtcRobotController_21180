@@ -143,8 +143,12 @@ public class AutonomousRight extends LinearOpMode {
     private Servo armServo = null;
 
     // variables for autonomous
-    static final int COUNTS_PER_INCH_DRIVE = 45; // robot drive 1 INCH. Back-forth moving
-    static final int COUNTS_PER_INCH_STRAFE = 55; // robot strafe 1 INCH. Left-right moving. need test
+    static final double COUNTS_PER_MOTOR_REV = 537.7 ;   // eg: GoBILDA 312 RPM Yellow Jacket
+    static final double DRIVE_GEAR_REDUCTION = 1.0 ;     // No External Gearing.
+    static final double WHEEL_DIAMETER_INCHES = 4.0 ;     // For figuring circumference
+    static final double COUNTS_PER_INCH_DRIVE = (COUNTS_PER_MOTOR_REV * DRIVE_GEAR_REDUCTION) /
+            (WHEEL_DIAMETER_INCHES * 3.1415); // Back-forth driving for 1 INCH. It is 42.8
+    static final double COUNTS_PER_INCH_STRAFE = 55; // robot strafe 1 INCH. the value is based on test
     double matCenterToJunctionDistance = 15;
     double robotAutoLoadMovingDistance = 1.0; // in INCH
     double robotAutoUnloadMovingDistance = 3.5; // in INCH
@@ -398,7 +402,7 @@ public class AutonomousRight extends LinearOpMode {
         if (Math.abs(targetDistance) < 0.4){
             return;
         }
-        int countsPerInch = isBackForth? COUNTS_PER_INCH_DRIVE : COUNTS_PER_INCH_STRAFE;
+        double countsPerInch = isBackForth? COUNTS_PER_INCH_DRIVE : COUNTS_PER_INCH_STRAFE;
         int targetPosition = (int)(targetDistance * countsPerInch);
         int tSign = (int)Math.copySign(1, targetDistance);
         setTargetPositionsToWheels(targetPosition, isBackForth);
@@ -675,7 +679,7 @@ public class AutonomousRight extends LinearOpMode {
             }
 
             if (speedRampOn) {
-                int currDistance = Math.abs(FrontLeftDrive.getCurrentPosition()) / COUNTS_PER_INCH_DRIVE;
+                double currDistance = Math.abs(FrontLeftDrive.getCurrentPosition()) / COUNTS_PER_INCH_DRIVE;
                 drivePower = MAX_POWER;
                 double rampUpPower = MAX_POWER;
                 double rampDownPower = MAX_POWER;
