@@ -60,11 +60,9 @@ import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.ColorSensor;
-import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
-import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
@@ -94,23 +92,13 @@ import org.openftc.easyopencv.OpenCvCameraRotation;
 //@Disabled
 public class AutonomousRight extends LinearOpMode {
 
+    public static boolean debugFlag = true;
+
     // Declare OpMode members.
     static final double MAX_WAIT_TIME = 8.0; // in seconds
     private final ElapsedTime runtime = new ElapsedTime();
-    private DcMotor FrontLeftDrive = null;
-    private DcMotor FrontRightDrive = null;
-    private DcMotor BackLeftDrive = null;
-    private DcMotor BackRightDrive = null;
+    private final ChassisWith4Motors chassis = new ChassisWith4Motors();
     private BNO055IMU imu = null;
-
-    // Driving motor variables
-    static final double MAX_CORRECTION_POWER = 0.12;
-    static final double MAX_POWER = 1.0 - MAX_CORRECTION_POWER;
-    static final double RAMP_START_POWER = 0.35;
-    static final double RAMP_END_POWER = 0.2;
-    static final double SHORT_DISTANCE_POWER = 0.35;
-    static final double MIN_ROTATE_POWER = 0.21;
-    static final double AUTO_ROTATE_POWER = 0.9;
 
     // slider position variables
     private final SlidersWith2Motors slider = new SlidersWith2Motors();
@@ -132,27 +120,12 @@ public class AutonomousRight extends LinearOpMode {
     private Servo armServo = null;
 
     // variables for autonomous
-    static final double COUNTS_PER_MOTOR_REV = 537.7 ;   // eg: GoBILDA 312 RPM Yellow Jacket
-    static final double DRIVE_GEAR_REDUCTION = 1.0 ;     // No External Gearing.
-    static final double WHEEL_DIAMETER_INCHES = 4.0 ;     // For figuring circumference
-    static final double COUNTS_PER_INCH_DRIVE = (COUNTS_PER_MOTOR_REV * DRIVE_GEAR_REDUCTION) /
-            (WHEEL_DIAMETER_INCHES * 3.1415); // Back-forth driving for 1 INCH. It is 42.8
-    static final double COUNTS_PER_INCH_STRAFE = 55; // robot strafe 1 INCH. the value is based on test
     double matCenterToJunctionDistance = 15;
     double robotAutoLoadMovingDistance = 1.0; // in INCH
     double robotAutoUnloadMovingDistance = 3.5; // in INCH
     double backToMatCenterDistance = matCenterToJunctionDistance - robotAutoUnloadMovingDistance - 0.5; // in INCH
-    static final double RAMP_UP_DISTANCE = 10.0; // ramp up in the first 10 inch
-    static final double RAMP_DOWN_DISTANCE = 9.0; // slow down in the final 9 inch
-    static final double SHORT_DISTANCE = 6.0; // consistent low power for short driving
     static final double matCenterToConeStack = 27.0; // inch
 
-    // IMU related
-    Orientation lastAngles = new Orientation();
-    double globalAngle = 0.0;
-    double correction = 0.0;
-    double rotation = 0.0;
-    PIDController pidRotate, pidDrive;
 
     // sensors
     private DistanceSensor distanceSensor;
@@ -165,15 +138,10 @@ public class AutonomousRight extends LinearOpMode {
     String webcamName = "Webcam 1";
     boolean isCameraInstalled = true;
 
-    // variables for reading current encoder positions just after a turn.
-    int frontLeftPos;
-    int frontRightPos;
-    int backLeftPos;
-    int backRightPos;
 
     // variables for location shift
     double[] xyShift = {0.0, -0.5};
-    boolean debugFlag = true;
+
 
     @Override
     public void runOpMode() {
@@ -187,69 +155,18 @@ public class AutonomousRight extends LinearOpMode {
         // on a Core Device Interface Module, configured to be a sensor of type "AdaFruit IMU",
         // and named "imu".
         slider.init(hardwareMap, "RightSlider", "LeftSlider");
-        FrontLeftDrive  = hardwareMap.get(DcMotor.class, "FrontLeft");
-        FrontRightDrive = hardwareMap.get(DcMotor.class, "FrontRight");
-        BackLeftDrive = hardwareMap.get(DcMotor.class,"BackLeft");
-        BackRightDrive = hardwareMap.get(DcMotor.class,"BackRight");
+        chassis.init(hardwareMap, "FrontLeft", "FrontRight",
+                "BackLeft", "BackRight");
+
         armServo = hardwareMap.get(Servo.class, "ArmServo");
         clawServo = hardwareMap.get(Servo.class, "ClawServo");
         imu = hardwareMap.get(BNO055IMU.class, "imu");
         distanceSensor = hardwareMap.get(DistanceSensor.class, "DistanceSensor");
         colorSensor = hardwareMap.get(ColorSensor.class, "ColorSensor");
 
-        // Most robots need the motor on one side to be reversed to drive forward
-        // Reverse the motor that runs backwards when connected directly to the battery
-        FrontLeftDrive.setDirection(DcMotor.Direction.REVERSE);
-        FrontRightDrive.setDirection(DcMotor.Direction.FORWARD);
-        BackLeftDrive.setDirection(DcMotor.Direction.REVERSE);
-        BackRightDrive.setDirection(DcMotor.Direction.FORWARD);
-
-        FrontLeftDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        FrontRightDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        BackLeftDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        BackRightDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-
-        //reset encode number to zero
-        FrontLeftDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        FrontRightDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        BackLeftDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        BackRightDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-
-        robotRunWithPositionModeOn(false); // turn off encoder mode as default
-
         // claw servo motor initial
         clawServoPosition = CLAW_CLOSE_POS;
         clawServo.setPosition(clawServoPosition);
-
-        // IMU
-        BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
-        parameters.mode                = BNO055IMU.SensorMode.IMU;
-        parameters.angleUnit           = BNO055IMU.AngleUnit.DEGREES;
-        parameters.accelUnit           = BNO055IMU.AccelUnit.METERS_PERSEC_PERSEC;
-        parameters.loggingEnabled      = false;
-        imu.initialize(parameters);
-
-        // Set PID proportional value to start reducing power at about 50 degrees of rotation.
-        // P by itself may stall before turn completed so we add a bit of I (integral) which
-        // causes the PID controller to gently increase power if the turn is not completed.
-        pidRotate = new PIDController(.014, .0, 0);
-
-        // Set PID proportional value to produce non-zero correction value when robot veers off
-        // straight line. P value controls how sensitive the correction is.
-        pidDrive = new PIDController(.04, 0, 0);
-
-        // make sure the imu gyro is calibrated before continuing.
-        double loopStartTime = runtime.seconds();
-        while (!isStopRequested() && !imu.isGyroCalibrated() && (runtime.seconds() - loopStartTime) < MAX_WAIT_TIME) {
-            idle();
-        }
-        telemetry.addData("imu calib status", imu.getCalibrationStatus().toString());
-
-        // Set up parameters for driving in a straight line.
-        pidDrive.setInputRange(-90, 90);
-        pidDrive.setSetpoint(0); // be sure input range has been set before
-        pidDrive.setOutputRange(0, MAX_CORRECTION_POWER);
-        pidDrive.enable();
 
         // camera for sleeve color detect
         int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier(
@@ -309,11 +226,7 @@ public class AutonomousRight extends LinearOpMode {
 
         // The motor stop on their own but power is still applied. Turn off motor.
         slider.stop();
-        setPowerToWheels(0.0);
-        FrontLeftDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
-        FrontRightDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
-        BackLeftDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
-        BackRightDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+        chassis.setPowerToWheels(0.0);
     }
 
     /**
@@ -326,7 +239,7 @@ public class AutonomousRight extends LinearOpMode {
      */
     private void autoUnloadCone(double backDistanceAfterUnloading) {
         // moving back in inch
-        robotRunToPosition(-robotAutoUnloadMovingDistance, true);
+        chassis.robotRunToPosition(-robotAutoUnloadMovingDistance, true);
 
         // move down slider a little bit to unload cone
         int sliderTargetPosition = slider.getPosition();
@@ -338,7 +251,7 @@ public class AutonomousRight extends LinearOpMode {
         clawServo.setPosition(CLAW_OPEN_POS); // unload cone
         sleep(100); // make sure cone has been unloaded
         slider.setPosition(sliderTargetPosition);
-        robotRunToPosition(-backDistanceAfterUnloading, true); // move out from junction
+        chassis.robotRunToPosition(-backDistanceAfterUnloading, true); // move out from junction
         slider.setPosition(WALL_POSITION);
         Logging.log("Auto unload - Cone has been unloaded.");
     }
@@ -357,353 +270,13 @@ public class AutonomousRight extends LinearOpMode {
     private void autoLoadCone(int coneLocation) {
         clawServo.setPosition(CLAW_OPEN_POS);
         slider.setPosition(coneLocation);
-        robotRunToPosition(-robotAutoLoadMovingDistance, true); // back a little bit to avoid stuck.
+        chassis.robotRunToPosition(-robotAutoLoadMovingDistance, true); // back a little bit to avoid stuck.
         slider.waitRunningComplete();
         clawServo.setPosition(CLAW_CLOSE_POS);
         Logging.log("Auto load - Cone has been loaded.");
         sleep(200); // wait to make sure clawServo is at grep position
     }
 
-    /**
-     * Set target position for every wheel motor, and set power to motors to move the robot.
-     * Turn off encode mode after moving. No action if moving distance less than 0.4inch (1cm).
-     * @param targetDistance: Input value for the target distance in inch.
-     * @param isBackForth: flag for back-forth (true) moving, or left-right moving (false)
-     */
-    private void robotRunToPosition(double targetDistance, boolean isBackForth) {
-
-        if (Math.abs(targetDistance) < 0.4){
-            return;
-        }
-        double countsPerInch = isBackForth? COUNTS_PER_INCH_DRIVE : COUNTS_PER_INCH_STRAFE;
-        int targetPosition = (int)(targetDistance * countsPerInch);
-        int tSign = (int)Math.copySign(1, targetDistance);
-        setTargetPositionsToWheels(targetPosition, isBackForth);
-
-        robotRunWithPositionModeOn(true); // turn on encoder mode,and reset encoders
-
-        robotDriveWithPIDControl(targetDistance, tSign, isBackForth);
-
-        robotRunWithPositionModeOn(false); // turn off encoder mode
-
-        if (debugFlag) {
-            Logging.log("Autonomous - Required moving distance %.2f.", targetDistance);
-            Logging.log("Autonomous - Target Position = %d", targetPosition);
-            Logging.log("Autonomous - PID = %d", tSign);
-            Logging.log("Autonomous - Current Position after moving, FL = %d, FR= %d, BL = %d, BR = %d",
-                    FrontLeftDrive.getCurrentPosition(), FrontRightDrive.getCurrentPosition(),
-                    BackLeftDrive.getCurrentPosition(), BackRightDrive.getCurrentPosition());
-        }
-    }
-
-    /**
-     * Set wheels motors to stop and reset encode to set the current encoder position to zero.
-     * And then set to run to position mode if withPositionMode is on.
-     * Otherwise, set to run without encode mode.
-     * @param withPositionMode: flag for wheels motors run with position mode on,
-     *                       or off(run without encode)
-     */
-    private void robotRunWithPositionModeOn(boolean withPositionMode) {
-        if (withPositionMode) {
-            FrontLeftDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-            FrontLeftDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-
-            FrontRightDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-            FrontRightDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-
-            BackLeftDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-            BackLeftDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-
-            BackRightDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-            BackRightDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        }
-        else {
-            // set back to WITHOUT ENCODER mode
-            FrontLeftDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-            FrontRightDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-            BackLeftDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-            BackRightDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        }
-    }
-
-    /**
-     * resets encoder for motors
-     */
-    private void robotResetEncoder() {
-        BackRightDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        BackLeftDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        FrontRightDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        FrontLeftDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-    }
-    /**
-     * Set wheels motors target positions according to back-forward moving flag
-     * @param tPos: target position values for motors
-     * @param isBF: flag for back-forward moving or left-right moving.
-     *            Back forward(1), or left right (0)
-     */
-    private void setTargetPositionsToWheels(int tPos, boolean isBF) {
-        if (isBF) {
-            FrontLeftDrive.setTargetPosition( tPos );
-            FrontRightDrive.setTargetPosition( tPos );
-            BackLeftDrive.setTargetPosition( tPos );
-            BackRightDrive.setTargetPosition( tPos );
-        }
-        else {// move left or right, positive for right
-            FrontLeftDrive.setTargetPosition( tPos );
-            FrontRightDrive.setTargetPosition( -tPos );
-            BackLeftDrive.setTargetPosition( -tPos );
-            BackRightDrive.setTargetPosition( tPos );
-        }
-    }
-
-    /**
-     * Set wheels motors power
-     * @param p: the power value set to motors (0.0 ~ 1.0)
-     */
-    private void setPowerToWheels(double p) {
-        FrontLeftDrive.setPower(p);
-        FrontRightDrive.setPower(p);
-        BackLeftDrive.setPower(p);
-        BackRightDrive.setPower(p);
-    }
-
-    /**
-     * Resets the cumulative angle tracking to zero.
-     */
-    private void resetAngle() {
-        lastAngles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
-        globalAngle = 0;
-    }
-
-    /**
-     * Get current cumulative angle rotation from last reset.
-     * @return Angle in degrees. + = left, - = right from zero point.
-     */
-    private double getAngle() {
-        // We experimentally determined the Z axis is the axis we want to use for heading angle.
-        // We have to process the angle because the imu works in euler angles so the Z axis is
-        // returned as 0 to +180 or 0 to -180 rolling back to -179 or +179 when rotation passes
-        // 180 degrees. We detect this transition and track the total cumulative angle of rotation.
-
-        Orientation angles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
-
-        double deltaAngle = angles.firstAngle - lastAngles.firstAngle;
-
-        if (deltaAngle < -180)
-            deltaAngle += 360;
-        else if (deltaAngle > 180)
-            deltaAngle -= 360;
-
-        globalAngle += deltaAngle;
-
-        lastAngles = angles;
-
-        return globalAngle;
-    }
-
-    /**
-     * Rotate left or right the number of degrees. Does not support turning more than 359 degrees.
-     * @param degrees Degrees to turn, + is left - is right
-     */
-    private void rotate(double degrees, double power) {
-        resetAngle();
-        robotResetEncoder();
-        robotRunWithPositionModeOn(false); // make sure it is the mode of Run without encoder
-
-        // if degrees > 359 we cap at 359 with same sign as original degrees.
-        if (Math.abs(degrees) > 359.99) {
-            degrees = Math.floorMod(360, (int)degrees);
-        }
-
-        // start pid controller. PID controller will monitor the turn angle with respect to the
-        // target angle and reduce power as we approach the target angle. This is to prevent the
-        // robots momentum from overshooting the turn after we turn off the power. The PID controller
-        // reports onTarget() = true when the difference between turn angle and target angle is within
-        // 1% of target (tolerance) which is about 1 degree. This helps prevent overshoot. Overshoot is
-        // dependant on the motor and gearing configuration, starting power, weight of the robot and the
-        // on target tolerance. If the controller overshoots, it will reverse the sign of the output
-        // turning the robot back toward the setpoint value.
-
-        pidRotate.reset();
-        pidRotate.setInputRange(0, degrees);
-        pidRotate.setSetpoint(degrees); // be sure input range has been set before
-        pidRotate.setOutputRange(MIN_ROTATE_POWER, power);
-        pidRotate.setTolerance(1.5);
-        pidRotate.enable();
-
-        // getAngle() returns + when rotating counter clockwise (left) and - when rotating
-        // clockwise (right).
-
-        // rotate until turn is completed.
-        double maxLoopDuration = runtime.milliseconds();
-        do {
-            int[] motorsPos = {0, 0, 0, 0};
-            double[] motorsPowerCorrection = {0.0, 0.0, 0.0, 0.0};
-            double[] motorPowers = {power, power, power, power};
-            motorsPos[0] = FrontLeftDrive.getCurrentPosition();
-            motorsPos[1] = FrontRightDrive.getCurrentPosition();
-            motorsPos[2] = BackLeftDrive.getCurrentPosition();
-            motorsPos[3] = BackRightDrive.getCurrentPosition();
-
-            calculateRotatePowerCorrection(motorsPos, motorsPowerCorrection);
-
-            power = pidRotate.performPID(getAngle()); // power will be + on left turn.
-
-            for (int i = 0; i <4; i++) {
-                motorPowers[i] = Range.clip(Math.abs(power) + motorsPowerCorrection[i], 0.0, Math.abs(power) * 1.1);
-                motorPowers[i] = Math.copySign(Math.min(motorPowers[i], 1.0), power);
-            }
-            if (debugFlag) {
-                Logging.log("Autonomous - Positions: FL = %d, FR = %d, BL = %d, BR = %d",
-                        motorsPos[0], motorsPos[1], motorsPos[2], motorsPos[3]);
-                Logging.log("Autonomous - Powers: FL = %.2f, FR = %.2f, BL = %.2f, BR = %.2f",
-                        -motorPowers[0], motorPowers[1], -motorPowers[2], motorPowers[3]);
-            }
-            FrontLeftDrive.setPower(-motorPowers[0]);
-            FrontRightDrive.setPower(motorPowers[1]);
-            BackLeftDrive.setPower(-motorPowers[2]);
-            BackRightDrive.setPower(motorPowers[3]);
-
-        } while (opModeIsActive() && (!pidRotate.onAbsTarget()) && ((runtime.milliseconds() - maxLoopDuration) < 1500));
-
-        // turn the motors off.
-        rightMotorSetPower(0);
-        leftMotorSetPower(0);
-
-        rotation = getAngle();
-        Logging.log("Autonomous - IMU angle before turn stop %.2f.", lastAngles.firstAngle);
-
-        // wait for rotation to stop.
-        sleep(50);
-
-        // reset angle tracking on new heading.
-        resetAngle();
-        frontLeftPos = FrontLeftDrive.getCurrentPosition();
-        frontRightPos = FrontRightDrive.getCurrentPosition();
-        backLeftPos = BackLeftDrive.getCurrentPosition();
-        backRightPos = BackRightDrive.getCurrentPosition();
-        Logging.log("Required turning degrees: %.2f.", degrees);
-        Logging.log("Autonomous - Rotated angle is %.2f.", rotation);
-        Logging.log("Autonomous - IMU angle after turn is %.2f.", lastAngles.firstAngle);
-    }
-
-    /**
-     * Set left side motors power.
-     * @param p the power set to front left motor and back left motor
-     */
-    private void leftMotorSetPower(double p) {
-        FrontLeftDrive.setPower(p);
-        BackLeftDrive.setPower(p);
-    }
-
-    private void logEncoderAfterRotate() {
-        Logging.log("Front Left Motor Position: %d", frontLeftPos);
-        Logging.log("Front Right Motor Position: %d", frontRightPos);
-        Logging.log("Back Left Motor Position: %d", backLeftPos);
-        Logging.log("Back Right Motor Position: %d", backRightPos);
-    }
-    /**
-     * Set right side motors power.
-     * @param p the power set to front left right motor and back right motor
-     */
-    private void rightMotorSetPower(double p) {
-        FrontRightDrive.setPower(p);
-        BackRightDrive.setPower(p);
-    }
-
-    /**
-     * Set front motors power.
-     * @param p the power set to front left right motor and front right motor
-     */
-    private void frontMotorSetPower(double p) {
-        FrontRightDrive.setPower(p);
-        FrontLeftDrive.setPower(p);
-    }
-
-    /**
-     * Set front motors power.
-     * @param p the power set to back left right motor and back right motor
-     */
-    private void backMotorSetPower(double p) {
-        BackRightDrive.setPower(p);
-        BackLeftDrive.setPower(p);
-    }
-
-    /**
-     * Set motors power and drive or strafe robot straightly with run_to_position mode by PID control.
-     * @param tDistance the target distance in inch
-     * @param targetSign: Input value for the target distance sign to indicate drive directions. Disable PID if it is zero.
-     * @param isBF: flag for back-forth (true) moving, or left-right moving (false)
-     */
-    private void robotDriveWithPIDControl(double tDistance, int targetSign, boolean isBF ) {
-        double curTime = runtime.seconds();
-        boolean speedRampOn = false;
-        double drivePower = SHORT_DISTANCE_POWER;
-        double tDistanceAbs = Math.abs(tDistance);
-
-        if (tDistanceAbs > SHORT_DISTANCE) {
-            speedRampOn = true;
-        }
-        correction = 0.0;
-        setPowerToWheels(RAMP_START_POWER); // p is always positive for RUN_TO_POSITION mode.
-        sleep(50); // let motors to start moving before checking isBusy.
-
-        while(robotIsBusy() && ((runtime.seconds() - curTime) < MAX_WAIT_TIME)) {
-            if (0 != targetSign) { // no pid if sign = 0;
-                correction = pidDrive.performPID(getAngle());
-            }
-
-            if (speedRampOn) {
-                double currDistance = Math.abs(FrontLeftDrive.getCurrentPosition()) / COUNTS_PER_INCH_DRIVE;
-                drivePower = MAX_POWER;
-                double rampUpPower = MAX_POWER;
-                double rampDownPower = MAX_POWER;
-                //speed ramp up.
-                if (currDistance < RAMP_UP_DISTANCE) {
-                    rampUpPower = (MAX_POWER - RAMP_START_POWER) * currDistance / RAMP_UP_DISTANCE + RAMP_START_POWER;
-                    rampUpPower = Range.clip(rampUpPower, RAMP_START_POWER, drivePower);
-                }
-
-                // speed ramp down
-                if ((tDistanceAbs - currDistance) < RAMP_DOWN_DISTANCE) {
-                    rampDownPower = (MAX_POWER/3 - RAMP_END_POWER) * (tDistanceAbs - currDistance) / RAMP_DOWN_DISTANCE + RAMP_END_POWER;
-                    rampDownPower = Range.clip(rampDownPower, RAMP_END_POWER, drivePower);
-                }
-
-                drivePower = Math.min(rampUpPower, rampDownPower);
-
-                if(debugFlag) {
-                    Logging.log("Autonomous - tDistance = %.2f, currLocation = %.2f", tDistance, currDistance);
-                    Logging.log("Autonomous - rampUpPower = %.2f, rampDownPower = %.2f", rampUpPower, rampDownPower);
-                }
-            }
-
-            if(debugFlag) {
-
-                Logging.log("Autonomous - power = %.2f, correction = %.2f, global angle = %.3f, last angle = %.2f",
-                        drivePower, correction, getAngle(), lastAngles.firstAngle);
-            }
-
-            if (isBF) { // left motors have same power
-                leftMotorSetPower(drivePower - correction * targetSign);
-                rightMotorSetPower(drivePower + correction * targetSign);
-            }
-            else { // front motors have same power
-                frontMotorSetPower(drivePower - correction * targetSign);
-                backMotorSetPower(drivePower + correction * targetSign);
-            }
-        }
-        setPowerToWheels(0.0); //stop moving
-        Logging.log("Autonomous -power = %.2f, global angle = %.3f", drivePower, getAngle());
-    }
-
-    /**
-     * Check if robot motors are busy. Return ture if yes, false otherwise.
-     */
-    private boolean robotIsBusy() {
-        return (FrontRightDrive.isBusy() && FrontLeftDrive.isBusy() &&
-                BackLeftDrive.isBusy() && BackRightDrive.isBusy());
-    }
 
     /** code for autonomous
      * 1. take a picture, recognize the color on sleeve signal
@@ -723,40 +296,40 @@ public class AutonomousRight extends LinearOpMode {
         slider.setPosition(MEDIUM_JUNCTION_POS);
         if (ConceptSleeveDetection.ParkingPosition.UNKNOWN != myParkingLot) {
             //move center of robot to the edge of 3rd mat
-            robotRunToPosition(65.5, true);
+            chassis.robotRunToPosition(65.5, true);
         }
         else {
             sleep(500); // wait for preloaded cone to lifted.
             readColorSensor(backgroundColor);
             Logging.log("Autonomous - complete background color read.");
             // drive robot to sleeve cone
-            robotRunToPosition(21.5, true);
+            chassis.robotRunToPosition(21.5, true);
             readColorSensor(sleeveColor); // reading sleeve signal
             Logging.log("Autonomous - complete Sleeve color read.");
             // push sleeve cone out, and reading background color for calibration
-            robotRunToPosition(44, true);
+            chassis.robotRunToPosition(44, true);
         }
         parkingLocation = calculateParkingLocation(sleeveColor, backgroundColor);
         Logging.log("Autonomous - parking lot aisle location: %.2f", parkingLocation);
 
         // turn robot 0 degrees
         Orientation imuAngles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
-        rotate(-AngleUnit.DEGREES.normalize(imuAngles.firstAngle), AUTO_ROTATE_POWER);
+        chassis.rotate(-AngleUnit.DEGREES.normalize(imuAngles.firstAngle));
         Logging.log("Autonomous - imu angle before back to mat center: %.2f", imuAngles.firstAngle);
 
         // lift slider during strafe to high junction
-        robotRunToPosition(-14.5, true); // get rid of sleeve cone, and back to the center of mat
+        chassis.robotRunToPosition(-14.5, true); // get rid of sleeve cone, and back to the center of mat
         slider.setPosition(HIGH_JUNCTION_POS);
 
         // turn robot 45 degrees left
         imuAngles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
-        rotate(45 - AngleUnit.DEGREES.normalize(imuAngles.firstAngle), AUTO_ROTATE_POWER);
+        chassis.rotate(45 - AngleUnit.DEGREES.normalize(imuAngles.firstAngle));
         Logging.log("Autonomous - imu angle before 45 turning: %.2f", imuAngles.firstAngle);
-        logEncoderAfterRotate();
+        chassis.logEncoderAfterRotate();
         slider.waitRunningComplete();
 
         //drive forward and let V to touch junction
-        robotRunToPosition(matCenterToJunctionDistance, true);
+        chassis.robotRunToPosition(matCenterToJunctionDistance, true);
         Logging.log("Autonomous - Robot V reached junction.");
 
         // Compensate angle, and waiting junction shaking
@@ -772,20 +345,20 @@ public class AutonomousRight extends LinearOpMode {
 
             // right turn 135 degree
             imuAngles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
-            rotate(-AngleUnit.DEGREES.normalize(imuAngles.firstAngle) - 90, AUTO_ROTATE_POWER);
+            chassis.rotate(-AngleUnit.DEGREES.normalize(imuAngles.firstAngle) - 90);
             Logging.log("Autonomous - imu angle before right turn: %.2f", imuAngles.firstAngle);
-            logEncoderAfterRotate();
+            chassis.logEncoderAfterRotate();
 
-            locationShiftCalculation(xyShift, frontLeftPos, frontRightPos, backLeftPos, backRightPos);
+            chassis.locationShiftCalculation(xyShift);
             // strafe to the left a little bit to compensate for the shift from 135 degree rotation(currently 1 inch).
-            robotRunToPosition(xyShift[0], false);
+            chassis.robotRunToPosition(xyShift[0], false);
 
             // adjust position and double rotation for accurate 135
             imuAngles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
-            rotate( -AngleUnit.DEGREES.normalize(imuAngles.firstAngle) - 90, AUTO_ROTATE_POWER);
+            chassis.rotate( -AngleUnit.DEGREES.normalize(imuAngles.firstAngle) - 90);
 
             // drive robot to loading area. xyShift is according to testing from 135 degrees turning.
-            robotRunToPosition(matCenterToConeStack - xyShift[1], true);
+            chassis.robotRunToPosition(matCenterToConeStack - xyShift[1], true);
             Logging.log("Autonomous - Robot has arrived loading area.");
 
             // load cone
@@ -796,9 +369,9 @@ public class AutonomousRight extends LinearOpMode {
 
             // make sure robot is still in the same orientation before back to junction
             imuAngles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
-            rotate(-AngleUnit.DEGREES.normalize(imuAngles.firstAngle) - 90, AUTO_ROTATE_POWER);
+            chassis.rotate(-AngleUnit.DEGREES.normalize(imuAngles.firstAngle) - 90);
             Logging.log("Autonomous - imu angle after load cone: %.2f", imuAngles.firstAngle);
-            logEncoderAfterRotate();
+            chassis.logEncoderAfterRotate();
 
             slider.waitRunningComplete(); // make sure slider has been lifted before moving out cone stack.
 
@@ -806,7 +379,7 @@ public class AutonomousRight extends LinearOpMode {
             slider.setPosition(MEDIUM_JUNCTION_POS);
 
             // drive back to high junction. 1.0 inch has been moved back during autoLoadCone()
-            robotRunToPosition(-(matCenterToConeStack - 1.0), true);
+            chassis.robotRunToPosition(-(matCenterToConeStack - 1.0), true);
             Logging.log("Autonomous - Robot arrived the mat center near high junction.");
 
             // lift slider during rotation.
@@ -814,22 +387,22 @@ public class AutonomousRight extends LinearOpMode {
 
             // left turn 135 degree facing to high junction
             imuAngles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
-            rotate(-AngleUnit.DEGREES.normalize(imuAngles.firstAngle) + 45, AUTO_ROTATE_POWER);
+            chassis.rotate(-AngleUnit.DEGREES.normalize(imuAngles.firstAngle) + 45);
             Logging.log("Autonomous - imu angle before 135 left turn: %.2f", imuAngles.firstAngle);
-            logEncoderAfterRotate();
+            chassis.logEncoderAfterRotate();
 
-            locationShiftCalculation(xyShift, frontLeftPos, frontRightPos, backLeftPos, backRightPos);
-            robotRunToPosition(-xyShift[0], false);
+            chassis.locationShiftCalculation(xyShift);
+            chassis.robotRunToPosition(-xyShift[0], false);
 
             slider.waitRunningComplete(); // make sure slider has been lifted
             Logging.log("Autonomous - slider is positioned to high junction.");
 
             // moving forward V to junction
-            robotRunToPosition(matCenterToJunctionDistance + xyShift[1], true);
+            chassis.robotRunToPosition(matCenterToJunctionDistance + xyShift[1], true);
 
             // Make sure it is 45 degree before V leaving junction
             imuAngles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
-            rotate(- AngleUnit.DEGREES.normalize(imuAngles.firstAngle) + 45, AUTO_ROTATE_POWER);
+            chassis.rotate(- AngleUnit.DEGREES.normalize(imuAngles.firstAngle) + 45);
 
             sleep(100);
             // unload cone & adjust
@@ -845,13 +418,13 @@ public class AutonomousRight extends LinearOpMode {
 
         //rotate 45 degrees to keep orientation at 90
         imuAngles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
-        rotate(-AngleUnit.DEGREES.normalize(imuAngles.firstAngle) + 90, AUTO_ROTATE_POWER);
+        chassis.rotate(-AngleUnit.DEGREES.normalize(imuAngles.firstAngle) + 90);
 
         // lower slider in prep for tele-op
         slider.setPosition(GROUND_POSITION);
 
         // drive to final parking lot
-        robotRunToPosition(-parkingLocation, true); // strafe robot to parking
+        chassis.robotRunToPosition(-parkingLocation, true); // strafe robot to parking
         Logging.log("Autonomous - Arrived at parking lot aisle: %.2f", parkingLocation);
 
         slider.waitRunningComplete();
@@ -954,52 +527,5 @@ public class AutonomousRight extends LinearOpMode {
         Logging.log("Autonomous - Red: %.2f, green: %.2f, blue: %.2f", colorRatio[0], colorRatio[1], colorRatio[2]);
     }
 
-    /**
-     * Calculate the robot center shift due to a big angle turn.
-     * @param shift output array address. The array is for robot center shift in horizontal and
-     *             portrait direction related to robot position after turning. shift[0] is for the
-     *             shift in horizontal direction, shift[1] is for the shift in portrait direction.
-     *              After turning, the robot need to strafe shift[0] inch, and drive shift[1] inch to
-     *              move the robot center back. Strafing to left when shift[0] less than zero. Driving
-     *              back when shift[1] less than zero.
-     * @param flpos the position value read from front left motor encoder.
-     * @param frpos the position value read from front right motor encoder.
-     * @param blpos the position value read from back left motor encoder.
-     * @param brpos the position value read from back right motor encoder.
-     */
-    private void locationShiftCalculation(double [] shift, int flpos, int frpos, int blpos, int brpos) {
-
-        /*
-        * TODO: add the shift calculation according to the algorithm.
-        */
-        //shift[0] = -1.5;
-        //shift[1] = -1.0;
-        return;
-    }
-
-    /**
-     * Calculate the motors power adjustment during rotation to make sure each motor has same
-     * position counts, in order to avoid robot center shift during turning.
-     * @param pos the input of current positions for driving motors.
-     * @param motorsPowerCorrection the output of power correction.
-     */
-    private void calculateRotatePowerCorrection(int[] pos, double [] motorsPowerCorrection) {
-        int posAve = 0;
-        for (int t = 0; t < 4; t++) {
-            pos[t] = Math.abs(pos[t]);
-            posAve += pos[t];
-        }
-        posAve = posAve/4;
-
-        // Do not correct power at the beginning when positions are small to avoid big impact on power.
-        if (posAve < 50) {
-            return;
-        }
-
-        for (int i = 0; i < 4; i++) {
-            // the factor 4.0 below is according to test results. It can be adjust for sensitivity.
-            motorsPowerCorrection[i] = (posAve - pos[i]) * 4.0 / posAve * AUTO_ROTATE_POWER;
-        }
-    }
 }
 
