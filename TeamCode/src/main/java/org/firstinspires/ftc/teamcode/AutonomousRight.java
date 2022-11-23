@@ -999,5 +999,5 @@ public class AutonomousRight extends LinearOpMode {
             motorsPowerCorrection[i] = (posAve - pos[i]) * 4.0 / posAve * AUTO_ROTATE_POWER;
         }
     }
-
 }
+

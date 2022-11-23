@@ -27,6 +27,7 @@ android {
     packagingOptions {
         jniLibs.useLegacyPackaging true
     }
+
     androidResources {
         noCompress 'tflite'
     }
