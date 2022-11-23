@@ -106,8 +106,8 @@ public class AutonomousRight extends LinearOpMode {
     // Driving motor variables
     static final double MAX_CORRECTION_POWER = 0.12;
     static final double MAX_POWER = 1.0 - MAX_CORRECTION_POWER;
-    static final double RAMP_START_POWER = 0.2;
-    static final double RAMP_END_POWER = 0.18;
+    static final double RAMP_START_POWER = 0.35;
+    static final double RAMP_END_POWER = 0.2;
     static final double SHORT_DISTANCE_POWER = 0.35;
     static final double MIN_ROTATE_POWER = 0.21;
     static final double AUTO_ROTATE_POWER = 0.9;
@@ -142,8 +142,9 @@ public class AutonomousRight extends LinearOpMode {
     double robotAutoLoadMovingDistance = 1.0; // in INCH
     double robotAutoUnloadMovingDistance = 3.5; // in INCH
     double backToMatCenterDistance = matCenterToJunctionDistance - robotAutoUnloadMovingDistance - 0.5; // in INCH
-    static final double RAMP_DISTANCE = 10.0; // slow down in the final 10 inch
-    static final double SHORT_DISTANCE = 6.0; // slow down in the final 10 inch
+    static final double RAMP_UP_DISTANCE = 10.0; // ramp up in the first 10 inch
+    static final double RAMP_DOWN_DISTANCE = 9.0; // slow down in the final 9 inch
+    static final double SHORT_DISTANCE = 6.0; // consistent low power for short driving
     static final double matCenterToConeStack = 27.0; // inch
 
     // IMU related
@@ -505,9 +506,9 @@ public class AutonomousRight extends LinearOpMode {
      * @param degrees Degrees to turn, + is left - is right
      */
     private void rotate(double degrees, double power) {
+        resetAngle();
         robotResetEncoder();
         robotRunWithPositionModeOn(false); // make sure it is the mode of Run without encoder
-        resetAngle();
 
         // if degrees > 359 we cap at 359 with same sign as original degrees.
         if (Math.abs(degrees) > 359.99) {
@@ -570,9 +571,10 @@ public class AutonomousRight extends LinearOpMode {
         leftMotorSetPower(0);
 
         rotation = getAngle();
+        Logging.log("Autonomous - IMU angle before turn stop %.2f.", lastAngles.firstAngle);
 
         // wait for rotation to stop.
-        sleep(200);
+        sleep(50);
 
         // reset angle tracking on new heading.
         resetAngle();
@@ -637,8 +639,9 @@ public class AutonomousRight extends LinearOpMode {
         double curTime = runtime.seconds();
         boolean speedRampOn = false;
         double drivePower = SHORT_DISTANCE_POWER;
+        double tDistanceAbs = Math.abs(tDistance);
 
-        if (tDistance > SHORT_DISTANCE) {
+        if (tDistanceAbs > SHORT_DISTANCE) {
             speedRampOn = true;
         }
         correction = 0.0;
@@ -656,28 +659,29 @@ public class AutonomousRight extends LinearOpMode {
                 double rampUpPower = MAX_POWER;
                 double rampDownPower = MAX_POWER;
                 //speed ramp up.
-                if (currDistance < RAMP_DISTANCE) {
-                    rampUpPower = (MAX_POWER - RAMP_START_POWER) * currDistance / RAMP_DISTANCE + RAMP_START_POWER;
+                if (currDistance < RAMP_UP_DISTANCE) {
+                    rampUpPower = (MAX_POWER - RAMP_START_POWER) * currDistance / RAMP_UP_DISTANCE + RAMP_START_POWER;
                     rampUpPower = Range.clip(rampUpPower, RAMP_START_POWER, drivePower);
                 }
 
                 // speed ramp down
-                if ((tDistance - currDistance) < RAMP_DISTANCE) {
-                    rampDownPower = (MAX_POWER - RAMP_END_POWER) * (tDistance - currDistance) / 2.0 / RAMP_DISTANCE + RAMP_END_POWER;
+                if ((tDistanceAbs - currDistance) < RAMP_DOWN_DISTANCE) {
+                    rampDownPower = (MAX_POWER/3 - RAMP_END_POWER) * (tDistanceAbs - currDistance) / RAMP_DOWN_DISTANCE + RAMP_END_POWER;
                     rampDownPower = Range.clip(rampDownPower, RAMP_END_POWER, drivePower);
                 }
 
                 drivePower = Math.min(rampUpPower, rampDownPower);
 
                 if(debugFlag) {
-                    Logging.log("Autonomous - tDistance = %.2f, currLocation = %.2", tDistance, currDistance);
-                    Logging.log("Autonomous - rampUpPower = %.2f, rampDownPower = %.2", rampUpPower, rampDownPower);
+                    Logging.log("Autonomous - tDistance = %.2f, currLocation = %.2f", tDistance, currDistance);
+                    Logging.log("Autonomous - rampUpPower = %.2f, rampDownPower = %.2f", rampUpPower, rampDownPower);
                 }
             }
 
             if(debugFlag) {
-                Logging.log("Autonomous - power = %.2f, correction = %.2f, global angle = %.3f",
-                        drivePower, correction, getAngle());
+
+                Logging.log("Autonomous - power = %.2f, correction = %.2f, global angle = %.3f, last angle = %.2f",
+                        drivePower, correction, getAngle(), lastAngles.firstAngle);
             }
 
             if (isBF) { // left motors have same power
@@ -735,20 +739,19 @@ public class AutonomousRight extends LinearOpMode {
         parkingLocation = calculateParkingLocation(sleeveColor, backgroundColor);
         Logging.log("Autonomous - parking lot aisle location: %.2f", parkingLocation);
 
-        Orientation imuAngles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
-        Logging.log("Autonomous - imu angle before back to mat center: %.2f", imuAngles.firstAngle);
-
         // turn robot 0 degrees
+        Orientation imuAngles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
         rotate(-AngleUnit.DEGREES.normalize(imuAngles.firstAngle), AUTO_ROTATE_POWER);
+        Logging.log("Autonomous - imu angle before back to mat center: %.2f", imuAngles.firstAngle);
 
         // lift slider during strafe to high junction
         robotRunToPosition(-14.5, true); // get rid of sleeve cone, and back to the center of mat
         slider.setPosition(HIGH_JUNCTION_POS);
-        imuAngles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
-        Logging.log("Autonomous - imu angle before 45 turning: %.2f", imuAngles.firstAngle);
 
-       // turn robot 45 degrees left
+        // turn robot 45 degrees left
+        imuAngles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
         rotate(45 - AngleUnit.DEGREES.normalize(imuAngles.firstAngle), AUTO_ROTATE_POWER);
+        Logging.log("Autonomous - imu angle before 45 turning: %.2f", imuAngles.firstAngle);
         logEncoderAfterRotate();
         slider.waitRunningComplete();
 
@@ -769,9 +772,8 @@ public class AutonomousRight extends LinearOpMode {
 
             // right turn 135 degree
             imuAngles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
-            Logging.log("Autonomous - imu angle before right turn: %.2f", imuAngles.firstAngle);
-
             rotate(-AngleUnit.DEGREES.normalize(imuAngles.firstAngle) - 90, AUTO_ROTATE_POWER);
+            Logging.log("Autonomous - imu angle before right turn: %.2f", imuAngles.firstAngle);
             logEncoderAfterRotate();
 
             locationShiftCalculation(xyShift, frontLeftPos, frontRightPos, backLeftPos, backRightPos);
@@ -794,8 +796,8 @@ public class AutonomousRight extends LinearOpMode {
 
             // make sure robot is still in the same orientation before back to junction
             imuAngles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
-            Logging.log("Autonomous - imu angle after load cone: %.2f", imuAngles.firstAngle);
             rotate(-AngleUnit.DEGREES.normalize(imuAngles.firstAngle) - 90, AUTO_ROTATE_POWER);
+            Logging.log("Autonomous - imu angle after load cone: %.2f", imuAngles.firstAngle);
             logEncoderAfterRotate();
 
             slider.waitRunningComplete(); // make sure slider has been lifted before moving out cone stack.
@@ -803,7 +805,7 @@ public class AutonomousRight extends LinearOpMode {
             // lift slider during rotation.
             slider.setPosition(MEDIUM_JUNCTION_POS);
 
-            // drive back to high junction. 1.0 has been moved back during autoLoadCone()
+            // drive back to high junction. 1.0 inch has been moved back during autoLoadCone()
             robotRunToPosition(-(matCenterToConeStack - 1.0), true);
             Logging.log("Autonomous - Robot arrived the mat center near high junction.");
 
@@ -812,8 +814,8 @@ public class AutonomousRight extends LinearOpMode {
 
             // left turn 135 degree facing to high junction
             imuAngles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
-            Logging.log("Autonomous - imu angle before 135 left turn: %.2f", imuAngles.firstAngle);
             rotate(-AngleUnit.DEGREES.normalize(imuAngles.firstAngle) + 45, AUTO_ROTATE_POWER);
+            Logging.log("Autonomous - imu angle before 135 left turn: %.2f", imuAngles.firstAngle);
             logEncoderAfterRotate();
 
             locationShiftCalculation(xyShift, frontLeftPos, frontRightPos, backLeftPos, backRightPos);
