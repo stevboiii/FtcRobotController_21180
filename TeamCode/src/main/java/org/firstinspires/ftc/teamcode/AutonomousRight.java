@@ -61,7 +61,6 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
@@ -71,7 +70,6 @@ import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
-import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 import org.firstinspires.ftc.teamcode.Reno.poc.ConceptSleeveDetection;
 import org.opencv.core.Point;
@@ -98,7 +96,7 @@ public class AutonomousRight extends LinearOpMode {
 
     // Declare OpMode members.
     static final double MAX_WAIT_TIME = 8.0; // in seconds
-    private ElapsedTime runtime = new ElapsedTime();
+    private final ElapsedTime runtime = new ElapsedTime();
     private DcMotor FrontLeftDrive = null;
     private DcMotor FrontRightDrive = null;
     private DcMotor BackLeftDrive = null;
@@ -115,10 +113,10 @@ public class AutonomousRight extends LinearOpMode {
     static final double AUTO_ROTATE_POWER = 0.9;
 
     // slider position variables
-    private SliderWith2Motors slider = new SliderWith2Motors();
+    private final SliderWith2Motors slider = new SliderWith2Motors();
     static final int coneStack5th = (int)(SliderWith2Motors.COUNTS_PER_INCH * 5.2); // the 5th cone position in the cone stack. The lowest cone is the 1th one.
     static final int coneLoadStackGap = (int)(SliderWith2Motors.COUNTS_PER_INCH *  1.32);
-    static final int GROUND_POSITION = (int)(0); // Ground(0 inch)
+    static final int GROUND_POSITION = 0; // Ground(0 inch)
     static final int WALL_POSITION = (int)(SliderWith2Motors.COUNTS_PER_INCH * 7.0);  // 7 inch
     static final int MEDIUM_JUNCTION_POS = (int)(SliderWith2Motors.COUNTS_PER_INCH * 23.5); //23.5 inch
     static final int HIGH_JUNCTION_POS = (int)(SliderWith2Motors.COUNTS_PER_INCH * 33.5); //33.5 inch
@@ -303,8 +301,8 @@ public class AutonomousRight extends LinearOpMode {
 
             autonomousCore();
 
-            Logging.log("Autonomous - total Run Time: " + runtime.toString());
-            telemetry.addData("Status", "Run Time: " + runtime.toString());
+            Logging.log("Autonomous - total Run Time: " + runtime);
+            telemetry.addData("Status", "Run Time: " + runtime);
             telemetry.update(); // update message at the end of loop
         }
 
@@ -326,7 +324,8 @@ public class AutonomousRight extends LinearOpMode {
      * @param backDistanceAfterUnloading: the moving distance after unloading the cone.
      */
     private void autoUnloadCone(double backDistanceAfterUnloading) {
-        robotRunToPosition(-robotAutoUnloadMovingDistance, true); // moving back in inch
+        // moving back in inch
+        robotRunToPosition(-robotAutoUnloadMovingDistance, true);
 
         // move down slider a little bit to unload cone
         int sliderTargetPosition = slider.getPosition();
@@ -339,7 +338,7 @@ public class AutonomousRight extends LinearOpMode {
         sleep(100); // make sure cone has been unloaded
         slider.setPosition(sliderTargetPosition);
         robotRunToPosition(-backDistanceAfterUnloading, true); // move out from junction
-        sliderTargetPosition = WALL_POSITION;
+        slider.setPosition(WALL_POSITION);
         Logging.log("Auto unload - Cone has been unloaded.");
     }
 
