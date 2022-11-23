@@ -113,14 +113,14 @@ public class AutonomousRight extends LinearOpMode {
     static final double AUTO_ROTATE_POWER = 0.9;
 
     // slider position variables
-    private final SliderWith2Motors slider = new SliderWith2Motors();
-    static final int coneStack5th = (int)(SliderWith2Motors.COUNTS_PER_INCH * 5.2); // the 5th cone position in the cone stack. The lowest cone is the 1th one.
-    static final int coneLoadStackGap = (int)(SliderWith2Motors.COUNTS_PER_INCH *  1.32);
+    private final SlidersWith2Motors slider = new SlidersWith2Motors();
+    static final int coneStack5th = (int)(SlidersWith2Motors.COUNTS_PER_INCH * 5.2); // the 5th cone position in the cone stack. The lowest cone is the 1th one.
+    static final int coneLoadStackGap = (int)(SlidersWith2Motors.COUNTS_PER_INCH *  1.32);
     static final int GROUND_POSITION = 0; // Ground(0 inch)
-    static final int WALL_POSITION = (int)(SliderWith2Motors.COUNTS_PER_INCH * 7.0);  // 7 inch
-    static final int MEDIUM_JUNCTION_POS = (int)(SliderWith2Motors.COUNTS_PER_INCH * 23.5); //23.5 inch
-    static final int HIGH_JUNCTION_POS = (int)(SliderWith2Motors.COUNTS_PER_INCH * 33.5); //33.5 inch
-    static final int SLIDER_MOVE_DOWN_POSITION = SliderWith2Motors.COUNTS_PER_INCH * 3; // move down 6 inch to unload cone
+    static final int WALL_POSITION = (int)(SlidersWith2Motors.COUNTS_PER_INCH * 7.0);  // 7 inch
+    static final int MEDIUM_JUNCTION_POS = (int)(SlidersWith2Motors.COUNTS_PER_INCH * 23.5); //23.5 inch
+    static final int HIGH_JUNCTION_POS = (int)(SlidersWith2Motors.COUNTS_PER_INCH * 33.5); //33.5 inch
+    static final int SLIDER_MOVE_DOWN_POSITION = SlidersWith2Motors.COUNTS_PER_INCH * 3; // move down 6 inch to unload cone
 
     // claw servo motor variables
     private Servo clawServo = null;
@@ -331,7 +331,7 @@ public class AutonomousRight extends LinearOpMode {
         // move down slider a little bit to unload cone
         int sliderTargetPosition = slider.getPosition();
         int moveSlider = sliderTargetPosition - SLIDER_MOVE_DOWN_POSITION;
-        moveSlider = Math.max(moveSlider, SliderWith2Motors.SLIDER_MIN_POS);
+        moveSlider = Math.max(moveSlider, SlidersWith2Motors.SLIDER_MIN_POS);
         slider.setPosition(moveSlider);
         slider.waitRunningComplete();
 
@@ -718,7 +718,7 @@ public class AutonomousRight extends LinearOpMode {
         double[] sleeveColor = {1.0, 1.0, 1.0}; // cone color
         double parkingLocation; // distance between cone loading area to parking area, in inch
 
-        slider.setPower(SliderWith2Motors.SLIDER_MOTOR_POWER);
+        slider.setPower(SlidersWith2Motors.SLIDER_MOTOR_POWER);
 
         slider.setPosition(MEDIUM_JUNCTION_POS);
         if (ConceptSleeveDetection.ParkingPosition.UNKNOWN != myParkingLot) {
