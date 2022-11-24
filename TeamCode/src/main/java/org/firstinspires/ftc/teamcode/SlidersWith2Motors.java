@@ -52,10 +52,11 @@ public class SlidersWith2Motors
     //private
     HardwareMap hardwareMap =  null;
     private final ElapsedTime period  = new ElapsedTime();
+    static final double MAX_WAIT_TIME = 8.0; // in seconds
 
     // slider motor variables
-    private DcMotor RightSliderMotor = null;
-    private DcMotor LeftSliderMotor = null;
+    public DcMotor RightSliderMotor = null;
+    public DcMotor LeftSliderMotor = null;
     static final double SLIDER_MOTOR_POWER = 1.0; // slider string gets loose with too high speed
 
     // slider position variables
@@ -79,12 +80,7 @@ public class SlidersWith2Motors
         LeftSliderMotor.setDirection(DcMotorSimple.Direction.FORWARD);
 
         // Reset slider motor encoder counts kept by the motor
-        resetEncorders();
-        setPosition(0);
-
-        // Set motor to run to target encoder position and top with brakes on.
-        RightSliderMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        LeftSliderMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        resetEncoders();
     }
 
     /**
@@ -96,13 +92,6 @@ public class SlidersWith2Motors
         LeftSliderMotor.setTargetPosition(sliderMotorPosition);
     }
 
-    /**
-     * Reset slider motor encoder counts kept by the motor
-     */
-    public void resetEncorders() {
-        RightSliderMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        LeftSliderMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-    }
     /**
      * Read current slider motors position. Return the mean value of left and right motor positions.
      * return slider motor position.
@@ -121,7 +110,7 @@ public class SlidersWith2Motors
 
         while ((Math.abs(RightSliderMotor.getCurrentPosition() - RightSliderMotor.getTargetPosition()) > COUNTS_PER_INCH * 0.2) &&
                 (Math.abs(LeftSliderMotor.getCurrentPosition() - LeftSliderMotor.getTargetPosition()) > COUNTS_PER_INCH * 0.2) &&
-                ((period.seconds() - curTime) < AutonomousRight.MAX_WAIT_TIME)) {
+                ((period.seconds() - curTime) < MAX_WAIT_TIME)) {
             Thread.yield(); // idle
         }
     }
@@ -140,6 +129,18 @@ public class SlidersWith2Motors
     public void setPower(double p) {
         RightSliderMotor.setPower(p);
         LeftSliderMotor.setPower(p);
+    }
+
+    /**
+     * Reset slider motor encoder counts kept by the motor
+     */
+    public void resetEncoders() {
+        stop();
+        RightSliderMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        LeftSliderMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        setPosition(0);
+        RightSliderMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        LeftSliderMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
     }
 
 }

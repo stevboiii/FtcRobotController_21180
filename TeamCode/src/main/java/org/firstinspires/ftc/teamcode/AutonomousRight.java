@@ -87,10 +87,7 @@ import org.openftc.easyopencv.OpenCvCameraRotation;
 //@Disabled
 public class AutonomousRight extends LinearOpMode {
 
-    public static boolean debugFlag = true;
-
     // Declare OpMode members.
-    static final double MAX_WAIT_TIME = 8.0; // in seconds
     private final ElapsedTime runtime = new ElapsedTime();
     private final ChassisWith4Motors chassis = new ChassisWith4Motors();
 

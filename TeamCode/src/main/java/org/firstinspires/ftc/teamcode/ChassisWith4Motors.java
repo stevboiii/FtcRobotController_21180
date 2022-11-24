@@ -50,12 +50,12 @@ import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
  */
 
 
-public class ChassisWith4Motors
-{
+public class ChassisWith4Motors {
     //private
-    HardwareMap hardwareMap =  null;
-    private final ElapsedTime runtime  = new ElapsedTime();
-    private final boolean debugFlag = AutonomousRight.debugFlag;
+    HardwareMap hardwareMap = null;
+    private final ElapsedTime runtime = new ElapsedTime();
+    static final double MAX_WAIT_TIME = 8.0; // in seconds
+    private final boolean debugFlag = true;
 
     // Motors variables
     private DcMotor FrontLeftDrive = null;
@@ -73,9 +73,9 @@ public class ChassisWith4Motors
     static final double AUTO_ROTATE_POWER = 0.9;
 
     // Position variables for autonomous
-    static final double COUNTS_PER_MOTOR_REV = 537.7 ;   // eg: GoBILDA 312 RPM Yellow Jacket
-    static final double DRIVE_GEAR_REDUCTION = 1.0 ;     // No External Gearing.
-    static final double WHEEL_DIAMETER_INCHES = 4.0 ;     // For figuring circumference
+    static final double COUNTS_PER_MOTOR_REV = 537.7;   // eg: GoBILDA 312 RPM Yellow Jacket
+    static final double DRIVE_GEAR_REDUCTION = 1.0;     // No External Gearing.
+    static final double WHEEL_DIAMETER_INCHES = 4.0;     // For figuring circumference
     static final double COUNTS_PER_INCH_DRIVE = (COUNTS_PER_MOTOR_REV * DRIVE_GEAR_REDUCTION) /
             (WHEEL_DIAMETER_INCHES * 3.1415); // Back-forth driving for 1 INCH. It is 42.8
     static final double COUNTS_PER_INCH_STRAFE = 55; // robot strafe 1 INCH. the value is based on test
@@ -92,6 +92,9 @@ public class ChassisWith4Motors
     double correction = 0.0;
     double rotation = 0.0;
     PIDController pidRotate, pidDrive;
+    boolean resetAngleFlag = false;
+    double timeMS = 0.0;
+    final int INERTIA_WAIT_TIME = 500; // in ms
 
     // variables for reading current encoder positions just after a turn.
     int frontLeftPos;
@@ -101,6 +104,7 @@ public class ChassisWith4Motors
 
     /**
      * Init slider motors hardware, and set their behaviors.
+     *
      * @param hardwareMap the Hardware Mappings.
      */
     public void init(HardwareMap hardwareMap,
@@ -110,7 +114,7 @@ public class ChassisWith4Motors
         this.hardwareMap = hardwareMap;
         Logging.log("init driving motors.");
 
-        FrontLeftDrive  = hardwareMap.get(DcMotor.class, frontLeftMotorName);
+        FrontLeftDrive = hardwareMap.get(DcMotor.class, frontLeftMotorName);
         FrontRightDrive = hardwareMap.get(DcMotor.class, frontRightMotorName);
         BackLeftDrive = hardwareMap.get(DcMotor.class, backLeftMotorName);
         BackRightDrive = hardwareMap.get(DcMotor.class, backRightMotorName);
@@ -143,10 +147,10 @@ public class ChassisWith4Motors
         // and named "imu".
         imu = hardwareMap.get(BNO055IMU.class, "imu");
         BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
-        parameters.mode                = BNO055IMU.SensorMode.IMU;
-        parameters.angleUnit           = BNO055IMU.AngleUnit.DEGREES;
-        parameters.accelUnit           = BNO055IMU.AccelUnit.METERS_PERSEC_PERSEC;
-        parameters.loggingEnabled      = false;
+        parameters.mode = BNO055IMU.SensorMode.IMU;
+        parameters.angleUnit = BNO055IMU.AngleUnit.DEGREES;
+        parameters.accelUnit = BNO055IMU.AccelUnit.METERS_PERSEC_PERSEC;
+        parameters.loggingEnabled = false;
         imu.initialize(parameters);
 
         // Set PID proportional value to start reducing power at about 50 degrees of rotation.
@@ -161,7 +165,7 @@ public class ChassisWith4Motors
         // make sure the imu gyro is calibrated before continuing.
         double loopStartTime = runtime.seconds();
         while (!imu.isGyroCalibrated() &&
-                (runtime.seconds() - loopStartTime) < AutonomousRight.MAX_WAIT_TIME) {
+                (runtime.seconds() - loopStartTime) < MAX_WAIT_TIME) {
             Thread.yield(); // idle
         }
         Logging.log("imu calib status", imu.getCalibrationStatus().toString());
@@ -178,8 +182,9 @@ public class ChassisWith4Motors
      * Set wheels motors to stop and reset encode to set the current encoder position to zero.
      * And then set to run to position mode if withPositionMode is on.
      * Otherwise, set to run without encode mode.
+     *
      * @param withPositionMode: flag for wheels motors run with position mode on,
-     *                       or off(run without encode)
+     *                          or off(run without encode)
      */
     private void robotRunWithPositionModeOn(boolean withPositionMode) {
         if (withPositionMode) {
@@ -194,8 +199,7 @@ public class ChassisWith4Motors
 
             BackRightDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
             BackRightDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        }
-        else {
+        } else {
             // set back to WITHOUT ENCODER mode
             FrontLeftDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
             FrontRightDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
@@ -216,27 +220,28 @@ public class ChassisWith4Motors
 
     /**
      * Set wheels motors target positions according to back-forward moving flag
+     *
      * @param tPos: target position values for motors
      * @param isBF: flag for back-forward moving or left-right moving.
-     *            Back forward(1), or left right (0)
+     *              Back forward(1), or left right (0)
      */
     private void setTargetPositions(int tPos, boolean isBF) {
         if (isBF) {
-            FrontLeftDrive.setTargetPosition( tPos );
-            FrontRightDrive.setTargetPosition( tPos );
-            BackLeftDrive.setTargetPosition( tPos );
-            BackRightDrive.setTargetPosition( tPos );
-        }
-        else {// move left or right, positive for right
-            FrontLeftDrive.setTargetPosition( tPos );
-            FrontRightDrive.setTargetPosition( -tPos );
-            BackLeftDrive.setTargetPosition( -tPos );
-            BackRightDrive.setTargetPosition( tPos );
+            FrontLeftDrive.setTargetPosition(tPos);
+            FrontRightDrive.setTargetPosition(tPos);
+            BackLeftDrive.setTargetPosition(tPos);
+            BackRightDrive.setTargetPosition(tPos);
+        } else {// move left or right, positive for right
+            FrontLeftDrive.setTargetPosition(tPos);
+            FrontRightDrive.setTargetPosition(-tPos);
+            BackLeftDrive.setTargetPosition(-tPos);
+            BackRightDrive.setTargetPosition(tPos);
         }
     }
 
     /**
      * Set wheels motors power
+     *
      * @param p: the power value set to motors (0.0 ~ 1.0)
      */
     public void setPowers(double p) {
@@ -249,16 +254,17 @@ public class ChassisWith4Motors
     /**
      * Resets the cumulative angle tracking to zero.
      */
-    private void resetAngle() {
+    public void resetAngle() {
         lastAngles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
         globalAngle = 0;
     }
 
     /**
      * Get current cumulative angle rotation from last reset.
+     *
      * @return Angle in degrees. + = left, - = right from zero point.
      */
-    private double getAngle() {
+    public double getAngle() {
         // We experimentally determined the Z axis is the axis we want to use for heading angle.
         // We have to process the angle because the imu works in euler angles so the Z axis is
         // returned as 0 to +180 or 0 to -180 rolling back to -179 or +179 when rotation passes
@@ -287,6 +293,7 @@ public class ChassisWith4Motors
 
     /**
      * Rotate left or right to make IMU direct to a certain degree.
+     *
      * @param imuTargetAngle the target angle of imu after rotation.
      */
     public void rotateIMUTargetAngle(double imuTargetAngle) {
@@ -299,6 +306,7 @@ public class ChassisWith4Motors
 
     /**
      * Rotate left or right the number of degrees. Does not support turning more than 359 degrees.
+     *
      * @param degrees Degrees to turn, + is left - is right
      */
     private void rotate(double degrees) {
@@ -308,7 +316,7 @@ public class ChassisWith4Motors
         double power = AUTO_ROTATE_POWER;
         // if degrees > 359 we cap at 359 with same sign as original degrees.
         if (Math.abs(degrees) > 359.99) {
-            degrees = Math.floorMod(360, (int)degrees);
+            degrees = Math.floorMod(360, (int) degrees);
         }
 
         // start pid controller. PID controller will monitor the turn angle with respect to the
@@ -345,7 +353,7 @@ public class ChassisWith4Motors
 
             power = pidRotate.performPID(getAngle()); // power will be + on left turn.
 
-            for (int i = 0; i <4; i++) {
+            for (int i = 0; i < 4; i++) {
                 motorPowers[i] = Range.clip(Math.abs(power) + motorsPowerCorrection[i],
                         0.0, Math.abs(power) * 1.1);
                 motorPowers[i] = Math.copySign(Math.min(motorPowers[i], 1.0), power);
@@ -386,6 +394,7 @@ public class ChassisWith4Motors
 
     /**
      * Set left side motors power.
+     *
      * @param p the power set to front left motor and back left motor
      */
     private void leftMotorSetPower(double p) {
@@ -395,6 +404,7 @@ public class ChassisWith4Motors
 
     /**
      * Set right side motors power.
+     *
      * @param p the power set to front left right motor and back right motor
      */
     private void rightMotorSetPower(double p) {
@@ -404,6 +414,7 @@ public class ChassisWith4Motors
 
     /**
      * Set front motors power.
+     *
      * @param p the power set to front left right motor and front right motor
      */
     private void frontMotorSetPower(double p) {
@@ -413,6 +424,7 @@ public class ChassisWith4Motors
 
     /**
      * Set front motors power.
+     *
      * @param p the power set to back left right motor and back right motor
      */
     private void backMotorSetPower(double p) {
@@ -422,11 +434,12 @@ public class ChassisWith4Motors
 
     /**
      * Set motors power and drive or strafe robot straightly with run_to_position mode by PID control.
-     * @param tDistance the target distance in inch
+     *
+     * @param tDistance   the target distance in inch
      * @param targetSign: Input value for the target distance sign to indicate drive directions. Disable PID if it is zero.
-     * @param isBF: flag for back-forth (true) moving, or left-right moving (false)
+     * @param isBF:       flag for back-forth (true) moving, or left-right moving (false)
      */
-    private void driveWithPIDControl(double tDistance, int targetSign, boolean isBF ) {
+    private void driveWithPIDControl(double tDistance, int targetSign, boolean isBF) {
         double curTime = runtime.seconds();
         boolean speedRampOn = false;
         double drivePower = SHORT_DISTANCE_POWER;
@@ -440,8 +453,7 @@ public class ChassisWith4Motors
         sleep(10); // let motors to start moving before checking isBusy.
 
         // in seconds
-        double MAX_WAIT_TIME = AutonomousRight.MAX_WAIT_TIME;
-        while(robotIsBusy() && ((runtime.seconds() - curTime) < MAX_WAIT_TIME)) {
+        while (robotIsBusy() && ((runtime.seconds() - curTime) < MAX_WAIT_TIME)) {
             if (0 != targetSign) { // no pid if sign = 0;
                 correction = pidDrive.performPID(getAngle());
             }
@@ -459,19 +471,19 @@ public class ChassisWith4Motors
 
                 // speed ramp down
                 if ((tDistanceAbs - currDistance) < RAMP_DOWN_DISTANCE) {
-                    rampDownPower = (MAX_POWER/3 - RAMP_END_POWER) * (tDistanceAbs - currDistance) / RAMP_DOWN_DISTANCE + RAMP_END_POWER;
+                    rampDownPower = (MAX_POWER / 3 - RAMP_END_POWER) * (tDistanceAbs - currDistance) / RAMP_DOWN_DISTANCE + RAMP_END_POWER;
                     rampDownPower = Range.clip(rampDownPower, RAMP_END_POWER, drivePower);
                 }
 
                 drivePower = Math.min(rampUpPower, rampDownPower);
 
-                if(debugFlag) {
+                if (debugFlag) {
                     Logging.log("tDistance = %.2f, currLocation = %.2f", tDistance, currDistance);
                     Logging.log("rampUpPower = %.2f, rampDownPower = %.2f", rampUpPower, rampDownPower);
                 }
             }
 
-            if(debugFlag) {
+            if (debugFlag) {
 
                 Logging.log("power = %.2f, correction = %.2f, global angle = %.3f, last angle = %.2f",
                         drivePower, correction, getAngle(), lastAngles.firstAngle);
@@ -480,8 +492,7 @@ public class ChassisWith4Motors
             if (isBF) { // left motors have same power
                 leftMotorSetPower(drivePower - correction * targetSign);
                 rightMotorSetPower(drivePower + correction * targetSign);
-            }
-            else { // front motors have same power
+            } else { // front motors have same power
                 frontMotorSetPower(drivePower - correction * targetSign);
                 backMotorSetPower(drivePower + correction * targetSign);
             }
@@ -500,15 +511,15 @@ public class ChassisWith4Motors
 
     /**
      * Calculate the robot center shift due to a big angle turn.
+     *
      * @param shift output array address. The array is for robot center shift in horizontal and
-     *             portrait direction related to robot position after turning. shift[0] is for the
-     *             shift in horizontal direction, shift[1] is for the shift in portrait direction.
+     *              portrait direction related to robot position after turning. shift[0] is for the
+     *              shift in horizontal direction, shift[1] is for the shift in portrait direction.
      *              After turning, the robot need to strafe shift[0] inch, and drive shift[1] inch to
      *              move the robot center back. Strafing to left when shift[0] less than zero. Driving
      *              back when shift[1] less than zero.
-     *
      */
-    public void locationShiftCalculation(double [] shift) {
+    public void locationShiftCalculation(double[] shift) {
 
         /*
          * TODO: add the shift calculation according to the algorithm.
@@ -518,16 +529,17 @@ public class ChassisWith4Motors
     /**
      * Calculate the motors power adjustment during rotation to make sure each motor has same
      * position counts, in order to avoid robot center shift during turning.
-     * @param pos the input of current positions for driving motors.
+     *
+     * @param pos                   the input of current positions for driving motors.
      * @param motorsPowerCorrection the output of power correction.
      */
-    private void calculateRotatePowerCorrection(int[] pos, double [] motorsPowerCorrection) {
+    private void calculateRotatePowerCorrection(int[] pos, double[] motorsPowerCorrection) {
         int posAve = 0;
         for (int t = 0; t < 4; t++) {
             pos[t] = Math.abs(pos[t]);
             posAve += pos[t];
         }
-        posAve = posAve/4;
+        posAve = posAve / 4;
 
         // Do not correct power at the beginning when positions are small to avoid big impact on power.
         if (posAve < 50) {
@@ -543,17 +555,18 @@ public class ChassisWith4Motors
     /**
      * Set target position for every wheel motor, and set power to motors to move the robot.
      * Turn off encode mode after moving. No action if moving distance less than 0.4inch (1cm).
+     *
      * @param targetDistance: Input value for the target distance in inch.
-     * @param isBackForth: flag for back-forth (true) moving, or left-right moving (false)
+     * @param isBackForth:    flag for back-forth (true) moving, or left-right moving (false)
      */
     public void runToPosition(double targetDistance, boolean isBackForth) {
 
-        if (Math.abs(targetDistance) < 0.4){
+        if (Math.abs(targetDistance) < 0.4) {
             return;
         }
-        double countsPerInch = isBackForth? COUNTS_PER_INCH_DRIVE : COUNTS_PER_INCH_STRAFE;
-        int targetPosition = (int)(targetDistance * countsPerInch);
-        int tSign = (int)Math.copySign(1, targetDistance);
+        double countsPerInch = isBackForth ? COUNTS_PER_INCH_DRIVE : COUNTS_PER_INCH_STRAFE;
+        int targetPosition = (int) (targetDistance * countsPerInch);
+        int tSign = (int) Math.copySign(1, targetDistance);
         setTargetPositions(targetPosition, isBackForth);
 
         robotRunWithPositionModeOn(true); // turn on encoder mode,and reset encoders
@@ -575,6 +588,7 @@ public class ChassisWith4Motors
     /**
      * Sleeps for the given amount of milliseconds, or until the thread is interrupted.
      * This is simple shorthand for the operating-system-provided sleep() method.
+     *
      * @param milliseconds amount of time to sleep, in milliseconds
      */
     private void sleep(long milliseconds) {
@@ -583,6 +597,49 @@ public class ChassisWith4Motors
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
+    }
+
+    public void drivingWithPID(double drive, double turn, double strafe) {
+        double FrontLeftPower;
+        double FrontRightPower;
+        double BackLeftPower;
+        double BackRightPower;
+
+        // only enable correction when the turn button is not pressed.
+        if (Math.abs(turn) > Math.ulp(0)) {
+            pidDrive.reset();
+            timeMS = runtime.milliseconds();
+            resetAngleFlag = true;
+            resetAngle(); // Resets the cumulative angle tracking to zero.
+        }
+
+        // turn on PID after a duration time to avoid robot inertia after turning.
+        if (((runtime.milliseconds() - timeMS) > INERTIA_WAIT_TIME) && resetAngleFlag) {
+            resetAngleFlag = false;
+            resetAngle(); // Resets the cumulative angle tracking to zero.
+            pidDrive.enable();
+        }
+
+        // Use PID with imu input to drive in a straight line.
+        if ((Math.abs(drive) > Math.ulp(0)) || (Math.abs(strafe) > Math.ulp(0))) {
+            correction = pidDrive.performPID(getAngle());
+        } else {
+            correction = 0.0;
+        }
+
+        FrontLeftPower = Range.clip(-drive - turn - strafe - correction, -1, 1);
+        FrontRightPower = Range.clip(-drive + turn + strafe + correction, -1, 1);
+        BackLeftPower = Range.clip(-drive - turn + strafe - correction, -1, 1);
+        BackRightPower = Range.clip(-drive + turn - strafe + correction, -1, 1);
+
+        // Send calculated power to wheels
+        FrontLeftDrive.setPower(FrontLeftPower);
+        FrontRightDrive.setPower(FrontRightPower);
+        BackLeftDrive.setPower(BackLeftPower);
+        BackRightDrive.setPower(BackRightPower);
+
+        Logging.log("Motors power", "FL (%.2f), FR (%.2f), BL (%.2f), BR (%.2f)",
+                FrontLeftPower, FrontRightPower, BackLeftPower, BackRightPower);
     }
 }
 
