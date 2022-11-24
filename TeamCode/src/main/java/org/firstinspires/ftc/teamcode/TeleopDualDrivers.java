@@ -54,24 +54,13 @@
 
 package org.firstinspires.ftc.teamcode;
 
-import android.app.Activity;
-import android.graphics.Color;
-import android.view.View;
-
-import androidx.annotation.NonNull;
-
-import com.qualcomm.hardware.rev.Rev2mDistanceSensor;
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.hardware.Gamepad;
-import com.qualcomm.robotcore.hardware.NormalizedColorSensor;
-import com.qualcomm.robotcore.hardware.NormalizedRGBA;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
@@ -102,7 +91,7 @@ public class TeleopDualDrivers extends LinearOpMode {
 
     // Declare OpMode members.
     static final double MAX_WAIT_TIME = 8; // in seconds
-    private ElapsedTime runtime = new ElapsedTime();
+    private final ElapsedTime runtime = new ElapsedTime();
     private DcMotor FrontLeftDrive = null;
     private DcMotor FrontRightDrive = null;
     private DcMotor BackLeftDrive = null;
@@ -127,7 +116,7 @@ public class TeleopDualDrivers extends LinearOpMode {
     static final int coneStack5th = (int)(COUNTS_PER_INCH * 5.2); // the 5th cone position in the cone stack. The lowest cone is the 1th one.
 
     // 10inch for low junction, 20inch for medium, and 30 for high
-    static final int WALL_POSITION = (int)(COUNTS_PER_INCH * 7);
+    static final int WALL_POSITION = (int)(COUNTS_PER_INCH * 7.0);
     static final int LOW_JUNCTION_POS = (int)(COUNTS_PER_INCH * 13.5); // 13.5 inch
     static final int MEDIUM_JUNCTION_POS = (int)(COUNTS_PER_INCH * 23.5);
     static final int HIGH_JUNCTION_POS = (int)(COUNTS_PER_INCH * 33.5);
@@ -233,7 +222,6 @@ public class TeleopDualDrivers extends LinearOpMode {
 
         // sensors
         boolean distanceSensorEnabled = true;
-        int redBackground = 1, greenBackground = 1, blueBackground = 1;
 
         // IMU
         BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
@@ -414,7 +402,7 @@ public class TeleopDualDrivers extends LinearOpMode {
 
             // use right stick_Y to lift or down slider continuously
             sliderTargetPosition -= (int)((sliderUpDown) * motorPositionInc);
-            if (sliderSkipLimitation) {
+            if (!sliderSkipLimitation) {
                 sliderTargetPosition = Range.clip(sliderTargetPosition, SLIDER_MIN_POS,
                         FOUR_STAGE_SLIDER_MAX_POS);
             }
@@ -422,6 +410,8 @@ public class TeleopDualDrivers extends LinearOpMode {
             if (sliderResetPosition) {
                 RightSliderMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
                 LeftSliderMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+                RightSliderMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                LeftSliderMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             }
             setSliderPosition(sliderTargetPosition);
             RightSliderMotor.setPower(SLIDER_MOTOR_POWER); // slider motor start movement
@@ -488,7 +478,7 @@ public class TeleopDualDrivers extends LinearOpMode {
                         BackLeftDrive.getCurrentPosition(), BackRightDrive.getCurrentPosition());
 
                 // running time
-                telemetry.addData("Status", "Run Time: " + runtime.toString());
+                telemetry.addData("Status", "Run Time: " + runtime);
             }
             telemetry.update(); // update message at the end of while loop
         }

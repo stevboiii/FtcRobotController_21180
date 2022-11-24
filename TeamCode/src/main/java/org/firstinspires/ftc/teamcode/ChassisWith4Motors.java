@@ -115,7 +115,6 @@ public class ChassisWith4Motors
         BackLeftDrive = hardwareMap.get(DcMotor.class, backLeftMotorName);
         BackRightDrive = hardwareMap.get(DcMotor.class, backRightMotorName);
 
-        imu = hardwareMap.get(BNO055IMU.class, "imu");
 
         // Most robots need the motor on one side to be reversed to drive forward
         // Reverse the motor that runs backwards when connected directly to the battery
@@ -138,6 +137,11 @@ public class ChassisWith4Motors
         robotRunWithPositionModeOn(false); // turn off encoder mode as default
 
         // IMU
+
+        // Retrieve and initialize the IMU. We expect the IMU to be attached to an I2C port
+        // on a Core Device Interface Module, configured to be a sensor of type "AdaFruit IMU",
+        // and named "imu".
+        imu = hardwareMap.get(BNO055IMU.class, "imu");
         BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
         parameters.mode                = BNO055IMU.SensorMode.IMU;
         parameters.angleUnit           = BNO055IMU.AngleUnit.DEGREES;
@@ -203,7 +207,7 @@ public class ChassisWith4Motors
     /**
      * resets encoder for motors
      */
-    private void robotResetEncoder() {
+    private void resetEncoders() {
         BackRightDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         BackLeftDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         FrontRightDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -216,7 +220,7 @@ public class ChassisWith4Motors
      * @param isBF: flag for back-forward moving or left-right moving.
      *            Back forward(1), or left right (0)
      */
-    private void setTargetPositionsToWheels(int tPos, boolean isBF) {
+    private void setTargetPositions(int tPos, boolean isBF) {
         if (isBF) {
             FrontLeftDrive.setTargetPosition( tPos );
             FrontRightDrive.setTargetPosition( tPos );
@@ -235,7 +239,7 @@ public class ChassisWith4Motors
      * Set wheels motors power
      * @param p: the power value set to motors (0.0 ~ 1.0)
      */
-    public void setPowerToWheels(double p) {
+    public void setPowers(double p) {
         FrontLeftDrive.setPower(p);
         FrontRightDrive.setPower(p);
         BackLeftDrive.setPower(p);
@@ -276,13 +280,30 @@ public class ChassisWith4Motors
         return globalAngle;
     }
 
+    public double getIMUFirstAngle() {
+        Orientation imuAngles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
+        return imuAngles.firstAngle;
+    }
+
+    /**
+     * Rotate left or right to make IMU direct to a certain degree.
+     * @param imuTargetAngle the target angle of imu after rotation.
+     */
+    public void rotateIMUTargetAngle(double imuTargetAngle) {
+        double imuFirstAngle = getIMUFirstAngle();
+        rotate(-AngleUnit.DEGREES.normalize(imuFirstAngle) + imuTargetAngle);
+        if (debugFlag) {
+            Logging.log("imu angle before rotation: %.2f", imuFirstAngle);
+        }
+    }
+
     /**
      * Rotate left or right the number of degrees. Does not support turning more than 359 degrees.
      * @param degrees Degrees to turn, + is left - is right
      */
-    public void rotate(double degrees) {
+    private void rotate(double degrees) {
         resetAngle();
-        robotResetEncoder();
+        resetEncoders();
         robotRunWithPositionModeOn(false); // make sure it is the mode of Run without encoder
         double power = AUTO_ROTATE_POWER;
         // if degrees > 359 we cap at 359 with same sign as original degrees.
@@ -329,9 +350,9 @@ public class ChassisWith4Motors
                 motorPowers[i] = Math.copySign(Math.min(motorPowers[i], 1.0), power);
             }
             if (debugFlag) {
-                Logging.log("Autonomous - Positions: FL = %d, FR = %d, BL = %d, BR = %d",
+                Logging.log("Positions: FL = %d, FR = %d, BL = %d, BR = %d",
                         motorsPos[0], motorsPos[1], motorsPos[2], motorsPos[3]);
-                Logging.log("Autonomous - Powers: FL = %.2f, FR = %.2f, BL = %.2f, BR = %.2f",
+                Logging.log("Powers: FL = %.2f, FR = %.2f, BL = %.2f, BR = %.2f",
                         -motorPowers[0], motorPowers[1], -motorPowers[2], motorPowers[3]);
             }
             FrontLeftDrive.setPower(-motorPowers[0]);
@@ -346,8 +367,11 @@ public class ChassisWith4Motors
         leftMotorSetPower(0);
 
         rotation = getAngle();
-        Logging.log("Autonomous - IMU angle before turn stop %.2f.", lastAngles.firstAngle);
-
+        if (debugFlag) {
+            Logging.log("Required turning degrees: %.2f.", degrees);
+            Logging.log("IMU angle before turn stop %.2f.", lastAngles.firstAngle);
+            Logging.log("Rotated angle is %.2f.", rotation);
+        }
         // wait for rotation to stop.
         sleep(50);
 
@@ -357,9 +381,8 @@ public class ChassisWith4Motors
         frontRightPos = FrontRightDrive.getCurrentPosition();
         backLeftPos = BackLeftDrive.getCurrentPosition();
         backRightPos = BackRightDrive.getCurrentPosition();
-        Logging.log("Required turning degrees: %.2f.", degrees);
-        Logging.log("Autonomous - Rotated angle is %.2f.", rotation);
-        Logging.log("Autonomous - IMU angle after turn is %.2f.", lastAngles.firstAngle);
+
+        Logging.log("IMU angle after turning stop is %.2f.", lastAngles.firstAngle);
     }
 
     /**
@@ -371,12 +394,6 @@ public class ChassisWith4Motors
         BackLeftDrive.setPower(p);
     }
 
-    public void logEncoderAfterRotate() {
-        Logging.log("Front Left Motor Position: %d", frontLeftPos);
-        Logging.log("Front Right Motor Position: %d", frontRightPos);
-        Logging.log("Back Left Motor Position: %d", backLeftPos);
-        Logging.log("Back Right Motor Position: %d", backRightPos);
-    }
     /**
      * Set right side motors power.
      * @param p the power set to front left right motor and back right motor
@@ -410,7 +427,7 @@ public class ChassisWith4Motors
      * @param targetSign: Input value for the target distance sign to indicate drive directions. Disable PID if it is zero.
      * @param isBF: flag for back-forth (true) moving, or left-right moving (false)
      */
-    private void robotDriveWithPIDControl(double tDistance, int targetSign, boolean isBF ) {
+    private void driveWithPIDControl(double tDistance, int targetSign, boolean isBF ) {
         double curTime = runtime.seconds();
         boolean speedRampOn = false;
         double drivePower = SHORT_DISTANCE_POWER;
@@ -420,7 +437,7 @@ public class ChassisWith4Motors
             speedRampOn = true;
         }
         correction = 0.0;
-        setPowerToWheels(RAMP_START_POWER); // p is always positive for RUN_TO_POSITION mode.
+        setPowers(RAMP_START_POWER); // p is always positive for RUN_TO_POSITION mode.
         sleep(10); // let motors to start moving before checking isBusy.
 
         // in seconds
@@ -450,14 +467,14 @@ public class ChassisWith4Motors
                 drivePower = Math.min(rampUpPower, rampDownPower);
 
                 if(debugFlag) {
-                    Logging.log("Autonomous - tDistance = %.2f, currLocation = %.2f", tDistance, currDistance);
-                    Logging.log("Autonomous - rampUpPower = %.2f, rampDownPower = %.2f", rampUpPower, rampDownPower);
+                    Logging.log("tDistance = %.2f, currLocation = %.2f", tDistance, currDistance);
+                    Logging.log("rampUpPower = %.2f, rampDownPower = %.2f", rampUpPower, rampDownPower);
                 }
             }
 
             if(debugFlag) {
 
-                Logging.log("Autonomous - power = %.2f, correction = %.2f, global angle = %.3f, last angle = %.2f",
+                Logging.log("power = %.2f, correction = %.2f, global angle = %.3f, last angle = %.2f",
                         drivePower, correction, getAngle(), lastAngles.firstAngle);
             }
 
@@ -470,7 +487,7 @@ public class ChassisWith4Motors
                 backMotorSetPower(drivePower + correction * targetSign);
             }
         }
-        setPowerToWheels(0.0); //stop moving
+        setPowers(0.0); //stop moving
         Logging.log("Autonomous -power = %.2f, global angle = %.3f", drivePower, getAngle());
     }
 
@@ -530,7 +547,7 @@ public class ChassisWith4Motors
      * @param targetDistance: Input value for the target distance in inch.
      * @param isBackForth: flag for back-forth (true) moving, or left-right moving (false)
      */
-    public void robotRunToPosition(double targetDistance, boolean isBackForth) {
+    public void runToPosition(double targetDistance, boolean isBackForth) {
 
         if (Math.abs(targetDistance) < 0.4){
             return;
@@ -538,24 +555,29 @@ public class ChassisWith4Motors
         double countsPerInch = isBackForth? COUNTS_PER_INCH_DRIVE : COUNTS_PER_INCH_STRAFE;
         int targetPosition = (int)(targetDistance * countsPerInch);
         int tSign = (int)Math.copySign(1, targetDistance);
-        setTargetPositionsToWheels(targetPosition, isBackForth);
+        setTargetPositions(targetPosition, isBackForth);
 
         robotRunWithPositionModeOn(true); // turn on encoder mode,and reset encoders
 
-        robotDriveWithPIDControl(targetDistance, tSign, isBackForth);
+        driveWithPIDControl(targetDistance, tSign, isBackForth);
 
         robotRunWithPositionModeOn(false); // turn off encoder mode
 
         if (debugFlag) {
-            Logging.log("Autonomous - Required moving distance %.2f.", targetDistance);
-            Logging.log("Autonomous - Target Position = %d", targetPosition);
-            Logging.log("Autonomous - PID = %d", tSign);
-            Logging.log("Autonomous - Current Position after moving, FL = %d, FR= %d, BL = %d, BR = %d",
+            Logging.log("Required moving distance %.2f.", targetDistance);
+            Logging.log("Target Position = %d", targetPosition);
+            Logging.log("PID = %d", tSign);
+            Logging.log("Current Position after moving, FL = %d, FR= %d, BL = %d, BR = %d",
                     FrontLeftDrive.getCurrentPosition(), FrontRightDrive.getCurrentPosition(),
                     BackLeftDrive.getCurrentPosition(), BackRightDrive.getCurrentPosition());
         }
     }
 
+    /**
+     * Sleeps for the given amount of milliseconds, or until the thread is interrupted.
+     * This is simple shorthand for the operating-system-provided sleep() method.
+     * @param milliseconds amount of time to sleep, in milliseconds
+     */
     private void sleep(long milliseconds) {
         try {
             Thread.sleep(milliseconds);
@@ -563,7 +585,5 @@ public class ChassisWith4Motors
             Thread.currentThread().interrupt();
         }
     }
-
-
 }
 
