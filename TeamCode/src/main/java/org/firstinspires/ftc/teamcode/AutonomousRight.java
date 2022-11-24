@@ -137,36 +137,17 @@ public class AutonomousRight extends LinearOpMode {
         telemetry.addData("Status", "Initialized");
         Logging.log("Status - Initialized");
 
-        // Initialize the hardware variables. Note that the strings used here as parameters
-        // to 'get' must correspond to the names assigned during the robot configuration
-        // step (using the FTC Robot Controller app on the phone).
-
-        slider.init(hardwareMap, "RightSlider", "LeftSlider");
-        chassis.init(hardwareMap, "FrontLeft", "FrontRight",
-                "BackLeft", "BackRight");
-
-        armServo = hardwareMap.get(Servo.class, "ArmServo");
-        clawServo = hardwareMap.get(Servo.class, "ClawServo");
-        distanceSensor = hardwareMap.get(DistanceSensor.class, "DistanceSensor");
-        colorSensor = hardwareMap.get(ColorSensor.class, "ColorSensor");
-
-        // claw servo motor initial
-        clawServoPosition = CLAW_CLOSE_POS;
-        clawServo.setPosition(clawServoPosition);
-
-        // camera for sleeve color detect
+        // camera for sleeve color detect, start camera at the beginning.
         int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier(
                 "cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
 
         sleeveDetection = new ConceptSleeveDetection();
 
-        // Sleeve cone location in the image
-        Point sleeveTopLeftPoint = new Point(145, 168);
-
         // Width and height for the bounding box of sleeve cone
         ConceptSleeveDetection.REGION_WIDTH = 30;
-        ConceptSleeveDetection.REGION_HEIGHT = 50;
-        ConceptSleeveDetection.SLEEVE_TOPLEFT_ANCHOR_POINT = sleeveTopLeftPoint;
+        ConceptSleeveDetection.REGION_HEIGHT = 60;
+        ConceptSleeveDetection.SLEEVE_TOPLEFT_ANCHOR_POINT.x = 0;
+        ConceptSleeveDetection.SLEEVE_TOPLEFT_ANCHOR_POINT.y = 140;
 
         if (isCameraInstalled) {
             camera = OpenCvCameraFactory.getInstance().createWebcam(hardwareMap.get(
@@ -177,7 +158,7 @@ public class AutonomousRight extends LinearOpMode {
             camera.openCameraDeviceAsync(new OpenCvCamera.AsyncCameraOpenListener() {
                 @Override
                 public void onOpened() {
-                    camera.startStreaming(320, 240, OpenCvCameraRotation.SIDEWAYS_LEFT);
+                    camera.startStreaming(320, 240, OpenCvCameraRotation.UPRIGHT);
                     Logging.log("Start stream to detect sleeve color.");
                     telemetry.addData("Start stream to detect sleeve color.", "ok");
                     telemetry.update();
@@ -191,9 +172,32 @@ public class AutonomousRight extends LinearOpMode {
                 }
             });
         }
-        myParkingLot = sleeveDetection.getPosition();
+
+        // Initialize the hardware variables. Note that the strings used here as parameters
+        // to 'get' must correspond to the names assigned during the robot configuration
+        // step (using the FTC Robot Controller app on the phone).
+        slider.init(hardwareMap, "RightSlider", "LeftSlider");
+        chassis.init(hardwareMap, "FrontLeft", "FrontRight",
+                "BackLeft", "BackRight");
+
+        armServo = hardwareMap.get(Servo.class, "ArmServo");
+        clawServo = hardwareMap.get(Servo.class, "ClawServo");
+        distanceSensor = hardwareMap.get(DistanceSensor.class, "DistanceSensor");
+        colorSensor = hardwareMap.get(ColorSensor.class, "ColorSensor");
+
+        // claw servo motor initial
+        clawServoPosition = CLAW_CLOSE_POS;
+        clawServo.setPosition(clawServoPosition);
+
+        double tmp = runtime.seconds();
+        while ((ConceptSleeveDetection.ParkingPosition.UNKNOWN == myParkingLot) &&
+                ((runtime.seconds() - tmp) < 3.0)) {
+            myParkingLot = sleeveDetection.getPosition();
+        }
+        Logging.log("Parking Lot position: %s", myParkingLot.toString());
 
         while (!isStarted()) {
+            myParkingLot = sleeveDetection.getPosition();
             telemetry.addData("Parking position: ", myParkingLot);
             telemetry.addData("Mode", "waiting for start");
             telemetry.update();
@@ -356,7 +360,6 @@ public class AutonomousRight extends LinearOpMode {
         int channel = 0;
         double location;
         String color;
-
         if(ConceptSleeveDetection.ParkingPosition.UNKNOWN != myParkingLot) { // camera
             switch (myParkingLot) {
                 case LEFT: // red

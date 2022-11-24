@@ -25,11 +25,11 @@ public class ConceptSleeveDetection extends OpenCvPipeline {
     }
 
     // TOPLEFT anchor point for the bounding box
-    public static Point SLEEVE_TOPLEFT_ANCHOR_POINT = new Point(145, 168);
+    public static Point SLEEVE_TOPLEFT_ANCHOR_POINT = new Point(0, 140);
 
     // Width and height for the bounding box
     public static int REGION_WIDTH = 30;
-    public static int REGION_HEIGHT = 50;
+    public static int REGION_HEIGHT = 60;
 
     // Color definitions
     private final Scalar
@@ -56,10 +56,14 @@ public class ConceptSleeveDetection extends OpenCvPipeline {
         Scalar sumColors = Core.sumElems(areaMat);
 
         // Get the minimum RGB value from every single channel
-        double maxColor = Math.max(sumColors.val[0], Math.min(sumColors.val[1], sumColors.val[2]));
+        double maxColor = Math.max(sumColors.val[0], Math.max(sumColors.val[1], sumColors.val[2]));
+        Logging.log("Sleeve max color = %.2f, %.2f, %.2f", sumColors.val[0], sumColors.val[1], sumColors.val[2]);
 
         // Change the bounding box color based on the sleeve color
-        if (sumColors.val[0] == maxColor) {
+        if (maxColor < Math.ulp(0)){
+            position = ParkingPosition.UNKNOWN;
+        }
+        else if (Math.abs(sumColors.val[0] - maxColor) < Math.ulp(0)) {
             position = ParkingPosition.LEFT;
             Imgproc.rectangle(
                     input,
@@ -68,7 +72,7 @@ public class ConceptSleeveDetection extends OpenCvPipeline {
                     RED,
                     2
             );
-        } else if (sumColors.val[1] == maxColor) {
+        } else if (Math.abs(sumColors.val[1] - maxColor) < Math.ulp(0)) {
             position = ParkingPosition.CENTER;
             Imgproc.rectangle(
                     input,
@@ -87,6 +91,7 @@ public class ConceptSleeveDetection extends OpenCvPipeline {
                     2
             );
         }
+        Logging.log("Sleeve position: %s", position.toString());
         
         // Release and return input
         areaMat.release();
