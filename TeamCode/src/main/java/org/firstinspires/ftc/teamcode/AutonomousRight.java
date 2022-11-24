@@ -120,7 +120,6 @@ public class AutonomousRight extends LinearOpMode {
     double backToMatCenterDistance = matCenterToJunctionDistance - robotAutoUnloadMovingDistance - 0.5; // in INCH
     static final double matCenterToConeStack = 27.0; // inch
 
-
     // sensors
     private DistanceSensor distanceSensor;
     private ColorSensor colorSensor;// best collected within 2cm of the target
@@ -131,7 +130,6 @@ public class AutonomousRight extends LinearOpMode {
     OpenCvCamera camera;
     String webcamName = "Webcam 1";
     boolean isCameraInstalled = true;
-
 
     // variables for location shift
     double[] xyShift = {0.0, -0.5};
@@ -183,10 +181,16 @@ public class AutonomousRight extends LinearOpMode {
                 @Override
                 public void onOpened() {
                     camera.startStreaming(320, 240, OpenCvCameraRotation.SIDEWAYS_LEFT);
+                    Logging.log("Start stream to detect sleeve color.");
+                    telemetry.addData("Start stream to detect sleeve color.", "ok");
+                    telemetry.update();
                 }
 
                 @Override
                 public void onError(int errorCode) {
+                    Logging.log("Start stream error.");
+                    telemetry.addData("Start stream to detect sleeve color.", "error");
+                    telemetry.update();
                 }
             });
         }
@@ -194,13 +198,11 @@ public class AutonomousRight extends LinearOpMode {
 
         while (!isStarted()) {
             telemetry.addData("Parking position: ", myParkingLot);
+            telemetry.addData("Mode", "waiting for start");
             telemetry.update();
         }
 
         // Wait for the game to start (driver presses PLAY)
-        telemetry.addData("Mode", "waiting for start");
-        telemetry.update();
-
         waitForStart();
         runtime.reset();
 
@@ -233,8 +235,9 @@ public class AutonomousRight extends LinearOpMode {
         double parkingLocation; // distance between cone loading area to parking area, in inch
 
         slider.setPower(SlidersWith2Motors.SLIDER_MOTOR_POWER);
-
         slider.setPosition(MEDIUM_JUNCTION_POS);
+
+        // driving forward
         if (ConceptSleeveDetection.ParkingPosition.UNKNOWN != myParkingLot) {
             //move center of robot to the edge of 3rd mat
             chassis.runToPosition(65.5, true);
@@ -253,17 +256,15 @@ public class AutonomousRight extends LinearOpMode {
         parkingLocation = calculateParkingLocation(sleeveColor, backgroundColor);
         Logging.log("Autonomous - parking lot aisle location: %.2f", parkingLocation);
 
-        // turn robot 0 degrees
+        // turn robot to make sure it is at 0 degree before backing to mat center
         chassis.rotateIMUTargetAngle(0.0);
-        
 
-        // lift slider during strafe to high junction
-        chassis.runToPosition(-14.5, true); // get rid of sleeve cone, and back to the center of mat
+        // driving back to mat center
+        chassis.runToPosition(-14.5, true);
+
+        // lift slider during rotating robot 45 degrees left
         slider.setPosition(HIGH_JUNCTION_POS);
-
-        // turn robot 45 degrees left
         chassis.rotateIMUTargetAngle(45.0);
-   
         slider.waitRunningComplete();
 
         //drive forward and let V to touch junction
@@ -276,56 +277,49 @@ public class AutonomousRight extends LinearOpMode {
         for(int autoLoop = 0; autoLoop < 2; autoLoop++) {
             Logging.log("Autonomous - loop index: %d ", autoLoop);
 
-            slider.setPosition(WALL_POSITION);
-
-            // right turn 135 degree
+            // right turn 135 degree (45 + 90).
             chassis.rotateIMUTargetAngle(-90.0);
-
-            chassis.locationShiftCalculation(xyShift);
-            // strafe to the left a little bit to compensate for the shift from 135 degree rotation(currently 1 inch).
-            chassis.runToPosition(xyShift[0], false);
-
             sleep(100); // wait for chassis stop from previous rotation inertia.
 
-            // adjust position and double rotation for accurate 135
+            chassis.locationShiftCalculation(xyShift);
+
+            // strafe to the left a little bit to compensate for the shift from previous rotation.
+            chassis.runToPosition(xyShift[0], false);
+
+            // Rotation for accurate 135 degrees
             chassis.rotateIMUTargetAngle(-90.0);
 
-            // drive robot to loading area. xyShift is according to testing from 135 degrees turning.
+            // drive robot to loading area. xyShift is according to the testing from 135 degrees turning.
             chassis.runToPosition(matCenterToConeStack - xyShift[1], true);
             Logging.log("Autonomous - Robot has arrived loading area.");
 
             // load cone
             autoLoadCone(coneStack5th - coneLoadStackGap * autoLoop);
 
-            // lift cone
+            // lift cone and make sure robot is in the same orientation before back to junction
             slider.setPosition(WALL_POSITION);
-
-            // make sure robot is still in the same orientation before back to junction
             chassis.rotateIMUTargetAngle(-90.0);
+            slider.waitRunningComplete(); // make sure slider has been lifted.
 
-            slider.waitRunningComplete(); // make sure slider has been lifted before moving out cone stack.
-
-            // lift slider during rotation.
+            // lift slider during driving back to mat center. 1 inch has been moved back during autoLoadCone.
             slider.setPosition(MEDIUM_JUNCTION_POS);
-
-            // drive back to high junction. 1.0 inch has been moved back during autoLoadCone()
             chassis.runToPosition(-(matCenterToConeStack - 1.0), true);
             Logging.log("Autonomous - Robot arrived the mat center near high junction.");
 
-            // lift slider during rotation.
+            // lift slider during left turning 135 degree facing to high junction.
             slider.setPosition(HIGH_JUNCTION_POS);
-
-            // left turn 135 degree facing to high junction
             chassis.rotateIMUTargetAngle(45.0);
-
             sleep(100); // wait for chassis stop from previous rotation inertia.
 
+            //Rotation for accurate 45 degrees
             chassis.rotateIMUTargetAngle(45.0);
 
+            // adjust xy shift.
             chassis.locationShiftCalculation(xyShift);
             chassis.runToPosition(-xyShift[0], false);
 
-            slider.waitRunningComplete(); // make sure slider has been lifted
+            // make sure slider has been lifted
+            slider.waitRunningComplete();
             Logging.log("Autonomous - slider is positioned to high junction.");
 
             // moving forward V to junction
@@ -335,14 +329,11 @@ public class AutonomousRight extends LinearOpMode {
             chassis.rotateIMUTargetAngle(45.0);
 
             sleep(100); // avoid junction shaking
-            // unload cone & adjust
-            autoUnloadCone(backToMatCenterDistance - 0.5); // 0.5 is for the cone has been in junction
-            Logging.log("Autonomous - cone %d has been unloaded.", autoLoop + 2);
 
-            // lower slider and get ready to load cone
-            slider.setPosition(WALL_POSITION);
+            // unload cone & adjust
+            autoUnloadCone(backToMatCenterDistance - 0.5); // 0.5 is because the cone has been in junction
+            Logging.log("Autonomous - cone %d has been unloaded.", autoLoop + 2);
         }
-        Logging.log("Autonomous -  last cone has been unloaded.");
 
         //rotate 45 degrees to keep orientation at 90
         chassis.rotateIMUTargetAngle(90.0);
@@ -355,7 +346,6 @@ public class AutonomousRight extends LinearOpMode {
         Logging.log("Autonomous - Arrived at parking lot aisle: %.2f", parkingLocation);
 
         slider.waitRunningComplete();
-        Logging.log("Autonomous - slider lowered to ground.");
         Logging.log("Autonomous - Autonomous complete.");
     }
 
@@ -423,7 +413,6 @@ public class AutonomousRight extends LinearOpMode {
             }
             Logging.log("Autonomous - channel = %d, max value = %.3f", channel, maxV);
             Logging.log("Autonomous - Sleeve color from color sensor is %s", color);
-            telemetry.addData("color", "rgb ratio, %.2f, %.2f, %.2f", ratio[0], ratio[1], ratio[2]);
         }
 
         return location;
@@ -445,11 +434,7 @@ public class AutonomousRight extends LinearOpMode {
             colorRatio[1] = (double) g / total;
             colorRatio[2] = (double) b / total;
         }
-        telemetry.addLine()
-                .addData("Red  ", colorSensor.red())
-                .addData("Green", colorSensor.green())
-                .addData("Blue ", colorSensor.blue());
-        telemetry.addData("color", "rgb ratio, %.2f, %.2f, %.2f", colorRatio[0], colorRatio[1], colorRatio[2]);
+
         Logging.log("Autonomous - Red: %d, green: %d, blue: %d", colorSensor.red(), colorSensor.green(), colorSensor.blue());
         Logging.log("Autonomous - Red: %.2f, green: %.2f, blue: %.2f", colorRatio[0], colorRatio[1], colorRatio[2]);
     }
@@ -503,4 +488,3 @@ public class AutonomousRight extends LinearOpMode {
     }
 
 }
-

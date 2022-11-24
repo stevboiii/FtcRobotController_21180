@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode.Reno.poc;
 
+import org.firstinspires.ftc.teamcode.Logging;
 import org.opencv.core.Core;
 import org.opencv.core.Mat;
 import org.opencv.core.Point;
@@ -49,6 +50,7 @@ public class ConceptSleeveDetection extends OpenCvPipeline {
 
     @Override
     public Mat processFrame(Mat input) {
+        Logging.log("Start Opcv process to detect sleeve color.");
         // Get the submat frame, and then sum all the values
         Mat areaMat = input.submat(new Rect(sleeve_pointA, sleeve_pointB));
         Scalar sumColors = Core.sumElems(areaMat);
