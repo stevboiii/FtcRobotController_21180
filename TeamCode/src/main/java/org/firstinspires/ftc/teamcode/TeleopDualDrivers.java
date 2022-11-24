@@ -154,7 +154,7 @@ public class TeleopDualDrivers extends LinearOpMode {
         clawServo.setPosition(clawServoPosition);
 
         // sensors
-        boolean distanceSensorEnabled = true;
+        boolean distanceSensorEnabled = false;
 
         //game pad setting
         float robotMovingBackForth;
