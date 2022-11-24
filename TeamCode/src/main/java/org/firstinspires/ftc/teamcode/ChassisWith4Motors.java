@@ -346,7 +346,8 @@ public class ChassisWith4Motors
             power = pidRotate.performPID(getAngle()); // power will be + on left turn.
 
             for (int i = 0; i <4; i++) {
-                motorPowers[i] = Range.clip(Math.abs(power) + motorsPowerCorrection[i], 0.0, Math.abs(power) * 1.1);
+                motorPowers[i] = Range.clip(Math.abs(power) + motorsPowerCorrection[i],
+                        0.0, Math.abs(power) * 1.1);
                 motorPowers[i] = Math.copySign(Math.min(motorPowers[i], 1.0), power);
             }
             if (debugFlag) {
@@ -372,8 +373,6 @@ public class ChassisWith4Motors
             Logging.log("IMU angle before turn stop %.2f.", lastAngles.firstAngle);
             Logging.log("Rotated angle is %.2f.", rotation);
         }
-        // wait for rotation to stop.
-        sleep(50);
 
         // reset angle tracking on new heading.
         resetAngle();

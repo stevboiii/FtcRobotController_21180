@@ -410,6 +410,7 @@ public class TeleopDualDrivers extends LinearOpMode {
             if (sliderResetPosition) {
                 RightSliderMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
                 LeftSliderMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+                sliderTargetPosition = SLIDER_MIN_POS;
                 RightSliderMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
                 LeftSliderMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             }

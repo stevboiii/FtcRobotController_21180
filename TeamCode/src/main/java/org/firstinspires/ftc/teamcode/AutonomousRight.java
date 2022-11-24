@@ -285,6 +285,8 @@ public class AutonomousRight extends LinearOpMode {
             // strafe to the left a little bit to compensate for the shift from 135 degree rotation(currently 1 inch).
             chassis.runToPosition(xyShift[0], false);
 
+            sleep(100); // wait for chassis stop from previous rotation inertia.
+
             // adjust position and double rotation for accurate 135
             chassis.rotateIMUTargetAngle(-90.0);
 
@@ -316,6 +318,10 @@ public class AutonomousRight extends LinearOpMode {
             // left turn 135 degree facing to high junction
             chassis.rotateIMUTargetAngle(45.0);
 
+            sleep(100); // wait for chassis stop from previous rotation inertia.
+
+            chassis.rotateIMUTargetAngle(45.0);
+
             chassis.locationShiftCalculation(xyShift);
             chassis.runToPosition(-xyShift[0], false);
 
@@ -328,7 +334,7 @@ public class AutonomousRight extends LinearOpMode {
             // Make sure it is 45 degree before V leaving junction
             chassis.rotateIMUTargetAngle(45.0);
 
-            sleep(100);
+            sleep(100); // avoid junction shaking
             // unload cone & adjust
             autoUnloadCone(backToMatCenterDistance - 0.5); // 0.5 is for the cone has been in junction
             Logging.log("Autonomous - cone %d has been unloaded.", autoLoop + 2);
