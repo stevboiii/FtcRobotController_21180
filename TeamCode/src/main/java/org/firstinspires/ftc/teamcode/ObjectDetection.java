@@ -8,12 +8,41 @@ import org.opencv.core.Scalar;
 import org.opencv.imgproc.Imgproc;
 import org.openftc.easyopencv.OpenCvPipeline;
 
-import java.util.Arrays;
-
 /**
- * Used to detect cone position.
+ * Used to detect cone position, and sleeve color.
  */
 public class ObjectDetection extends OpenCvPipeline {
+
+    // for sleeve color detect
+    public enum ParkingLot {
+        LEFT,
+        CENTER,
+        RIGHT,
+        UNKNOWN
+    }
+
+    // TOPLEFT anchor point for the bounding box
+    public static Point SLEEVE_TOPLEFT_ANCHOR_POINT = new Point(10, 100);
+
+    // Width and height for the bounding box
+    public static int SLEEVE_REGION_WIDTH = 60;
+    public static int SLEEVE_REGION_HEIGHT = 100;
+
+    // Anchor point definitions
+    Point sleeve_pointA = new Point(
+            SLEEVE_TOPLEFT_ANCHOR_POINT.x,
+            SLEEVE_TOPLEFT_ANCHOR_POINT.y);
+    Point sleeve_pointB = new Point(
+            SLEEVE_TOPLEFT_ANCHOR_POINT.x + SLEEVE_REGION_WIDTH,
+            SLEEVE_TOPLEFT_ANCHOR_POINT.y + SLEEVE_REGION_HEIGHT);
+
+    // Running variable storing the parking position
+    private volatile ParkingLot parkingLot = ParkingLot.UNKNOWN;
+
+
+    //check if cone has been detected.
+    private static final double cameraToConeDistance = 13.0; // inch
+    private static final double cameraViewAngle = 0.67;
 
     // TOP-LEFT anchor point for the bounding box
     public static Point Object_TOPLEFT_POINT = new Point(0, 0);
@@ -41,11 +70,78 @@ public class ObjectDetection extends OpenCvPipeline {
 
     @Override
     public Mat processFrame(Mat input) {
-        Logging.log("Start Opcv process to detect cone.");
 
+        Logging.log("Start Opcv process to detect sleeve color.");
+        sleeveColorDetect(input);
+
+        Logging.log("Start Opcv process to detect cone.");
+        conePositionDetect(input);
+
+        return input;
+    }
+
+    // Returns an enum being the current position where the robot will park
+    public double getConePosition() {
+        return objectPosition;
+    }
+
+    // Returns an enum being the current position where the robot will park
+    public ParkingLot getParkingLot() {
+        return parkingLot;
+    }
+
+    private void sleeveColorDetect(Mat sleeveImageInput) {
+        Logging.log("Start Opcv process to detect sleeve color.");
+        // Get the submat frame, and then sum all the values
+        Mat areaMat = sleeveImageInput.submat(new Rect(sleeve_pointA, sleeve_pointB));
+        Scalar sumColors = Core.sumElems(areaMat);
+
+        // Get the minimum RGB value from every single channel
+        double maxColor = Math.max(sumColors.val[0], Math.max(sumColors.val[1], sumColors.val[2]));
+        Logging.log("Sleeve max color = %.2f, %.2f, %.2f", sumColors.val[0], sumColors.val[1], sumColors.val[2]);
+
+        // Change the bounding box color based on the sleeve color
+        if (maxColor < Math.ulp(0)){
+            parkingLot = ParkingLot.UNKNOWN;
+        }
+        else if (Math.abs(sumColors.val[0] - maxColor) < Math.ulp(0)) {
+            parkingLot = ParkingLot.LEFT;
+            Imgproc.rectangle(
+                    sleeveImageInput,
+                    sleeve_pointA,
+                    sleeve_pointB,
+                    RED,
+                    2
+            );
+        } else if (Math.abs(sumColors.val[1] - maxColor) < Math.ulp(0)) {
+            parkingLot = ParkingLot.CENTER;
+            Imgproc.rectangle(
+                    sleeveImageInput,
+                    sleeve_pointA,
+                    sleeve_pointB,
+                    GREEN,
+                    2
+            );
+        } else {
+            parkingLot = ParkingLot.RIGHT;
+            Imgproc.rectangle(
+                    sleeveImageInput,
+                    sleeve_pointA,
+                    sleeve_pointB,
+                    BLUE,
+                    2
+            );
+        }
+        Logging.log("Sleeve position: %s", parkingLot.toString());
+
+        // Release and return input
+        areaMat.release();
+    }
+
+    private void conePositionDetect(Mat inputCone) {
         // Get the submat frame, and then sum all the values
 
-        Mat areaMat = input.submat(new Rect(pointA, pointB));
+        Mat areaMat = inputCone.submat(new Rect(pointA, pointB));
 
         Logging.log("areaMat has %d channels, and type is %d, depth is %d.",
                 areaMat.channels(), areaMat.type(), areaMat.depth());
@@ -64,7 +160,6 @@ public class ObjectDetection extends OpenCvPipeline {
             filterK[i] = 1.0/kernelSize/kernelSize;
         }
 
-
         Mat kernel = new Mat(kernelSize, kernelSize, doubleAreaMat.type() ) {
             {
                 for (int i = 0; i < kernelSize; i++) {
@@ -74,8 +169,6 @@ public class ObjectDetection extends OpenCvPipeline {
                 }
             }
         };
-        Logging.log("kernel(16,16)[0] = %.4f", kernel.get(16,16)[0]);
-        Logging.log("kernel(16,16)[1] = %.4f", kernel.get(16,16)[1]);
 
         Imgproc.filter2D(doubleAreaMat, destMat, -1, kernel);
 
@@ -130,28 +223,21 @@ public class ObjectDetection extends OpenCvPipeline {
                 maxCh = k;
             }
         }
-
-
-        //check if cone has been detected.
-        double cameraToConeDistance = 13.0; // inch
-        double cameraViewAngle = 0.67;
-
-
         Logging.log("detected channel is %d, location pixel is %d", maxCh, maxPixelLoc[maxCh] );
-        objectPosition = (maxPixelLoc[maxCh] * 2.0 / lineM.cols()) * Math.tan(cameraViewAngle/2.0) * cameraToConeDistance;
+
+        objectPosition = (maxPixelLoc[maxCh] * 2.0 / lineM.cols()) * Math.tan(cameraViewAngle / 2) * cameraToConeDistance;
         Logging.log("detected channel is %d, location pixel is %d, distance is %.2f", maxCh, maxPixelLoc[maxCh], objectPosition );
 
         Imgproc.rectangle(
-                input,
+                inputCone,
                 pointA,
                 pointB,
                 GREEN,
                 2
         );
 
-
-        Imgproc.line(input, new Point(maxPixelLoc[0], 0), new Point(maxPixelLoc[0], input.rows()), RED);
-        Imgproc.line(input, new Point(maxPixelLoc[2], 0), new Point(maxPixelLoc[2], input.rows()), BLUE);
+        Imgproc.line(inputCone, new Point(maxPixelLoc[0], 0), new Point(maxPixelLoc[0], inputCone.rows()), RED);
+        Imgproc.line(inputCone, new Point(maxPixelLoc[2], 0), new Point(maxPixelLoc[2], inputCone.rows()), BLUE);
 
         // Release and return input
         areaMat.release();
@@ -159,12 +245,5 @@ public class ObjectDetection extends OpenCvPipeline {
         kernel.release();
         doubleAreaMat.release();
         destMat.release();
-
-        return input;
-    }
-
-    // Returns an enum being the current position where the robot will park
-    public double getPosition() {
-        return objectPosition;
     }
 }

@@ -64,7 +64,6 @@ import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
-import org.firstinspires.ftc.teamcode.Reno.poc.ConceptSleeveDetection;
 import org.openftc.easyopencv.OpenCvCamera;
 import org.openftc.easyopencv.OpenCvCameraFactory;
 import org.openftc.easyopencv.OpenCvCameraRotation;
@@ -121,14 +120,12 @@ public class AutonomousRight extends LinearOpMode {
     private ColorSensor colorSensor;// best collected within 2cm of the target
 
     // camera and sleeve color
-    ConceptSleeveDetection.ParkingPosition myParkingLot = ConceptSleeveDetection.ParkingPosition.UNKNOWN;
-    ConceptSleeveDetection sleeveDetection;
+    ObjectDetection.ParkingLot myParkingLot = ObjectDetection.ParkingLot.UNKNOWN;
+    ObjectDetection coneSleeveDetect;
     OpenCvCamera camera;
     String webcamName = "Webcam 1";
     boolean isCameraInstalled = true;
     boolean coneDetectOn = false;
-
-    ObjectDetection coneDetect;
 
     // variables for location shift
     double[] xyShift = {0.0, -0.5};
@@ -143,21 +140,13 @@ public class AutonomousRight extends LinearOpMode {
         int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier(
                 "cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
 
-        sleeveDetection = new ConceptSleeveDetection();
-
-        coneDetect = new ObjectDetection();
-
-        // Width and height for the bounding box of sleeve cone
-        ConceptSleeveDetection.REGION_WIDTH = 30;
-        ConceptSleeveDetection.REGION_HEIGHT = 60;
-        ConceptSleeveDetection.SLEEVE_TOPLEFT_ANCHOR_POINT.x = 0;
-        ConceptSleeveDetection.SLEEVE_TOPLEFT_ANCHOR_POINT.y = 140;
+        coneSleeveDetect = new ObjectDetection();
 
         if (isCameraInstalled) {
             camera = OpenCvCameraFactory.getInstance().createWebcam(hardwareMap.get(
                     WebcamName.class, webcamName), cameraMonitorViewId);
 
-            camera.setPipeline(sleeveDetection);
+            camera.setPipeline(coneSleeveDetect);
 
             camera.openCameraDeviceAsync(new OpenCvCamera.AsyncCameraOpenListener() {
                 @Override
@@ -194,42 +183,19 @@ public class AutonomousRight extends LinearOpMode {
         clawServo.setPosition(clawServoPosition);
 
         runtime.reset();
-        while ((ConceptSleeveDetection.ParkingPosition.UNKNOWN == myParkingLot) &&
+        while ((ObjectDetection.ParkingLot.UNKNOWN == myParkingLot) &&
                 ((runtime.seconds()) < 3.0)) {
-            myParkingLot = sleeveDetection.getPosition();
+            myParkingLot = coneSleeveDetect.getParkingLot();
         }
         Logging.log("Parking Lot position: %s", myParkingLot.toString());
 
         while (!isStarted()) {
-            myParkingLot = sleeveDetection.getPosition();
+            myParkingLot = coneSleeveDetect.getParkingLot();
             telemetry.addData("Parking position: ", myParkingLot);
-            telemetry.addData("Cone position:"," %.2f", coneDetect.getPosition());
+            telemetry.addData("Cone position:"," %.2f", coneSleeveDetect.getConePosition());
 
             telemetry.addData("Mode", "waiting for start");
             telemetry.update();
-        }
-
-
-        if (coneDetectOn) {
-
-            camera.setPipeline(coneDetect);
-
-            camera.openCameraDeviceAsync(new OpenCvCamera.AsyncCameraOpenListener() {
-                @Override
-                public void onOpened() {
-                    camera.startStreaming(320, 240, OpenCvCameraRotation.UPRIGHT);
-                    Logging.log("Start stream to detect cone.");
-                    telemetry.addData("Start stream to detect cone.", "ok");
-                    telemetry.update();
-                }
-
-                @Override
-                public void onError(int errorCode) {
-                    Logging.log("Start stream error.");
-                    telemetry.addData("Start stream to detect cone.", "error");
-                    telemetry.update();
-                }
-            });
         }
 
         // Wait for the game to start (driver presses PLAY)
@@ -268,7 +234,7 @@ public class AutonomousRight extends LinearOpMode {
         slider.setPosition(MEDIUM_JUNCTION_POS);
 
         // driving forward
-        if (ConceptSleeveDetection.ParkingPosition.UNKNOWN != myParkingLot) {
+        if (ObjectDetection.ParkingLot.UNKNOWN != myParkingLot) {
             //move center of robot to the edge of 3rd mat
             chassis.runToPosition(65.5, true);
         }
@@ -349,8 +315,8 @@ public class AutonomousRight extends LinearOpMode {
             chassis.runToPosition(-xyShift[0], false);
 
             if (coneDetectOn) {
-                Logging.log("Cone position: %.2f", coneDetect.getPosition());
-                chassis.runToPosition(coneDetect.getPosition(), false);
+                Logging.log("Cone position: %.2f", coneSleeveDetect.getConePosition());
+                chassis.runToPosition(coneSleeveDetect.getConePosition(), false);
                 Logging.log("shift driving completed");
             }
 
@@ -395,7 +361,7 @@ public class AutonomousRight extends LinearOpMode {
         int channel = 0;
         double location;
         String color;
-        if(ConceptSleeveDetection.ParkingPosition.UNKNOWN != myParkingLot) { // camera
+        if(ObjectDetection.ParkingLot.UNKNOWN != myParkingLot) { // camera
             switch (myParkingLot) {
                 case LEFT: // red
                     location = -2.0 * 12; // parking lot #1 (red), first mat
