@@ -65,7 +65,6 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.teamcode.Reno.poc.ConceptSleeveDetection;
-import org.opencv.core.Point;
 import org.openftc.easyopencv.OpenCvCamera;
 import org.openftc.easyopencv.OpenCvCameraFactory;
 import org.openftc.easyopencv.OpenCvCameraRotation;
@@ -127,6 +126,9 @@ public class AutonomousRight extends LinearOpMode {
     OpenCvCamera camera;
     String webcamName = "Webcam 1";
     boolean isCameraInstalled = true;
+    boolean coneDetectOn = false;
+
+    ObjectDetection coneDetect;
 
     // variables for location shift
     double[] xyShift = {0.0, -0.5};
@@ -142,6 +144,8 @@ public class AutonomousRight extends LinearOpMode {
                 "cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
 
         sleeveDetection = new ConceptSleeveDetection();
+
+        coneDetect = new ObjectDetection();
 
         // Width and height for the bounding box of sleeve cone
         ConceptSleeveDetection.REGION_WIDTH = 30;
@@ -189,9 +193,9 @@ public class AutonomousRight extends LinearOpMode {
         clawServoPosition = CLAW_CLOSE_POS;
         clawServo.setPosition(clawServoPosition);
 
-        double tmp = runtime.seconds();
+        runtime.reset();
         while ((ConceptSleeveDetection.ParkingPosition.UNKNOWN == myParkingLot) &&
-                ((runtime.seconds() - tmp) < 3.0)) {
+                ((runtime.seconds()) < 3.0)) {
             myParkingLot = sleeveDetection.getPosition();
         }
         Logging.log("Parking Lot position: %s", myParkingLot.toString());
@@ -199,8 +203,33 @@ public class AutonomousRight extends LinearOpMode {
         while (!isStarted()) {
             myParkingLot = sleeveDetection.getPosition();
             telemetry.addData("Parking position: ", myParkingLot);
+            telemetry.addData("Cone position:"," %.2f", coneDetect.getPosition());
+
             telemetry.addData("Mode", "waiting for start");
             telemetry.update();
+        }
+
+
+        if (coneDetectOn) {
+
+            camera.setPipeline(coneDetect);
+
+            camera.openCameraDeviceAsync(new OpenCvCamera.AsyncCameraOpenListener() {
+                @Override
+                public void onOpened() {
+                    camera.startStreaming(320, 240, OpenCvCameraRotation.UPRIGHT);
+                    Logging.log("Start stream to detect cone.");
+                    telemetry.addData("Start stream to detect cone.", "ok");
+                    telemetry.update();
+                }
+
+                @Override
+                public void onError(int errorCode) {
+                    Logging.log("Start stream error.");
+                    telemetry.addData("Start stream to detect cone.", "error");
+                    telemetry.update();
+                }
+            });
         }
 
         // Wait for the game to start (driver presses PLAY)
@@ -318,6 +347,12 @@ public class AutonomousRight extends LinearOpMode {
             // adjust xy shift.
             chassis.locationShiftCalculation(xyShift);
             chassis.runToPosition(-xyShift[0], false);
+
+            if (coneDetectOn) {
+                Logging.log("Cone position: %.2f", coneDetect.getPosition());
+                chassis.runToPosition(coneDetect.getPosition(), false);
+                Logging.log("shift driving completed");
+            }
 
             // make sure slider has been lifted
             slider.waitRunningComplete();

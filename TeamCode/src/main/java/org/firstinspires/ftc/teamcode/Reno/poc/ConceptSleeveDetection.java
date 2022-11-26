@@ -6,7 +6,6 @@ import org.opencv.core.Mat;
 import org.opencv.core.Point;
 import org.opencv.core.Rect;
 import org.opencv.core.Scalar;
-import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
 import org.openftc.easyopencv.OpenCvPipeline;
 
@@ -25,11 +24,11 @@ public class ConceptSleeveDetection extends OpenCvPipeline {
     }
 
     // TOPLEFT anchor point for the bounding box
-    public static Point SLEEVE_TOPLEFT_ANCHOR_POINT = new Point(0, 140);
+    public static Point SLEEVE_TOPLEFT_ANCHOR_POINT = new Point(10, 100);
 
     // Width and height for the bounding box
-    public static int REGION_WIDTH = 30;
-    public static int REGION_HEIGHT = 60;
+    public static int REGION_WIDTH = 60;
+    public static int REGION_HEIGHT = 100;
 
     // Color definitions
     private final Scalar
