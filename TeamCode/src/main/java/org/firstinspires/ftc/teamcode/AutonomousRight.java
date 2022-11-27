@@ -112,7 +112,7 @@ public class AutonomousRight extends LinearOpMode {
     double matCenterToJunctionDistance = 15;
     double robotAutoLoadMovingDistance = 1.0; // in INCH
     double robotAutoUnloadMovingDistance = 3.5; // in INCH
-    double backToMatCenterDistance = matCenterToJunctionDistance - robotAutoUnloadMovingDistance - 0.5; // in INCH
+    double backToMatCenterDistance = matCenterToJunctionDistance - robotAutoUnloadMovingDistance - 1.0; // in INCH
     static final double matCenterToConeStack = 27.0; // inch
 
     // sensors
@@ -125,10 +125,9 @@ public class AutonomousRight extends LinearOpMode {
     OpenCvCamera camera;
     String webcamName = "Webcam 1";
     boolean isCameraInstalled = true;
-    boolean coneDetectOn = false;
 
     // variables for location shift
-    double[] xyShift = {0.0, -0.5};
+    double[] xyShift = {0.0, 0.0};
 
 
     @Override
@@ -192,8 +191,8 @@ public class AutonomousRight extends LinearOpMode {
         while (!isStarted()) {
             myParkingLot = coneSleeveDetect.getParkingLot();
             telemetry.addData("Parking position: ", myParkingLot);
+            telemetry.addData("Cone has detected:", coneSleeveDetect.isConeDetected()? "Yes" : "No");
             telemetry.addData("Cone position:"," %.2f", coneSleeveDetect.getConePosition());
-
             telemetry.addData("Mode", "waiting for start");
             telemetry.update();
         }
@@ -279,7 +278,7 @@ public class AutonomousRight extends LinearOpMode {
 
             chassis.locationShiftCalculation(xyShift);
 
-            // strafe to the left a little bit to compensate for the shift from previous rotation.
+            // strafe to left/right a little bit to compensate for the shift from previous rotation.
             chassis.runToPosition(xyShift[0], false);
 
             // Rotation for accurate 135 degrees
@@ -314,8 +313,8 @@ public class AutonomousRight extends LinearOpMode {
             chassis.locationShiftCalculation(xyShift);
             chassis.runToPosition(-xyShift[0], false);
 
-            if (coneDetectOn) {
-                Logging.log("Cone position: %.2f", coneSleeveDetect.getConePosition());
+            Logging.log("Cone position: %.2f", coneSleeveDetect.getConePosition());
+            if (coneSleeveDetect.isConeDetected()) {
                 chassis.runToPosition(coneSleeveDetect.getConePosition(), false);
                 Logging.log("shift driving completed");
             }
@@ -333,7 +332,7 @@ public class AutonomousRight extends LinearOpMode {
             sleep(100); // avoid junction shaking
 
             // unload cone & adjust
-            autoUnloadCone(backToMatCenterDistance - 0.5); // 0.5 is because the cone has been in junction
+            autoUnloadCone(backToMatCenterDistance - 1.0); // 0.5 is because the cone has been in junction
             Logging.log("Autonomous - cone %d has been unloaded.", autoLoop + 2);
         }
 
@@ -362,24 +361,9 @@ public class AutonomousRight extends LinearOpMode {
         double location;
         String color;
         if(ObjectDetection.ParkingLot.UNKNOWN != myParkingLot) { // camera
-            switch (myParkingLot) {
-                case LEFT: // red
-                    location = -2.0 * 12; // parking lot #1 (red), first mat
-                    color = "red";
-                    break;
-                case CENTER: // green
-                    location = 0.0; // parking lot #2 (green), second mat
-                    color = "green";
-                    break;
-                case RIGHT: // blue
-                    location = 2.0 * 12; // parking lot #3 (blue), third mat
-                    color = "blue";
-                    break;
-                default:
-                    location = 0.0;
-                    color = "Unknown";
-            }
-            Logging.log("Autonomous - Sleeve color from camera is %s", color);
+            location = coneSleeveDetect.getParkingLotDistance();
+            Logging.log("Autonomous - Sleeve color from camera is %s", myParkingLot.toString());
+            Logging.log("Autonomous - parking lot distance from camera is %.2f", location);
         }
         else { // color sensor
             if (0 == b[0]) return 0.0;
