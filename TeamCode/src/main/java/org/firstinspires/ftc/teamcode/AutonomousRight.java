@@ -112,7 +112,7 @@ public class AutonomousRight extends LinearOpMode {
     double matCenterToJunctionDistance = 15;
     double robotAutoLoadMovingDistance = 1.0; // in INCH
     double robotAutoUnloadMovingDistance = 3.5; // in INCH
-    double backToMatCenterDistance = matCenterToJunctionDistance - robotAutoUnloadMovingDistance - 1.0; // in INCH
+    double backToMatCenterDistance = matCenterToJunctionDistance - robotAutoUnloadMovingDistance - 1.5; // in INCH
     static final double matCenterToConeStack = 27.0; // inch
 
     // sensors
@@ -121,6 +121,7 @@ public class AutonomousRight extends LinearOpMode {
 
     // camera and sleeve color
     ObjectDetection.ParkingLot myParkingLot = ObjectDetection.ParkingLot.UNKNOWN;
+    double parkingLotDis = 0;
     ObjectDetection coneSleeveDetect;
     OpenCvCamera camera;
     String webcamName = "Webcam 1";
@@ -190,9 +191,10 @@ public class AutonomousRight extends LinearOpMode {
 
         while (!isStarted()) {
             myParkingLot = coneSleeveDetect.getParkingLot();
+            parkingLotDis = coneSleeveDetect.getParkingLotDistance();
             telemetry.addData("Parking position: ", myParkingLot);
             telemetry.addData("Cone has detected:", coneSleeveDetect.isConeDetected()? "Yes" : "No");
-            telemetry.addData("Cone position:"," %.2f", coneSleeveDetect.getConePosition());
+            telemetry.addData("Cone position:"," %.2f", parkingLotDis);
             telemetry.addData("Mode", "waiting for start");
             telemetry.update();
         }
@@ -236,6 +238,7 @@ public class AutonomousRight extends LinearOpMode {
         if (ObjectDetection.ParkingLot.UNKNOWN != myParkingLot) {
             //move center of robot to the edge of 3rd mat
             chassis.runToPosition(65.5, true);
+            parkingLocation = parkingLotDis;
         }
         else {
             sleep(500); // wait for preloaded cone to lifted.
@@ -247,8 +250,9 @@ public class AutonomousRight extends LinearOpMode {
             Logging.log("Autonomous - complete Sleeve color read.");
             // push sleeve cone out, and reading background color for calibration
             chassis.runToPosition(44, true);
+            parkingLocation = calculateParkingLocation(sleeveColor, backgroundColor);
         }
-        parkingLocation = calculateParkingLocation(sleeveColor, backgroundColor);
+
         Logging.log("Autonomous - parking lot aisle location: %.2f", parkingLocation);
 
         // turn robot to make sure it is at 0 degree before backing to mat center
@@ -361,7 +365,7 @@ public class AutonomousRight extends LinearOpMode {
         double location;
         String color;
         if(ObjectDetection.ParkingLot.UNKNOWN != myParkingLot) { // camera
-            location = coneSleeveDetect.getParkingLotDistance();
+            location = parkingLotDis;
             Logging.log("Autonomous - Sleeve color from camera is %s", myParkingLot.toString());
             Logging.log("Autonomous - parking lot distance from camera is %.2f", location);
         }
