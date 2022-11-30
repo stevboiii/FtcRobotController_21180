@@ -53,17 +53,12 @@
   */
 
 package org.firstinspires.ftc.teamcode;
-
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.hardware.ColorSensor;
-import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
-import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
-
 
 /**
  * This file contains an minimal example of a Linear "OpMode". An OpMode is a 'program' that runs in either
@@ -87,25 +82,24 @@ public class TeleopDualDrivers extends LinearOpMode {
     // chassis
     private final ChassisWith4Motors chassis = new ChassisWith4Motors();
 
-    // slider
-    private final SlidersWith2Motors slider = new SlidersWith2Motors();
-
     // Driving motor variables
     static final double HIGH_SPEED_POWER = 0.6;
-    static final double SLOW_DOWN_POWER = 0.2;
 
-    // slider motor variables
+    // slider motor power variables
+    private final SlidersWith2Motors slider = new SlidersWith2Motors();
     static final double SLIDER_MOTOR_POWER = 0.8;
-    static final int COUNTS_PER_INCH = SlidersWith2Motors.COUNTS_PER_INCH;
+
+    // slider position variables
     static final int FOUR_STAGE_SLIDER_MAX_POS = 4200;  // with 312 RPM motor.
     static final int SLIDER_MIN_POS = 0;
-    static final int WALL_POSITION = (int)(COUNTS_PER_INCH * 7.0);
-    static final int LOW_JUNCTION_POS = (int)(COUNTS_PER_INCH * 13.5); // 13.5 inch
-    static final int MEDIUM_JUNCTION_POS = (int)(COUNTS_PER_INCH * 23.5);
-    static final int HIGH_JUNCTION_POS = (int)(COUNTS_PER_INCH * 33.5);
-    static final int SLIDER_MOVE_DOWN_POSITION = COUNTS_PER_INCH * 3; // move down 3 inch to unload cone
+    static final int GROUND_CONE_POSITION = (int)SlidersWith2Motors.COUNTS_PER_INCH; // 1 inch
+    static final int WALL_POSITION = (int)(SlidersWith2Motors.COUNTS_PER_INCH * 7.5);  // 7.5 inch
+    static final int MEDIUM_JUNCTION_POS = (int)(SlidersWith2Motors.COUNTS_PER_INCH * 24.5); //23.5 inch
+    static final int HIGH_JUNCTION_POS = (int)(SlidersWith2Motors.COUNTS_PER_INCH * 34.5); //33.5 inch
+    static final int SLIDER_MOVE_DOWN_POSITION = SlidersWith2Motors.COUNTS_PER_INCH * 3; // move down 6 inch to unload cone
+    static final int LOW_JUNCTION_POS = (int)(SlidersWith2Motors.COUNTS_PER_INCH * 14.5); // 13.5 inch
     static final int POSITION_COUNTS_FOR_ONE_REVOLUTION = 538; // for 312 rpm motor
-    int motorPositionInc = POSITION_COUNTS_FOR_ONE_REVOLUTION / 4;
+    int motorPositionInc = POSITION_COUNTS_FOR_ONE_REVOLUTION / 6;
     int sliderTargetPosition = 0;
 
     // claw servo motor variables
@@ -117,18 +111,12 @@ public class TeleopDualDrivers extends LinearOpMode {
     static final double CLAW_MIN_POS = CLAW_CLOSE_POS;  // Minimum rotational position
     double clawServoPosition = CLAW_OPEN_POS;
 
-
     // arm servo variables, not used in current prototype version.
     private Servo armServo = null;
 
     // variables for auto load and unload cone
     double robotAutoLoadMovingDistance = 1.0; // in INCH
     double robotAutoUnloadMovingDistance = 3.5; // in INCH
-
-    // sensors
-    private DistanceSensor distanceSensor;
-    static final double CLOSE_DISTANCE = 8.0; // the distance to slow down robot driving
-    private ColorSensor colorSensor;// best collected the color within 2cm of the target
 
     // debug flags, turn it off for formal version to save time of logging
     boolean debugFlag = true;
@@ -146,15 +134,10 @@ public class TeleopDualDrivers extends LinearOpMode {
 
         armServo = hardwareMap.get(Servo.class, "ArmServo");
         clawServo = hardwareMap.get(Servo.class, "ClawServo");
-        distanceSensor = hardwareMap.get(DistanceSensor.class, "DistanceSensor");
-        colorSensor = hardwareMap.get(ColorSensor.class, "ColorSensor");
 
         // claw servo motor initial
         clawServoPosition = CLAW_OPEN_POS;
         clawServo.setPosition(clawServoPosition);
-
-        // sensors
-        boolean distanceSensorEnabled = false;
 
         //game pad setting
         float robotMovingBackForth;
@@ -172,7 +155,6 @@ public class TeleopDualDrivers extends LinearOpMode {
         boolean clawOpen;
         boolean autoLoadConeOn;
         boolean autoUnloadConeOn;
-        boolean distanceSensorOn;
 
         boolean dualDriverMode = true;
         Gamepad myGamePad;
@@ -205,7 +187,6 @@ public class TeleopDualDrivers extends LinearOpMode {
             robotMovingBackForth = gamepad1.left_stick_y;
             robotMovingRightLeft = gamepad1.left_stick_x;
             robotTurn            = gamepad1.right_stick_x;
-            distanceSensorOn     = gamepad1.back;
             autoLoadConeOn       = gamepad1.left_bumper;
             autoUnloadConeOn     = gamepad1.right_bumper;
 
@@ -226,19 +207,8 @@ public class TeleopDualDrivers extends LinearOpMode {
                 sliderResetPosition = (gamepad2.right_bumper && gamepad2.left_bumper);
             }
 
-            // sensors
-            if (distanceSensorOn) {
-                distanceSensorEnabled = !distanceSensorEnabled;
-            }
-
             // Setup a variable for each drive wheel to save power level for telemetry
             double maxDrivePower = HIGH_SPEED_POWER;
-
-            //distance sensor control
-            if ((distanceSensor.getDistance(DistanceUnit.INCH) < CLOSE_DISTANCE) &&
-                    distanceSensorEnabled) {
-                maxDrivePower = SLOW_DOWN_POWER;
-            }
 
             double drive = maxDrivePower * robotMovingBackForth;
             double turn  =  maxDrivePower * (-robotTurn);
@@ -267,7 +237,7 @@ public class TeleopDualDrivers extends LinearOpMode {
             }
 
             if (sliderGroundPsition) {
-                sliderTargetPosition = SLIDER_MIN_POS;
+                sliderTargetPosition = GROUND_CONE_POSITION;
             }
 
             // use right stick_Y to lift or down slider continuously
@@ -297,7 +267,7 @@ public class TeleopDualDrivers extends LinearOpMode {
 
             //  auto driving, grip cone, and lift slider
             if(autoLoadConeOn) {
-                loadCone(SLIDER_MIN_POS); // Always on ground during teleop mode
+                loadCone(GROUND_CONE_POSITION); // Always on ground during teleop mode
             }
 
             //  auto driving, unload cone
@@ -307,16 +277,12 @@ public class TeleopDualDrivers extends LinearOpMode {
 
             if (debugFlag) {
                 // config log
-                telemetry.addData("distance sensor: ", distanceSensorEnabled? "On" : "Off");
                 telemetry.addData("Dual driver mode: ", dualDriverMode? "On" : "Off");
 
                 // imu log
                 telemetry.addData("imu heading ","%.2f", chassis.lastAngles.firstAngle);
                 telemetry.addData("global heading ", "%.2f", chassis.globalAngle);
                 telemetry.addData("Correction  ", "%.2f", chassis.correction);
-
-                // sensor log
-                telemetry.addData("Distance sensor = ", "%.2f", distanceSensor.getDistance(DistanceUnit.INCH));
 
                 // claw servo log
                 telemetry.addData("Status", "Claw Servo position %.2f", clawServoPosition);
@@ -357,7 +323,7 @@ public class TeleopDualDrivers extends LinearOpMode {
         // move down slider a little bit to unload cone
         sliderTargetPosition = slider.getPosition();
         int moveSlider = sliderTargetPosition - SLIDER_MOVE_DOWN_POSITION;
-        moveSlider = Math.max(moveSlider, SLIDER_MIN_POS);
+        moveSlider = Math.max(moveSlider, GROUND_CONE_POSITION);
         slider.setPosition(moveSlider);
         slider.waitRunningComplete();
 

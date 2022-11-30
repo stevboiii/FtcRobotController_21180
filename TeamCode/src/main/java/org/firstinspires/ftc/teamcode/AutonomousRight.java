@@ -54,16 +54,13 @@
 
 package org.firstinspires.ftc.teamcode;
 
-import androidx.annotation.NonNull;
-
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.hardware.ColorSensor;
-import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
+
 import org.openftc.easyopencv.OpenCvCamera;
 import org.openftc.easyopencv.OpenCvCameraFactory;
 import org.openftc.easyopencv.OpenCvCameraRotation;
@@ -85,7 +82,7 @@ import org.openftc.easyopencv.OpenCvCameraRotation;
 //@Disabled
 public class AutonomousRight extends LinearOpMode {
 
-    private final int autonomousStartLocation = 1; // 1 for right location, and -1 for left location.
+    public int autonomousStartLocation = 1; // 1 for right location, and -1 for left location.
 
     // Declare OpMode members.
     private final ElapsedTime runtime = new ElapsedTime();
@@ -93,12 +90,12 @@ public class AutonomousRight extends LinearOpMode {
 
     // slider position variables
     private final SlidersWith2Motors slider = new SlidersWith2Motors();
-    static final int coneStack5th = (int)(SlidersWith2Motors.COUNTS_PER_INCH * 5.2); // the 5th cone position in the cone stack. The lowest cone is the 1th one.
-    static final int coneLoadStackGap = (int)(SlidersWith2Motors.COUNTS_PER_INCH *  1.32);
-    static final int GROUND_POSITION = 0; // Ground(0 inch)
-    static final int WALL_POSITION = (int)(SlidersWith2Motors.COUNTS_PER_INCH * 7.0);  // 7 inch
-    static final int MEDIUM_JUNCTION_POS = (int)(SlidersWith2Motors.COUNTS_PER_INCH * 23.5); //23.5 inch
-    static final int HIGH_JUNCTION_POS = (int)(SlidersWith2Motors.COUNTS_PER_INCH * 33.5); //33.5 inch
+    static final int coneStack5th = (int)(SlidersWith2Motors.COUNTS_PER_INCH * 6.2); // the 5th cone position in the cone stack. The lowest cone is the 1th one.
+    static final int coneLoadStackGap = (int)(SlidersWith2Motors.COUNTS_PER_INCH *  1.3);
+    static final int GROUND_POSITION = 0; // Ground(0 inch), beacon pick up position
+    static final int WALL_POSITION = (int)(SlidersWith2Motors.COUNTS_PER_INCH * 7.5);  // 7.5 inch
+    static final int MEDIUM_JUNCTION_POS = (int)(SlidersWith2Motors.COUNTS_PER_INCH * 24.5); //23.5 inch
+    static final int HIGH_JUNCTION_POS = (int)(SlidersWith2Motors.COUNTS_PER_INCH * 34.5); //33.5 inch
     static final int SLIDER_MOVE_DOWN_POSITION = SlidersWith2Motors.COUNTS_PER_INCH * 3; // move down 6 inch to unload cone
 
     // claw servo motor variables
@@ -115,11 +112,7 @@ public class AutonomousRight extends LinearOpMode {
     double robotAutoLoadMovingDistance = 1.0; // in INCH
     double robotAutoUnloadMovingDistance = 3.5; // in INCH
     double backToMatCenterDistance = matCenterToJunctionDistance - robotAutoUnloadMovingDistance - 1.5; // in INCH
-    static final double matCenterToConeStack = 27.0; // inch
-
-    // sensors
-    private DistanceSensor distanceSensor;
-    private ColorSensor colorSensor;// best collected within 2cm of the target
+    static final double matCenterToConeStack = 27.5; // inch
 
     // camera and sleeve color
     ObjectDetection.ParkingLot myParkingLot = ObjectDetection.ParkingLot.UNKNOWN;
@@ -137,6 +130,8 @@ public class AutonomousRight extends LinearOpMode {
     public void runOpMode() {
         telemetry.addData("Status", "Initialized");
         Logging.log("Status - Initialized");
+
+        setRobotLocation();
 
         // camera for sleeve color detect, start camera at the beginning.
         int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier(
@@ -177,8 +172,6 @@ public class AutonomousRight extends LinearOpMode {
 
         armServo = hardwareMap.get(Servo.class, "ArmServo");
         clawServo = hardwareMap.get(Servo.class, "ClawServo");
-        distanceSensor = hardwareMap.get(DistanceSensor.class, "DistanceSensor");
-        colorSensor = hardwareMap.get(ColorSensor.class, "ColorSensor");
 
         // claw servo motor initial
         clawServoPosition = CLAW_CLOSE_POS;
@@ -196,7 +189,8 @@ public class AutonomousRight extends LinearOpMode {
             parkingLotDis = coneSleeveDetect.getParkingLotDistance();
             telemetry.addData("Parking position: ", myParkingLot);
             telemetry.addData("Cone has detected:", coneSleeveDetect.isConeDetected()? "Yes" : "No");
-            telemetry.addData("Cone position:"," %.2f", parkingLotDis);
+            telemetry.addData("Cone position:"," %.2f", coneSleeveDetect.getConePosition());
+            telemetry.addData("robot position: ", autonomousStartLocation>0? "Right":"Left");
             telemetry.addData("Mode", "waiting for start");
             telemetry.update();
         }
@@ -229,33 +223,12 @@ public class AutonomousRight extends LinearOpMode {
      * 6. Move robot to parking area
      */
     private void autonomousCore() {
-        double[] backgroundColor = {1.0, 1.0, 1.0}; // ambient color
-        double[] sleeveColor = {1.0, 1.0, 1.0}; // cone color
-        double parkingLocation; // distance between cone loading area to parking area, in inch
 
         slider.setPower(SlidersWith2Motors.SLIDER_MOTOR_POWER);
         slider.setPosition(MEDIUM_JUNCTION_POS);
 
-        // driving forward
-        if (ObjectDetection.ParkingLot.UNKNOWN != myParkingLot) {
-            //move center of robot to the edge of 3rd mat
-            chassis.runToPosition(65.5, true);
-            parkingLocation = parkingLotDis;
-        }
-        else {
-            sleep(500); // wait for preloaded cone to lifted.
-            readColorSensor(backgroundColor);
-            Logging.log("Autonomous - complete background color read.");
-            // drive robot to sleeve cone
-            chassis.runToPosition(21.5, true);
-            readColorSensor(sleeveColor); // reading sleeve signal
-            Logging.log("Autonomous - complete Sleeve color read.");
-            // push sleeve cone out, and reading background color for calibration
-            chassis.runToPosition(44, true);
-            parkingLocation = calculateParkingLocation(sleeveColor, backgroundColor);
-        }
-
-        Logging.log("Autonomous - parking lot aisle location: %.2f", parkingLocation);
+        //move center of robot to the edge of 3rd mat
+        chassis.runToPosition(65.5, true);
 
         // turn robot to make sure it is at 0 degree before backing to mat center
         chassis.rotateIMUTargetAngle(0.0);
@@ -271,7 +244,9 @@ public class AutonomousRight extends LinearOpMode {
         //drive forward and let V to touch junction
         chassis.runToPosition(matCenterToJunctionDistance, true);
         Logging.log("Autonomous - Robot V reached junction.");
-        
+
+        sleep(300); // avoid junction shaking
+
         // drop cone and back to the center of mat
         autoUnloadCone(backToMatCenterDistance);
 
@@ -302,9 +277,10 @@ public class AutonomousRight extends LinearOpMode {
             chassis.rotateIMUTargetAngle(-90.0 * autonomousStartLocation);
             slider.waitRunningComplete(); // make sure slider has been lifted.
 
-            // lift slider during driving back to mat center. 1 inch has been moved back during autoLoadCone.
+            // lift slider during driving back to mat center.
+            // 1.5 inch has been moved back during autoLoadCone including inertia.
             slider.setPosition(MEDIUM_JUNCTION_POS);
-            chassis.runToPosition(-(matCenterToConeStack - 1.0), true);
+            chassis.runToPosition(-(matCenterToConeStack - 1.5), true);
             Logging.log("Autonomous - Robot arrived the mat center near high junction.");
 
             // lift slider during left turning 135 degree facing to high junction.
@@ -319,12 +295,6 @@ public class AutonomousRight extends LinearOpMode {
             chassis.locationShiftCalculation(xyShift);
             chassis.runToPosition(-xyShift[0], false);
 
-            Logging.log("Cone position: %.2f", coneSleeveDetect.getConePosition());
-            if (coneSleeveDetect.isConeDetected()) {
-                chassis.runToPosition(coneSleeveDetect.getConePosition(), false);
-                Logging.log("shift driving completed");
-            }
-
             // make sure slider has been lifted
             slider.waitRunningComplete();
             Logging.log("Autonomous - slider is positioned to high junction.");
@@ -335,7 +305,7 @@ public class AutonomousRight extends LinearOpMode {
             // Make sure it is 45 degree before V leaving junction
             chassis.rotateIMUTargetAngle(45.0 * autonomousStartLocation);
 
-            sleep(100); // avoid junction shaking
+            sleep(300); // avoid junction shaking
 
             // unload cone & adjust
             autoUnloadCone(backToMatCenterDistance - 1.0); // 0.5 is because the cone has been in junction
@@ -349,85 +319,11 @@ public class AutonomousRight extends LinearOpMode {
         slider.setPosition(GROUND_POSITION);
 
         // drive to final parking lot
-        chassis.runToPosition(-parkingLocation * autonomousStartLocation, true);
-        Logging.log("Autonomous - Arrived at parking lot aisle: %.2f", parkingLocation);
+        chassis.runToPosition(-parkingLotDis * autonomousStartLocation, true);
+        Logging.log("Autonomous - Arrived at parking lot Mat: %.2f", parkingLotDis);
 
         slider.waitRunningComplete();
         Logging.log("Autonomous - Autonomous complete.");
-    }
-
-    /**
-     * Calculate the destination parking area according to sleeve color.
-     * @param s three ratios values of sleeve signal color reading from color sensor
-     * @param b three ratios values of background color reading from color sensor
-     * return the distance between cone stack and parking area, in inch.
-     */
-    private double calculateParkingLocation(@NonNull double[] s, @NonNull double[] b) {
-        int channel = 0;
-        double location;
-        String color;
-        if(ObjectDetection.ParkingLot.UNKNOWN != myParkingLot) { // camera
-            location = parkingLotDis;
-            Logging.log("Autonomous - Sleeve color from camera is %s", myParkingLot.toString());
-            Logging.log("Autonomous - parking lot distance from camera is %.2f", location);
-        }
-        else { // color sensor
-            if (0 == b[0]) return 0.0;
-            if (0 == b[1]) return 0.0;
-            if (0 == b[2]) return 0.0;
-            double[] ratio = {s[0] / b[0], s[1] / b[1], s[2] / b[2]};
-
-            // find the maximum value in ratio[]
-            double maxV = ratio[0];
-            for (int i = 1; i < 3; i++) {
-                if (ratio[i] > maxV) {
-                    channel = i;
-                    maxV = ratio[i];
-                }
-            }
-            switch (channel) {
-                case 0: // red
-                    location = -2.0 * 12; // parking lot #1 (red), third mat
-                    color = "red";
-                    break;
-                case 1: // green
-                    location = 0; // parking lot #2 (green), third mat
-                    color = "green";
-                    break;
-                case 2: // blue
-                    location = 2.0 * 12; // parking lot #3 (blue), third mat
-                    color = "blue";
-                    break;
-                default:
-                    location = 0.0;
-                    color = "Unknown";
-            }
-            Logging.log("Autonomous - channel = %d, max value = %.3f", channel, maxV);
-            Logging.log("Autonomous - Sleeve color from color sensor is %s", color);
-        }
-
-        return location;
-    }
-
-    /**
-     * Read color from color sensor and translate three values to relative ratio.
-     * @param colorRatio three ratios values of color reading from color sensor
-     */
-    private void readColorSensor(@NonNull double[] colorRatio ) {
-        //color sensor control
-        int r = colorSensor.red();
-        int g = colorSensor.green();
-        int b = colorSensor.blue();
-
-        int total = r + g + b;
-        if (0 != total) {
-            colorRatio[0] = (double) r / total;
-            colorRatio[1] = (double) g / total;
-            colorRatio[2] = (double) b / total;
-        }
-
-        Logging.log("Autonomous - Red: %d, green: %d, blue: %d", colorSensor.red(), colorSensor.green(), colorSensor.blue());
-        Logging.log("Autonomous - Red: %.2f, green: %.2f, blue: %.2f", colorRatio[0], colorRatio[1], colorRatio[2]);
     }
 
     /**
@@ -476,6 +372,13 @@ public class AutonomousRight extends LinearOpMode {
         chassis.runToPosition(-backDistanceAfterUnloading, true); // move out from junction
         slider.setPosition(WALL_POSITION);
         Logging.log("Auto unload - Cone has been unloaded.");
+    }
+
+/**
+ * Set robot starting position: 1 for right and -1 for left.
+ */
+    public void setRobotLocation() {
+        autonomousStartLocation = 1;
     }
 
 }

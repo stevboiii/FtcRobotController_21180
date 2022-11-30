@@ -48,8 +48,6 @@ import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
  * Note:  All names are case sensitive.
  * Motors type: GoBILDA 312 RPM Yellow Jacket.
  */
-
-
 public class ChassisWith4Motors {
     //private
     HardwareMap hardwareMap = null;
@@ -439,7 +437,7 @@ public class ChassisWith4Motors {
      * @param targetSign: Input value for the target distance sign to indicate drive directions. Disable PID if it is zero.
      * @param isBF:       flag for back-forth (true) moving, or left-right moving (false)
      */
-    private void driveWithPIDControl(double tDistance, int targetSign, boolean isBF) {
+    private void setPowerWithPIDControl(double tDistance, int targetSign, boolean isBF) {
         double curTime = runtime.seconds();
         boolean speedRampOn = false;
         double drivePower = SHORT_DISTANCE_POWER;
@@ -471,7 +469,7 @@ public class ChassisWith4Motors {
 
                 // speed ramp down
                 if ((tDistanceAbs - currDistance) < RAMP_DOWN_DISTANCE) {
-                    rampDownPower = (MAX_POWER / 3 - RAMP_END_POWER) * (tDistanceAbs - currDistance) / RAMP_DOWN_DISTANCE + RAMP_END_POWER;
+                    rampDownPower = (MAX_POWER / 2.5 - RAMP_END_POWER) * (tDistanceAbs - currDistance) / RAMP_DOWN_DISTANCE + RAMP_END_POWER;
                     rampDownPower = Range.clip(rampDownPower, RAMP_END_POWER, drivePower);
                 }
 
@@ -571,7 +569,7 @@ public class ChassisWith4Motors {
 
         robotRunWithPositionModeOn(true); // turn on encoder mode,and reset encoders
 
-        driveWithPIDControl(targetDistance, tSign, isBackForth);
+        setPowerWithPIDControl(targetDistance, tSign, isBackForth);
 
         robotRunWithPositionModeOn(false); // turn off encoder mode
 

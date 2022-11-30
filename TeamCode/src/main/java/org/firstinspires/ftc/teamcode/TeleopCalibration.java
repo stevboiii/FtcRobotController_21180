@@ -98,7 +98,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
  */
  
 @TeleOp(name="TeleopCalibration", group="Concept")
-//@Disabled
+@Disabled
 public class TeleopCalibration extends LinearOpMode {
 
     // Declare OpMode members.
