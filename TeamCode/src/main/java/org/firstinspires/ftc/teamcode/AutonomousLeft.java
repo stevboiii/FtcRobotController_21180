@@ -81,11 +81,11 @@ import org.openftc.easyopencv.OpenCvCameraRotation;
  * Remove or comment out the @Disabled line to add this opmode to the Driver Station OpMode list
  */
 
-@Autonomous(name="AutonomousRight", group="Concept")
+@Autonomous(name="AutonomousLeft", group="Concept")
 //@Disabled
 public class AutonomousLeft extends LinearOpMode {
 
-    private int autonomousStartLocation = -1; // 1 for right location, and -1 for left location.
+    private final int autonomousStartLocation = -1; // 1 for right location, and -1 for left location.
 
     // Declare OpMode members.
     private final ElapsedTime runtime = new ElapsedTime();

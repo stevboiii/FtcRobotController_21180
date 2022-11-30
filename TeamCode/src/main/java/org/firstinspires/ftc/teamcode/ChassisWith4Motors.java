@@ -599,6 +599,14 @@ public class ChassisWith4Motors {
         }
     }
 
+    /**
+     * drive power calculation and setting.
+     *
+     * @param drive power from drive button
+     * @param turn power from turn button
+     * @param strafe power from strafe button
+     * @param PIDEnabled flag to enable/disable PID correction.
+     */
     public void drivingWithPID(double drive, double turn, double strafe, boolean PIDEnabled) {
         double FrontLeftPower;
         double FrontRightPower;
