@@ -62,6 +62,7 @@ import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
+
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 
 
@@ -80,7 +81,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 
 @TeleOp(name="TeleopDualDrivers", group="Concept")
 //@Disabled
-public class TeleopDualDrivers extends LinearOpMode {
+public class TeleopTest extends LinearOpMode {
     // Declare OpMode members.
     private final ElapsedTime runtime = new ElapsedTime();
 
@@ -244,7 +245,7 @@ public class TeleopDualDrivers extends LinearOpMode {
             double turn  =  maxDrivePower * (-robotTurn);
             double strafe = maxDrivePower * (-robotMovingRightLeft);
 
-            chassis.drivingWithPID(drive, turn, strafe, true);
+            chassis.drivingWithPID(drive, turn, strafe, false);
 
             // use Y button to lift up the slider reaching high junction
             if (sliderHighJunctionPosition) {

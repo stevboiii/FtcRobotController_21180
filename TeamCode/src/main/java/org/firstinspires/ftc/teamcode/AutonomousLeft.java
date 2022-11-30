@@ -83,9 +83,9 @@ import org.openftc.easyopencv.OpenCvCameraRotation;
 
 @Autonomous(name="AutonomousRight", group="Concept")
 //@Disabled
-public class AutonomousRight extends LinearOpMode {
+public class AutonomousLeft extends LinearOpMode {
 
-    private int autonomousStartLocation = 1; // 1 for right location, and -1 for left location.
+    private int autonomousStartLocation = -1; // 1 for right location, and -1 for left location.
 
     // Declare OpMode members.
     private final ElapsedTime runtime = new ElapsedTime();

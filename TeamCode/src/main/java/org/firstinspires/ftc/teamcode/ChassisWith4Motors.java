@@ -599,7 +599,7 @@ public class ChassisWith4Motors {
         }
     }
 
-    public void drivingWithPID(double drive, double turn, double strafe) {
+    public void drivingWithPID(double drive, double turn, double strafe, boolean PIDEnabled) {
         double FrontLeftPower;
         double FrontRightPower;
         double BackLeftPower;
@@ -621,7 +621,7 @@ public class ChassisWith4Motors {
         }
 
         // Use PID with imu input to drive in a straight line.
-        if ((Math.abs(drive) > Math.ulp(0)) || (Math.abs(strafe) > Math.ulp(0))) {
+        if (PIDEnabled && ((Math.abs(drive) > Math.ulp(0)) || (Math.abs(strafe) > Math.ulp(0)))) {
             correction = pidDrive.performPID(getAngle());
         } else {
             correction = 0.0;
