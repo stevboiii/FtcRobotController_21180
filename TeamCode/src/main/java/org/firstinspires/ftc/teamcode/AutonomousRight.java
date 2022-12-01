@@ -90,8 +90,8 @@ public class AutonomousRight extends LinearOpMode {
 
     // slider position variables
     private final SlidersWith2Motors slider = new SlidersWith2Motors();
-    static final int coneStack5th = (int)(SlidersWith2Motors.COUNTS_PER_INCH * 6.2); // the 5th cone position in the cone stack. The lowest cone is the 1th one.
-    static final int coneLoadStackGap = (int)(SlidersWith2Motors.COUNTS_PER_INCH *  1.3);
+    static final int coneStack5th = (int)(SlidersWith2Motors.COUNTS_PER_INCH * 6.1); // the 5th cone position in the cone stack. The lowest cone is the 1th one.
+    static final int coneLoadStackGap = (int)(SlidersWith2Motors.COUNTS_PER_INCH *  1.4);
     static final int GROUND_POSITION = 0; // Ground(0 inch), beacon pick up position
     static final int WALL_POSITION = (int)(SlidersWith2Motors.COUNTS_PER_INCH * 7.5);  // 7.5 inch
     static final int MEDIUM_JUNCTION_POS = (int)(SlidersWith2Motors.COUNTS_PER_INCH * 24.5); //23.5 inch
@@ -108,10 +108,10 @@ public class AutonomousRight extends LinearOpMode {
     private Servo armServo = null;
 
     // variables for autonomous
-    double matCenterToJunctionDistance = 15;
+    double matCenterToJunctionDistance = 14;
     double robotAutoLoadMovingDistance = 1.0; // in INCH
-    double robotAutoUnloadMovingDistance = 3.5; // in INCH
-    double backToMatCenterDistance = matCenterToJunctionDistance - robotAutoUnloadMovingDistance - 1.5; // in INCH
+    double robotAutoUnloadMovingDistance = 3.2; // in INCH
+    double backToMatCenterDistance = matCenterToJunctionDistance - robotAutoUnloadMovingDistance - 2.0; // in INCH
     static final double matCenterToConeStack = 27.5; // inch
 
     // camera and sleeve color

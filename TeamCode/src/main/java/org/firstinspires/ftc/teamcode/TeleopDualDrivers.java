@@ -87,7 +87,7 @@ public class TeleopDualDrivers extends LinearOpMode {
 
     // slider motor power variables
     private final SlidersWith2Motors slider = new SlidersWith2Motors();
-    static final double SLIDER_MOTOR_POWER = 0.8;
+    static final double SLIDER_MOTOR_POWER = 0.5;
 
     // slider position variables
     static final int FOUR_STAGE_SLIDER_MAX_POS = 4200;  // with 312 RPM motor.
@@ -97,7 +97,7 @@ public class TeleopDualDrivers extends LinearOpMode {
     static final int MEDIUM_JUNCTION_POS = (int)(SlidersWith2Motors.COUNTS_PER_INCH * 24.5); //23.5 inch
     static final int HIGH_JUNCTION_POS = (int)(SlidersWith2Motors.COUNTS_PER_INCH * 34.5); //33.5 inch
     static final int SLIDER_MOVE_DOWN_POSITION = SlidersWith2Motors.COUNTS_PER_INCH * 3; // move down 6 inch to unload cone
-    static final int LOW_JUNCTION_POS = (int)(SlidersWith2Motors.COUNTS_PER_INCH * 14.5); // 13.5 inch
+    static final int LOW_JUNCTION_POS = (int)(SlidersWith2Motors.COUNTS_PER_INCH * 14.7); // 13.5 inch
     static final int POSITION_COUNTS_FOR_ONE_REVOLUTION = 538; // for 312 rpm motor
     int motorPositionInc = POSITION_COUNTS_FOR_ONE_REVOLUTION / 6;
     int sliderTargetPosition = 0;

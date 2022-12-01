@@ -27,11 +27,11 @@ public class ObjectDetection extends OpenCvPipeline {
     }
 
     // TOPLEFT anchor point for the bounding box
-    private static final Point SLEEVE_TOPLEFT_ANCHOR_POINT = new Point(20, 130);
+    private static final Point SLEEVE_TOPLEFT_ANCHOR_POINT = new Point(20, 140);
 
     // Width and height for the bounding box
-    private static final int SLEEVE_REGION_WIDTH = 80;
-    private static final int SLEEVE_REGION_HEIGHT = 100;
+    private static final int SLEEVE_REGION_WIDTH = 30;
+    private static final int SLEEVE_REGION_HEIGHT = 50;
 
     // Anchor point definitions
     Point sleeve_pointA = new Point(
