@@ -56,10 +56,10 @@ public class ChassisWith4Motors {
     private final boolean debugFlag = true;
 
     // Motors variables
-    private DcMotor FrontLeftDrive = null;
-    private DcMotor FrontRightDrive = null;
-    private DcMotor BackLeftDrive = null;
-    private DcMotor BackRightDrive = null;
+    public DcMotor FrontLeftDrive = null;
+    public DcMotor FrontRightDrive = null;
+    public DcMotor BackLeftDrive = null;
+    public DcMotor BackRightDrive = null;
 
     // Driving motor variables
     static final double MAX_CORRECTION_POWER = 0.12;

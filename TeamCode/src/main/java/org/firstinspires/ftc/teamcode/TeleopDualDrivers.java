@@ -56,7 +56,9 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.Gamepad;
+import com.qualcomm.robotcore.hardware.HardwareDevice;
 import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.hardware.VoltageSensor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 
@@ -83,11 +85,11 @@ public class TeleopDualDrivers extends LinearOpMode {
     private final ChassisWith4Motors chassis = new ChassisWith4Motors();
 
     // Driving motor variables
-    static final double HIGH_SPEED_POWER = 0.5;
+    static final double HIGH_SPEED_POWER = 0.6;
 
     // slider motor power variables
     private final SlidersWith2Motors slider = new SlidersWith2Motors();
-    static final double SLIDER_MOTOR_POWER = 0.5;
+    static final double SLIDER_MOTOR_POWER = 0.6;
 
     // slider position variables
     static final int FOUR_STAGE_SLIDER_MAX_POS = 4200;  // with 312 RPM motor.
@@ -121,6 +123,11 @@ public class TeleopDualDrivers extends LinearOpMode {
 
     // debug flags, turn it off for formal version to save time of logging
     boolean debugFlag = true;
+
+    // voltage management
+    VoltageSensor voltSensor = hardwareMap.voltageSensor.get("Motor Controller 1");
+    private static double minVoltage = 12.5;
+
 
     @Override
     public void runOpMode() {
@@ -210,9 +217,15 @@ public class TeleopDualDrivers extends LinearOpMode {
                 sliderResetPosition = (gamepad2.right_bumper && gamepad2.left_bumper);
             }
 
-            double drive = HIGH_SPEED_POWER * robotMovingBackForth;
-            double turn  =  HIGH_SPEED_POWER * (-robotTurn);
-            double strafe = HIGH_SPEED_POWER * (-robotMovingRightLeft);
+            double maxDrivePower = HIGH_SPEED_POWER;
+            if (voltSensor.getVoltage() < minVoltage) //Reduce motors power if battery voltage is low
+            {
+                maxDrivePower = HIGH_SPEED_POWER / 2.0;
+            }
+
+            double drive = maxDrivePower * robotMovingBackForth;
+            double turn  =  maxDrivePower * (-robotTurn);
+            double strafe = maxDrivePower * (-robotMovingRightLeft);
 
             chassis.drivingWithPID(drive, turn, strafe, true);
 
@@ -251,8 +264,14 @@ public class TeleopDualDrivers extends LinearOpMode {
                 slider.resetEncoders();
                 sliderTargetPosition = SLIDER_MIN_POS;
             }
+
+            double sliderPower = SLIDER_MOTOR_POWER; // 0.6
+            if (voltSensor.getVoltage() < minVoltage) //Reduce slider motor power if battery voltage is low
+            {
+                sliderPower = SLIDER_MOTOR_POWER / 2.0;
+            }
+            slider.setPower(sliderPower);
             slider.setPosition(sliderTargetPosition);
-            slider.setPower(SLIDER_MOTOR_POWER); // slider motor start movement
 
             // Keep stepping up until we hit the max value.
             if (clawClose) {
@@ -280,6 +299,16 @@ public class TeleopDualDrivers extends LinearOpMode {
                 unloadCone();
             }
 
+            double curVolt = voltSensor.getVoltage();
+            telemetry.addData("Controller Voltage ", "= %.2f", curVolt);
+            Logging.log("Current Voltage = %.2f", curVolt);
+
+            Logging.log("Driving Motor powers. FL = %.2f, FR = %.2f, BL = %.2f, BR = %.2f",
+                    chassis.FrontLeftDrive.getPower(), chassis.FrontRightDrive.getPower(),
+                    chassis.BackLeftDrive.getPower(), chassis.BackRightDrive.getPower());
+            Logging.log("Slider Motor powers. Left = %.2f, Right = %.2f",
+                    slider.LeftSliderMotor.getPower(), slider.RightSliderMotor.getPower());
+
             if (debugFlag) {
                 // config log
                 telemetry.addData("Dual driver mode: ", dualDriverMode? "On" : "Off");
@@ -301,7 +330,7 @@ public class TeleopDualDrivers extends LinearOpMode {
                         slider.LeftSliderMotor.getCurrentPosition());
 
                 // drive motors log
-                telemetry.addData("Max driving power ", "%.2f", HIGH_SPEED_POWER);
+                telemetry.addData("Max driving power ", "%.2f", maxDrivePower);
 
                 // running time
                 telemetry.addData("Status", "Run Time: " + runtime);
