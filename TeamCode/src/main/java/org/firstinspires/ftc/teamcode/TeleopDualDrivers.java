@@ -92,11 +92,12 @@ public class TeleopDualDrivers extends LinearOpMode {
     // slider position variables
     static final int FOUR_STAGE_SLIDER_MAX_POS = 4200;  // with 312 RPM motor.
     static final int SLIDER_MIN_POS = 0;
-    static final int GROUND_CONE_POSITION = (int)SlidersWith2Motors.COUNTS_PER_INCH; // 1 inch
+    static final int GROUND_BEACON_POSITION = SLIDER_MIN_POS; // pick up beacon position
+    static final int GROUND_CONE_POSITION = SlidersWith2Motors.COUNTS_PER_INCH; // 1 inch
     static final int WALL_POSITION = (int)(SlidersWith2Motors.COUNTS_PER_INCH * 7.5);  // 7.5 inch
     static final int MEDIUM_JUNCTION_POS = (int)(SlidersWith2Motors.COUNTS_PER_INCH * 24.5); //23.5 inch
     static final int HIGH_JUNCTION_POS = (int)(SlidersWith2Motors.COUNTS_PER_INCH * 34.5); //33.5 inch
-    static final int SLIDER_MOVE_DOWN_POSITION = SlidersWith2Motors.COUNTS_PER_INCH * 3; // move down 6 inch to unload cone
+    static final int SLIDER_MOVE_DOWN_POSITION = SlidersWith2Motors.COUNTS_PER_INCH * 3; // move down 3 inch to unload cone
     static final int LOW_JUNCTION_POS = (int)(SlidersWith2Motors.COUNTS_PER_INCH * 14.7); // 13.5 inch
     static final int POSITION_COUNTS_FOR_ONE_REVOLUTION = 538; // for 312 rpm motor
     int motorPositionInc = POSITION_COUNTS_FOR_ONE_REVOLUTION / 6;
@@ -154,6 +155,7 @@ public class TeleopDualDrivers extends LinearOpMode {
         boolean clawClose;
         boolean clawOpen;
         boolean autoLoadConeOn;
+        boolean autoLoadBeaconeOn;
         boolean autoUnloadConeOn;
 
         boolean dualDriverMode = true;
@@ -189,6 +191,7 @@ public class TeleopDualDrivers extends LinearOpMode {
             robotTurn            = gamepad1.right_stick_x;
             autoLoadConeOn       = gamepad1.left_bumper;
             autoUnloadConeOn     = gamepad1.right_bumper;
+            autoLoadBeaconeOn       = gamepad1.dpad_down;
 
             // gamepad1(single driver) or gamepad2(dual driver) buttons
             sliderUpDown                = myGamePad.right_stick_y;
@@ -268,6 +271,11 @@ public class TeleopDualDrivers extends LinearOpMode {
             //  auto driving, grip cone, and lift slider
             if(autoLoadConeOn) {
                 loadCone(GROUND_CONE_POSITION); // Always on ground during teleop mode
+            }
+
+            //  auto driving, grip cone, and lift slider
+            if(autoLoadBeaconeOn) {
+                loadCone(GROUND_BEACON_POSITION); // Always on ground during teleop mode
             }
 
             //  auto driving, unload cone

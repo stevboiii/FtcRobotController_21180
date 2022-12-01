@@ -93,8 +93,9 @@ public class AutonomousRight extends LinearOpMode {
     static final int coneStack5th = (int)(SlidersWith2Motors.COUNTS_PER_INCH * 6.1); // the 5th cone position in the cone stack. The lowest cone is the 1th one.
     static final int coneLoadStackGap = (int)(SlidersWith2Motors.COUNTS_PER_INCH *  1.4);
     static final int GROUND_POSITION = 0; // Ground(0 inch), beacon pick up position
-    static final int WALL_POSITION = (int)(SlidersWith2Motors.COUNTS_PER_INCH * 7.5);  // 7.5 inch
+    static final int WALL_POSITION = (int)(SlidersWith2Motors.COUNTS_PER_INCH * 8.0);  // 7.5 inch
     static final int MEDIUM_JUNCTION_POS = (int)(SlidersWith2Motors.COUNTS_PER_INCH * 24.5); //23.5 inch
+    static final int LOW_JUNCTION_POS = (int)(SlidersWith2Motors.COUNTS_PER_INCH * 14.7); // 13.5 inch
     static final int HIGH_JUNCTION_POS = (int)(SlidersWith2Motors.COUNTS_PER_INCH * 34.5); //33.5 inch
     static final int SLIDER_MOVE_DOWN_POSITION = SlidersWith2Motors.COUNTS_PER_INCH * 3; // move down 6 inch to unload cone
 
@@ -110,8 +111,8 @@ public class AutonomousRight extends LinearOpMode {
     // variables for autonomous
     double matCenterToJunctionDistance = 14;
     double robotAutoLoadMovingDistance = 1.0; // in INCH
-    double robotAutoUnloadMovingDistance = 3.2; // in INCH
-    double backToMatCenterDistance = matCenterToJunctionDistance - robotAutoUnloadMovingDistance - 2.0; // in INCH
+    double movingDistBeforeDrop = 3.2; // in INCH
+    double movingDistAfterDrop = matCenterToJunctionDistance - movingDistBeforeDrop - 2.0; // in INCH
     static final double matCenterToConeStack = 27.5; // inch
 
     // camera and sleeve color
@@ -198,6 +199,7 @@ public class AutonomousRight extends LinearOpMode {
         // Wait for the game to start (driver presses PLAY)
         waitForStart();
         runtime.reset();
+        ObjectDetection.stopColorPipeLine = true;
 
         // run until the end of the match (driver presses STOP)
         if (opModeIsActive()) {
@@ -225,7 +227,7 @@ public class AutonomousRight extends LinearOpMode {
     private void autonomousCore() {
 
         slider.setPower(SlidersWith2Motors.SLIDER_MOTOR_POWER);
-        slider.setPosition(MEDIUM_JUNCTION_POS);
+        slider.setPosition(LOW_JUNCTION_POS);
 
         //move center of robot to the edge of 3rd mat
         chassis.runToPosition(65.5, true);
@@ -245,10 +247,8 @@ public class AutonomousRight extends LinearOpMode {
         chassis.runToPosition(matCenterToJunctionDistance, true);
         Logging.log("Autonomous - Robot V reached junction.");
 
-        sleep(300); // avoid junction shaking
-
         // drop cone and back to the center of mat
-        autoUnloadCone(backToMatCenterDistance);
+        autoUnloadCone(movingDistBeforeDrop, movingDistAfterDrop);
 
         for(int autoLoop = 0; autoLoop < 2; autoLoop++) {
             Logging.log("Autonomous - loop index: %d ", autoLoop);
@@ -256,8 +256,6 @@ public class AutonomousRight extends LinearOpMode {
             // right turn 135 degree (45 + 90).
             chassis.rotateIMUTargetAngle(-90.0 * autonomousStartLocation);
             sleep(100); // wait for chassis stop from previous rotation inertia.
-
-            chassis.locationShiftCalculation(xyShift);
 
             // strafe to left/right a little bit to compensate for the shift from previous rotation.
             chassis.runToPosition(xyShift[0], false);
@@ -292,7 +290,6 @@ public class AutonomousRight extends LinearOpMode {
             chassis.rotateIMUTargetAngle(45.0 * autonomousStartLocation);
 
             // adjust xy shift.
-            chassis.locationShiftCalculation(xyShift);
             chassis.runToPosition(-xyShift[0], false);
 
             // make sure slider has been lifted
@@ -305,10 +302,8 @@ public class AutonomousRight extends LinearOpMode {
             // Make sure it is 45 degree before V leaving junction
             chassis.rotateIMUTargetAngle(45.0 * autonomousStartLocation);
 
-            sleep(300); // avoid junction shaking
-
             // unload cone & adjust
-            autoUnloadCone(backToMatCenterDistance - 1.0); // 0.5 is because the cone has been in junction
+            autoUnloadCone(movingDistBeforeDrop - 0.5, movingDistAfterDrop - 0.5);
             Logging.log("Autonomous - cone %d has been unloaded.", autoLoop + 2);
         }
 
@@ -353,23 +348,25 @@ public class AutonomousRight extends LinearOpMode {
      * 3. Open claw to fall down cone
      * 4. Lift slider from junction pole during the robot moving back to leave junction
      * 6. Slider moving down to get ready to grip another cone
-     * @param backDistanceAfterUnloading: the moving distance after unloading the cone.
+     * @param moveDistanceBeforeDrop moving back distance before opening claw to drop cone.
+     * @param moveDistanceAfterDrop moving back distance after dropping the cone to move out claw from junction.
      */
-    private void autoUnloadCone(double backDistanceAfterUnloading) {
+    private void autoUnloadCone(double moveDistanceBeforeDrop, double moveDistanceAfterDrop) {
         // moving back in inch
-        chassis.runToPosition(-robotAutoUnloadMovingDistance, true);
+        chassis.runToPosition(-moveDistanceBeforeDrop, true);
 
         // move down slider a little bit to unload cone
         int sliderTargetPosition = slider.getPosition();
         int moveSlider = sliderTargetPosition - SLIDER_MOVE_DOWN_POSITION;
         moveSlider = Math.max(moveSlider, SlidersWith2Motors.SLIDER_MIN_POS);
+        sleep(500); // wait for avoiding junction shaking
         slider.setPosition(moveSlider);
         slider.waitRunningComplete();
 
         clawServo.setPosition(CLAW_OPEN_POS); // unload cone
         sleep(100); // make sure cone has been unloaded
         slider.setPosition(sliderTargetPosition);
-        chassis.runToPosition(-backDistanceAfterUnloading, true); // move out from junction
+        chassis.runToPosition(-moveDistanceAfterDrop, true); // move out from junction
         slider.setPosition(WALL_POSITION);
         Logging.log("Auto unload - Cone has been unloaded.");
     }

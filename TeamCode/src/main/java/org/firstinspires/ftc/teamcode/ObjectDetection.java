@@ -16,7 +16,10 @@ import org.openftc.easyopencv.OpenCvPipeline;
  */
 public class ObjectDetection extends OpenCvPipeline {
 
-    boolean debug = true;
+    boolean debug = false;
+
+    public static boolean stopColorPipeLine = false;
+    public static boolean stopConeDetectPipeLine = true;
 
     // for sleeve color detect
     public enum ParkingLot {
@@ -80,20 +83,25 @@ public class ObjectDetection extends OpenCvPipeline {
     @Override
     public Mat processFrame(Mat input) {
 
-        Logging.log("Start Opcv process to detect sleeve color.");
-        sleeveColorDetect(input);
+        if (!stopColorPipeLine) {
+            Logging.log("Start Opcv process to detect sleeve color.");
+            sleeveColorDetect(input);
+        }
 
-        Logging.log("Start Opcv process to detect cone.");
-        conePositionDetect(input);
+        if (!stopConeDetectPipeLine) {
+            Logging.log("Start Opcv process to detect cone.");
+            conePositionDetect(input);
+        }
 
-        Imgproc.rectangle(
-                input,
-                sleeve_pointA,
-                sleeve_pointB,
-                brushColor,
-                2
-        );
-
+        if (!stopColorPipeLine) {
+            Imgproc.rectangle(
+                    input,
+                    sleeve_pointA,
+                    sleeve_pointB,
+                    brushColor,
+                    2
+            );
+        }
         return input;
     }
 
@@ -255,7 +263,7 @@ public class ObjectDetection extends OpenCvPipeline {
         Imgproc.cvtColor(m, rgbFrame, Imgproc.COLOR_RGBA2RGB); // Cant't convert directly rgba->hsv
         Imgproc.cvtColor(rgbFrame, hsvFrame, Imgproc.COLOR_RGB2HSV);
         Scalar hsvColors = Core.sumElems(hsvFrame);
-        hChannelAve = (double)hsvColors.val[0]/m.rows()/m.cols();
+        hChannelAve = hsvColors.val[0] / m.rows() / m.cols();
 
         if (hChannelAve > Math.ulp(0)) {
             if (hChannelAve < 30 || hChannelAve > 130) {
@@ -312,7 +320,9 @@ public class ObjectDetection extends OpenCvPipeline {
         double minRatioChannel = 1.0;
         for(int j = 0; j < 3; j++) {
             per[j] = sumMinColor.val[j] / sumMaxColor.val[j];
-            Logging.log("per [%d] = %.3f, cone location = %d", j, per[j], maxPixelLoc);
+            if (debug) {
+                Logging.log("per [%d] = %.3f, cone location = %d", j, per[j], maxPixelLoc);
+            }
             if (per[j] < minRatioChannel) {
                 minRatioChannel = per[j];
             }

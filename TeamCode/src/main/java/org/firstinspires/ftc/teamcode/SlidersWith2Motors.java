@@ -57,7 +57,7 @@ public class SlidersWith2Motors
     // slider motor variables
     public DcMotor RightSliderMotor = null;
     public DcMotor LeftSliderMotor = null;
-    static final double SLIDER_MOTOR_POWER = 1.0; // slider string gets loose with too high speed
+    static final double SLIDER_MOTOR_POWER = 0.9; // save some powers
 
     // slider position variables
     static final int COUNTS_PER_INCH = 120; // verified by testing.

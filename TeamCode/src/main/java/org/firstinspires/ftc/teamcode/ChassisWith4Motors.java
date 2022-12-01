@@ -508,23 +508,6 @@ public class ChassisWith4Motors {
     }
 
     /**
-     * Calculate the robot center shift due to a big angle turn.
-     *
-     * @param shift output array address. The array is for robot center shift in horizontal and
-     *              portrait direction related to robot position after turning. shift[0] is for the
-     *              shift in horizontal direction, shift[1] is for the shift in portrait direction.
-     *              After turning, the robot need to strafe shift[0] inch, and drive shift[1] inch to
-     *              move the robot center back. Strafing to left when shift[0] less than zero. Driving
-     *              back when shift[1] less than zero.
-     */
-    public void locationShiftCalculation(double[] shift) {
-
-        /*
-         * TODO: add the shift calculation according to the algorithm.
-         */
-    }
-
-    /**
      * Calculate the motors power adjustment during rotation to make sure each motor has same
      * position counts, in order to avoid robot center shift during turning.
      *
