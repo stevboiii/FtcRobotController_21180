@@ -83,7 +83,7 @@ public class TeleopDualDrivers extends LinearOpMode {
     private final ChassisWith4Motors chassis = new ChassisWith4Motors();
 
     // Driving motor variables
-    static final double HIGH_SPEED_POWER = 0.6;
+    static final double HIGH_SPEED_POWER = 0.5;
 
     // slider motor power variables
     private final SlidersWith2Motors slider = new SlidersWith2Motors();
@@ -210,12 +210,9 @@ public class TeleopDualDrivers extends LinearOpMode {
                 sliderResetPosition = (gamepad2.right_bumper && gamepad2.left_bumper);
             }
 
-            // Setup a variable for each drive wheel to save power level for telemetry
-            double maxDrivePower = HIGH_SPEED_POWER;
-
-            double drive = maxDrivePower * robotMovingBackForth;
-            double turn  =  maxDrivePower * (-robotTurn);
-            double strafe = maxDrivePower * (-robotMovingRightLeft);
+            double drive = HIGH_SPEED_POWER * robotMovingBackForth;
+            double turn  =  HIGH_SPEED_POWER * (-robotTurn);
+            double strafe = HIGH_SPEED_POWER * (-robotMovingRightLeft);
 
             chassis.drivingWithPID(drive, turn, strafe, true);
 
@@ -304,7 +301,7 @@ public class TeleopDualDrivers extends LinearOpMode {
                         slider.LeftSliderMotor.getCurrentPosition());
 
                 // drive motors log
-                telemetry.addData("Max driving power ", "%.2f", maxDrivePower);
+                telemetry.addData("Max driving power ", "%.2f", HIGH_SPEED_POWER);
 
                 // running time
                 telemetry.addData("Status", "Run Time: " + runtime);
