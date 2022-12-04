@@ -53,14 +53,19 @@
   */
 
 package org.firstinspires.ftc.teamcode;
+
+import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.Gamepad;
-import com.qualcomm.robotcore.hardware.HardwareDevice;
 import com.qualcomm.robotcore.hardware.Servo;
-import com.qualcomm.robotcore.hardware.VoltageSensor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
+
+import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.VoltageUnit;
+
+import java.util.List;
 
 /**
  * This file contains an minimal example of a Linear "OpMode". An OpMode is a 'program' that runs in either
@@ -89,7 +94,7 @@ public class TeleopDualDrivers extends LinearOpMode {
 
     // slider motor power variables
     private final SlidersWith2Motors slider = new SlidersWith2Motors();
-    static final double SLIDER_MOTOR_POWER = 0.6;
+    static final double SLIDER_MOTOR_POWER = 0.7;
 
     // slider position variables
     static final int FOUR_STAGE_SLIDER_MAX_POS = 4200;  // with 312 RPM motor.
@@ -125,8 +130,9 @@ public class TeleopDualDrivers extends LinearOpMode {
     boolean debugFlag = true;
 
     // voltage management
-    VoltageSensor voltSensor = hardwareMap.voltageSensor.get("Motor Controller 1");
-    private static double minVoltage = 12.5;
+    LynxModule ctrlHub;
+    LynxModule exHub;
+    private static double powerRampRate = 0.3/100; // 0.2 per 100 ms
 
 
     @Override
@@ -143,6 +149,14 @@ public class TeleopDualDrivers extends LinearOpMode {
         armServo = hardwareMap.get(Servo.class, "ArmServo");
         clawServo = hardwareMap.get(Servo.class, "ClawServo");
 
+        // power control
+        ctrlHub = (LynxModule) hardwareMap.get(LynxModule.class, "Control Hub");
+        exHub = (LynxModule) hardwareMap.get(LynxModule.class, "Control Hub");
+        double ctrlHubCurrent, ctrlHubVolt, exHubCurrent, exHubVolt, auVolt;
+        double maxCtrlCurrent = 0.0, minCtrlVolt = 15.0, maxExCurrent = 0.0, minExVolt = 15.0, minAuVolt = 15.0;
+
+        double maxAccIMU = 0.0;
+
         // claw servo motor initial
         clawServoPosition = CLAW_OPEN_POS;
         clawServo.setPosition(clawServoPosition);
@@ -152,7 +166,7 @@ public class TeleopDualDrivers extends LinearOpMode {
         float robotMovingRightLeft;
         float robotTurn;
         float sliderUpDown;
-        boolean sliderGroundPsition;
+        boolean sliderGroundPosition;
         boolean sliderWallPosition;
         boolean sliderLowJunctionPosition;
         boolean sliderMediumJunctionPosition;
@@ -162,17 +176,23 @@ public class TeleopDualDrivers extends LinearOpMode {
         boolean clawClose;
         boolean clawOpen;
         boolean autoLoadConeOn;
-        boolean autoLoadBeaconeOn;
         boolean autoUnloadConeOn;
 
         boolean dualDriverMode = true;
         Gamepad myGamePad;
+
+        // bulk reading
+        List<LynxModule> allHubs = hardwareMap.getAll(LynxModule.class);
+        for (LynxModule hub : allHubs) {
+            hub.setBulkCachingMode(LynxModule.BulkCachingMode.AUTO);
+        }
 
         // Wait for the game to start (driver presses PLAY)
         telemetry.addData("Mode", "waiting for start");
         telemetry.update();
         waitForStart();
         runtime.reset();
+        double timeStamp = 0.0;
 
         // run until the end of the match (driver presses STOP)
         while (opModeIsActive()) {
@@ -198,7 +218,6 @@ public class TeleopDualDrivers extends LinearOpMode {
             robotTurn            = gamepad1.right_stick_x;
             autoLoadConeOn       = gamepad1.left_bumper;
             autoUnloadConeOn     = gamepad1.right_bumper;
-            autoLoadBeaconeOn       = gamepad1.dpad_down;
 
             // gamepad1(single driver) or gamepad2(dual driver) buttons
             sliderUpDown                = myGamePad.right_stick_y;
@@ -209,7 +228,7 @@ public class TeleopDualDrivers extends LinearOpMode {
             clawClose                   = myGamePad.dpad_up;
             clawOpen                    = myGamePad.dpad_down;
 
-            sliderGroundPsition         = myGamePad.dpad_left || myGamePad.dpad_right;
+            sliderGroundPosition         = myGamePad.dpad_left || myGamePad.dpad_right;
 
             if (dualDriverMode)
             {
@@ -217,11 +236,30 @@ public class TeleopDualDrivers extends LinearOpMode {
                 sliderResetPosition = (gamepad2.right_bumper && gamepad2.left_bumper);
             }
 
-            double maxDrivePower = HIGH_SPEED_POWER;
-            if (voltSensor.getVoltage() < minVoltage) //Reduce motors power if battery voltage is low
-            {
-                maxDrivePower = HIGH_SPEED_POWER / 2.0;
-            }
+            double maxDrivePower;
+
+            double chassisCurrentPower = chassis.getAveragePower();
+            double deltaTime = runtime.milliseconds() - timeStamp;
+            double maxP = chassisCurrentPower + powerRampRate * deltaTime;
+            timeStamp = runtime.milliseconds();
+
+            maxDrivePower = Math.min(maxP, HIGH_SPEED_POWER);
+            ctrlHubCurrent = ctrlHub.getCurrent(CurrentUnit.AMPS);
+            ctrlHubVolt = ctrlHub.getInputVoltage(VoltageUnit.VOLTS);
+            exHubCurrent = exHub.getCurrent(CurrentUnit.AMPS);
+            exHubVolt = exHub.getInputVoltage(VoltageUnit.VOLTS);
+
+            auVolt = ctrlHub.getAuxiliaryVoltage(VoltageUnit.VOLTS);
+            minAuVolt = Math.min(auVolt, minAuVolt);
+
+
+            double accIMU = chassis.getIMUAcceleration();
+            maxAccIMU = Math.max(accIMU, maxAccIMU);
+
+            maxCtrlCurrent = Math.max(ctrlHubCurrent, maxCtrlCurrent);
+            maxExCurrent = Math.max(exHubCurrent, maxExCurrent);
+            minCtrlVolt = Math.min(ctrlHubVolt, minCtrlVolt);
+            minExVolt = Math.min(exHubVolt, minExVolt);
 
             double drive = maxDrivePower * robotMovingBackForth;
             double turn  =  maxDrivePower * (-robotTurn);
@@ -249,7 +287,7 @@ public class TeleopDualDrivers extends LinearOpMode {
                 sliderTargetPosition = WALL_POSITION;
             }
 
-            if (sliderGroundPsition) {
+            if (sliderGroundPosition) {
                 sliderTargetPosition = GROUND_CONE_POSITION;
             }
 
@@ -265,12 +303,7 @@ public class TeleopDualDrivers extends LinearOpMode {
                 sliderTargetPosition = SLIDER_MIN_POS;
             }
 
-            double sliderPower = SLIDER_MOTOR_POWER; // 0.6
-            if (voltSensor.getVoltage() < minVoltage) //Reduce slider motor power if battery voltage is low
-            {
-                sliderPower = SLIDER_MOTOR_POWER / 2.0;
-            }
-            slider.setPower(sliderPower);
+            slider.setPower(SLIDER_MOTOR_POWER);
             slider.setPosition(sliderTargetPosition);
 
             // Keep stepping up until we hit the max value.
@@ -289,32 +322,33 @@ public class TeleopDualDrivers extends LinearOpMode {
                 loadCone(GROUND_CONE_POSITION); // Always on ground during teleop mode
             }
 
-            //  auto driving, grip cone, and lift slider
-            if(autoLoadBeaconeOn) {
-                loadCone(GROUND_BEACON_POSITION); // Always on ground during teleop mode
-            }
-
             //  auto driving, unload cone
             if(autoUnloadConeOn) {
                 unloadCone();
             }
 
-            double curVolt = voltSensor.getVoltage();
-            telemetry.addData("Controller Voltage ", "= %.2f", curVolt);
-            Logging.log("Current Voltage = %.2f", curVolt);
-
-            Logging.log("Driving Motor powers. FL = %.2f, FR = %.2f, BL = %.2f, BR = %.2f",
-                    chassis.FrontLeftDrive.getPower(), chassis.FrontRightDrive.getPower(),
-                    chassis.BackLeftDrive.getPower(), chassis.BackRightDrive.getPower());
-            Logging.log("Slider Motor powers. Left = %.2f, Right = %.2f",
-                    slider.LeftSliderMotor.getPower(), slider.RightSliderMotor.getPower());
-
             if (debugFlag) {
+                telemetry.addData("IMU", "Acc = %.2f, max = %.2f", accIMU, maxAccIMU);
+                telemetry.addData("Max Ctrl hub current = ", "%.2f", maxCtrlCurrent);
+                telemetry.addData("Min Ctrl hub Volt = ", "%.2f", minCtrlVolt);
+                telemetry.addData("Max Extend hub current = ", "%.2f", maxExCurrent);
+                telemetry.addData("Min Extend hub Volt = ", "%.2f", minExVolt);
+
+                Logging.log("While loop time in ms = %.1f.", deltaTime);
+                Logging.log("Get drive power = %.2f, set drive power = %.2f", chassisCurrentPower, maxP);
+                Logging.log("Ctrl hub current = %.2f, max = %.2f", ctrlHubCurrent, maxCtrlCurrent);
+                Logging.log("Ctrl hub volt = %.2f, min = %.2f", ctrlHubVolt, minCtrlVolt);
+                Logging.log("Extend hub current = %.2f, max = %.2f", exHubCurrent, maxExCurrent);
+                Logging.log("Extend hub volt = %.2f, min = %.2f", exHubVolt, minExVolt);
+                Logging.log("Auxiliary voltage = %.2f, min = %.2f", auVolt, minAuVolt);
+                Logging.log("IMU Acc = %.2f, max = %.2f", accIMU, maxAccIMU);
+
+
                 // config log
-                telemetry.addData("Dual driver mode: ", dualDriverMode? "On" : "Off");
+                telemetry.addData("Dual driver mode: ", dualDriverMode ? "On" : "Off");
 
                 // imu log
-                telemetry.addData("imu heading ","%.2f", chassis.lastAngles.firstAngle);
+                telemetry.addData("imu heading ", "%.2f", chassis.lastAngles.firstAngle);
                 telemetry.addData("global heading ", "%.2f", chassis.globalAngle);
                 telemetry.addData("Correction  ", "%.2f", chassis.correction);
 

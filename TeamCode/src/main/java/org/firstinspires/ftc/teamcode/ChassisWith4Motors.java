@@ -627,8 +627,31 @@ public class ChassisWith4Motors {
         BackLeftDrive.setPower(BackLeftPower);
         BackRightDrive.setPower(BackRightPower);
 
-        Logging.log("Motors power", "FL (%.2f), FR (%.2f), BL (%.2f), BR (%.2f)",
+        Logging.log("Motors power - FL (%.2f), FR (%.2f), BL (%.2f), BR (%.2f)",
                 FrontLeftPower, FrontRightPower, BackLeftPower, BackRightPower);
+    }
+
+    /**
+     * Get the average power of driving motors.
+     * @return the average power of 4 driving motors.
+     */
+    public double getAveragePower() {
+        return (Math.abs(FrontLeftDrive.getPower()) + Math.abs(FrontRightDrive.getPower()) +
+                Math.abs(BackLeftDrive.getPower()) + Math.abs(BackRightDrive.getPower()))/4.0;
+    }
+
+    /**
+     * Get IMU accelerations.
+     * @return the sum of acceleration in three directions
+     */
+    public double getIMUAcceleration() {
+        double xAcc = imu.getAcceleration().xAccel;
+        double yAcc = imu.getAcceleration().yAccel;
+        double zAcc = imu.getAcceleration().zAccel;
+
+        Logging.log("IMU Accelerations: x = %.2f, y = %.2f, z = %.2f", xAcc, yAcc, zAcc);
+
+        return Math.sqrt(Math.pow(xAcc, 2) + Math.pow(yAcc, 2) + Math.pow(zAcc, 2));
     }
 }
 

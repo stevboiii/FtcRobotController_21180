@@ -18,7 +18,6 @@ public class ObjectDetection extends OpenCvPipeline {
 
     boolean debug = false;
 
-    public static boolean stopColorPipeLine = false;
     public static boolean stopConeDetectPipeLine = true;
 
     // for sleeve color detect
@@ -79,29 +78,26 @@ public class ObjectDetection extends OpenCvPipeline {
             Object_TOPLEFT_POINT.y + REGION_HEIGHT);
 
 
-
     @Override
     public Mat processFrame(Mat input) {
+        // detect sleeve color.
+        sleeveColorDetect(input);
 
-        if (!stopColorPipeLine) {
-            Logging.log("Start Opcv process to detect sleeve color.");
-            sleeveColorDetect(input);
-        }
-
+        // detect cone location
         if (!stopConeDetectPipeLine) {
             Logging.log("Start Opcv process to detect cone.");
             conePositionDetect(input);
         }
 
-        if (!stopColorPipeLine) {
-            Imgproc.rectangle(
+        // draw a rectangle on sleeve.
+        Imgproc.rectangle(
                     input,
                     sleeve_pointA,
                     sleeve_pointB,
                     brushColor,
                     2
-            );
-        }
+        );
+
         return input;
     }
 

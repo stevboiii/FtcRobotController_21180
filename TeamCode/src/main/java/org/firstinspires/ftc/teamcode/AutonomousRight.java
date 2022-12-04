@@ -189,9 +189,7 @@ public class AutonomousRight extends LinearOpMode {
             myParkingLot = coneSleeveDetect.getParkingLot();
             parkingLotDis = coneSleeveDetect.getParkingLotDistance();
             telemetry.addData("Parking position: ", myParkingLot);
-            telemetry.addData("Cone has detected:", coneSleeveDetect.isConeDetected()? "Yes" : "No");
-            telemetry.addData("Cone position:"," %.2f", coneSleeveDetect.getConePosition());
-            telemetry.addData("robot position: ", autonomousStartLocation>0? "Right":"Left");
+            telemetry.addData("robot position: ", autonomousStartLocation > 0? "Right":"Left");
             telemetry.addData("Mode", "waiting for start");
             telemetry.update();
         }
@@ -199,11 +197,10 @@ public class AutonomousRight extends LinearOpMode {
         // Wait for the game to start (driver presses PLAY)
         waitForStart();
         runtime.reset();
-        ObjectDetection.stopColorPipeLine = true;
+
 
         // run until the end of the match (driver presses STOP)
         if (opModeIsActive()) {
-
             autonomousCore();
 
             Logging.log("Autonomous - total Run Time: " + runtime);
