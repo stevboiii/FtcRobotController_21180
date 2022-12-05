@@ -100,7 +100,7 @@ import java.util.Locale;
  * @see <a href="https://ae-bst.resource.bosch.com/media/_tech/media/datasheets/BST_BNO055_DS000_14.pdf">BNO055 specification</a>
  */
 @Autonomous(name = "POC: IMU Calibration", group = "Concept")
-//@Disabled                            // Uncomment this to add to the opmode list
+@Disabled                            // Uncomment this to add to the opmode list
 public class ConceptBNO055IMUCalibration extends LinearOpMode
     {
     //----------------------------------------------------------------------------------------------

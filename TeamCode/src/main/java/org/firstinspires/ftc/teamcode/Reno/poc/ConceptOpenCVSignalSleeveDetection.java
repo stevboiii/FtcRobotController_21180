@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode.Reno.poc;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
@@ -11,6 +12,7 @@ import org.openftc.easyopencv.OpenCvCameraFactory;
 import org.openftc.easyopencv.OpenCvCameraRotation;
 
 @Autonomous(name="POC - OpenCV Signal Sleeve", group ="Concept")
+@Disabled
 public class ConceptOpenCVSignalSleeveDetection extends LinearOpMode {
 
     ConceptSleeveDetection sleeveDetection;

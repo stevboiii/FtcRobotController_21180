@@ -35,6 +35,7 @@ import android.os.Handler;
 
 import androidx.annotation.NonNull;
 
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.RobotLog;
@@ -73,7 +74,7 @@ import java.util.concurrent.TimeUnit;
  * using Media Transfer; ADB; etc)
  */
 @TeleOp(name="nap: Webcam", group ="Concept")
-
+@Disabled
 public class ConceptWebcamTest extends LinearOpMode {
 
     //----------------------------------------------------------------------------------------------

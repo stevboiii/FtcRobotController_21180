@@ -99,8 +99,8 @@ public class TeleopDualDrivers extends LinearOpMode {
     // slider position variables
     static final int FOUR_STAGE_SLIDER_MAX_POS = 4200;  // with 312 RPM motor.
     static final int SLIDER_MIN_POS = 0;
-    static final int GROUND_BEACON_POSITION = SLIDER_MIN_POS; // pick up beacon position
     static final int GROUND_CONE_POSITION = SlidersWith2Motors.COUNTS_PER_INCH; // 1 inch
+    static final int coneLoadStackGap = (int)(SlidersWith2Motors.COUNTS_PER_INCH *  1.4);
     static final int WALL_POSITION = (int)(SlidersWith2Motors.COUNTS_PER_INCH * 7.5);  // 7.5 inch
     static final int MEDIUM_JUNCTION_POS = (int)(SlidersWith2Motors.COUNTS_PER_INCH * 24.5); //23.5 inch
     static final int HIGH_JUNCTION_POS = (int)(SlidersWith2Motors.COUNTS_PER_INCH * 34.5); //33.5 inch
@@ -155,8 +155,6 @@ public class TeleopDualDrivers extends LinearOpMode {
         double ctrlHubCurrent, ctrlHubVolt, exHubCurrent, exHubVolt, auVolt;
         double maxCtrlCurrent = 0.0, minCtrlVolt = 15.0, maxExCurrent = 0.0, minExVolt = 15.0, minAuVolt = 15.0;
 
-        double maxAccIMU = 0.0;
-
         // claw servo motor initial
         clawServoPosition = CLAW_OPEN_POS;
         clawServo.setPosition(clawServoPosition);
@@ -176,6 +174,8 @@ public class TeleopDualDrivers extends LinearOpMode {
         boolean clawClose;
         boolean clawOpen;
         boolean autoLoadConeOn;
+        boolean autoLoad34thConeStackOn;
+        boolean autoLoad5thConeStackOn;
         boolean autoUnloadConeOn;
 
         boolean dualDriverMode = true;
@@ -217,6 +217,8 @@ public class TeleopDualDrivers extends LinearOpMode {
             robotMovingRightLeft = gamepad1.left_stick_x;
             robotTurn            = gamepad1.right_stick_x;
             autoLoadConeOn       = gamepad1.left_bumper;
+            autoLoad34thConeStackOn = gamepad1.dpad_up;
+            autoLoad5thConeStackOn = gamepad1.dpad_down;
             autoUnloadConeOn     = gamepad1.right_bumper;
 
             // gamepad1(single driver) or gamepad2(dual driver) buttons
@@ -244,22 +246,6 @@ public class TeleopDualDrivers extends LinearOpMode {
             timeStamp = runtime.milliseconds();
 
             maxDrivePower = Math.min(maxP, HIGH_SPEED_POWER);
-            ctrlHubCurrent = ctrlHub.getCurrent(CurrentUnit.AMPS);
-            ctrlHubVolt = ctrlHub.getInputVoltage(VoltageUnit.VOLTS);
-            exHubCurrent = exHub.getCurrent(CurrentUnit.AMPS);
-            exHubVolt = exHub.getInputVoltage(VoltageUnit.VOLTS);
-
-            auVolt = ctrlHub.getAuxiliaryVoltage(VoltageUnit.VOLTS);
-            minAuVolt = Math.min(auVolt, minAuVolt);
-
-
-            double accIMU = chassis.getIMUAcceleration();
-            maxAccIMU = Math.max(accIMU, maxAccIMU);
-
-            maxCtrlCurrent = Math.max(ctrlHubCurrent, maxCtrlCurrent);
-            maxExCurrent = Math.max(exHubCurrent, maxExCurrent);
-            minCtrlVolt = Math.min(ctrlHubVolt, minCtrlVolt);
-            minExVolt = Math.min(exHubVolt, minExVolt);
 
             double drive = maxDrivePower * robotMovingBackForth;
             double turn  =  maxDrivePower * (-robotTurn);
@@ -270,25 +256,35 @@ public class TeleopDualDrivers extends LinearOpMode {
             // use Y button to lift up the slider reaching high junction
             if (sliderHighJunctionPosition) {
                 sliderTargetPosition = HIGH_JUNCTION_POS;
+                slider.setPosition(sliderTargetPosition);
+                slider.setPower(SLIDER_MOTOR_POWER);
             }
 
             // use B button to lift up the slider reaching medium junction
             if (sliderMediumJunctionPosition) {
                 sliderTargetPosition = MEDIUM_JUNCTION_POS;
+                slider.setPosition(sliderTargetPosition);
+                slider.setPower(SLIDER_MOTOR_POWER);
             }
 
             // use A button to lift up the slider reaching low junction
             if (sliderLowJunctionPosition) {
                 sliderTargetPosition = LOW_JUNCTION_POS;
+                slider.setPosition(sliderTargetPosition);
+                slider.setPower(SLIDER_MOTOR_POWER);
             }
 
             // use X button to move the slider for wall position
             if (sliderWallPosition) {
                 sliderTargetPosition = WALL_POSITION;
+                slider.setPosition(sliderTargetPosition);
+                slider.setPower(SLIDER_MOTOR_POWER);
             }
 
             if (sliderGroundPosition) {
                 sliderTargetPosition = GROUND_CONE_POSITION;
+                slider.setPosition(sliderTargetPosition);
+                slider.setPower(SLIDER_MOTOR_POWER);
             }
 
             // use right stick_Y to lift or down slider continuously
@@ -301,25 +297,37 @@ public class TeleopDualDrivers extends LinearOpMode {
             if (sliderResetPosition) {
                 slider.resetEncoders();
                 sliderTargetPosition = SLIDER_MIN_POS;
+                slider.setPosition(sliderTargetPosition);
+                slider.setPower(SLIDER_MOTOR_POWER);
             }
 
-            slider.setPower(SLIDER_MOTOR_POWER);
-            slider.setPosition(sliderTargetPosition);
-
-            // Keep stepping up until we hit the max value.
+            // Set position only when button is hit.
             if (clawClose) {
                 clawServoPosition += CLAW_INCREMENT;
+                clawServoPosition = Range.clip(clawServoPosition, CLAW_MIN_POS, CLAW_MAX_POS);
+                clawServo.setPosition(clawServoPosition);
             }
 
+            // Set position only when button is hit.
             if (clawOpen) {
                 clawServoPosition -= CLAW_INCREMENT;
+                clawServoPosition = Range.clip(clawServoPosition, CLAW_MIN_POS, CLAW_MAX_POS);
+                clawServo.setPosition(clawServoPosition);
             }
-            clawServoPosition = Range.clip(clawServoPosition, CLAW_MIN_POS, CLAW_MAX_POS);
-            clawServo.setPosition(clawServoPosition);
 
             //  auto driving, grip cone, and lift slider
             if(autoLoadConeOn) {
                 loadCone(GROUND_CONE_POSITION); // Always on ground during teleop mode
+            }
+
+            //  auto driving, grip cone, and lift slider
+            if(autoLoad34thConeStackOn) {
+                loadCone(GROUND_CONE_POSITION + coneLoadStackGap * 2); // Always on ground during teleop mode
+            }
+
+            //  auto driving, grip cone, and lift slider
+            if(autoLoad5thConeStackOn) {
+                loadCone(GROUND_CONE_POSITION + coneLoadStackGap * 3); // Always on ground during teleop mode
             }
 
             //  auto driving, unload cone
@@ -328,21 +336,30 @@ public class TeleopDualDrivers extends LinearOpMode {
             }
 
             if (debugFlag) {
-                telemetry.addData("IMU", "Acc = %.2f, max = %.2f", accIMU, maxAccIMU);
+                ctrlHubCurrent = ctrlHub.getCurrent(CurrentUnit.AMPS);
+                ctrlHubVolt = ctrlHub.getInputVoltage(VoltageUnit.VOLTS);
+                exHubCurrent = exHub.getCurrent(CurrentUnit.AMPS);
+                exHubVolt = exHub.getInputVoltage(VoltageUnit.VOLTS);
+
+                auVolt = ctrlHub.getAuxiliaryVoltage(VoltageUnit.VOLTS);
+                minAuVolt = Math.min(auVolt, minAuVolt);
+
+                maxCtrlCurrent = Math.max(ctrlHubCurrent, maxCtrlCurrent);
+                maxExCurrent = Math.max(exHubCurrent, maxExCurrent);
+                minCtrlVolt = Math.min(ctrlHubVolt, minCtrlVolt);
+                minExVolt = Math.min(exHubVolt, minExVolt);
+
                 telemetry.addData("Max Ctrl hub current = ", "%.2f", maxCtrlCurrent);
                 telemetry.addData("Min Ctrl hub Volt = ", "%.2f", minCtrlVolt);
                 telemetry.addData("Max Extend hub current = ", "%.2f", maxExCurrent);
                 telemetry.addData("Min Extend hub Volt = ", "%.2f", minExVolt);
 
-                Logging.log("While loop time in ms = %.1f.", deltaTime);
                 Logging.log("Get drive power = %.2f, set drive power = %.2f", chassisCurrentPower, maxP);
                 Logging.log("Ctrl hub current = %.2f, max = %.2f", ctrlHubCurrent, maxCtrlCurrent);
                 Logging.log("Ctrl hub volt = %.2f, min = %.2f", ctrlHubVolt, minCtrlVolt);
                 Logging.log("Extend hub current = %.2f, max = %.2f", exHubCurrent, maxExCurrent);
                 Logging.log("Extend hub volt = %.2f, min = %.2f", exHubVolt, minExVolt);
                 Logging.log("Auxiliary voltage = %.2f, min = %.2f", auVolt, minAuVolt);
-                Logging.log("IMU Acc = %.2f, max = %.2f", accIMU, maxAccIMU);
-
 
                 // config log
                 telemetry.addData("Dual driver mode: ", dualDriverMode ? "On" : "Off");
@@ -365,12 +382,14 @@ public class TeleopDualDrivers extends LinearOpMode {
 
                 // drive motors log
                 telemetry.addData("Max driving power ", "%.2f", maxDrivePower);
-
-                // running time
-                telemetry.addData("Status", "Run Time: " + runtime);
             }
+            // running time
+            telemetry.addData("Status", "Run Time: " + runtime);
+            telemetry.addData("Status", "While loop Time in ms = ", "%.1f", deltaTime);
             telemetry.update(); // update message at the end of while loop
+            Logging.log("While loop time in ms = %.1f.", deltaTime);
         }
+
 
         // The motor stop on their own but power is still applied. Turn off motor.
         slider.stop();
@@ -392,6 +411,7 @@ public class TeleopDualDrivers extends LinearOpMode {
         sliderTargetPosition = slider.getPosition();
         int moveSlider = sliderTargetPosition - SLIDER_MOVE_DOWN_POSITION;
         moveSlider = Math.max(moveSlider, GROUND_CONE_POSITION);
+        slider.setPower(SLIDER_MOTOR_POWER);
         slider.setPosition(moveSlider);
         slider.waitRunningComplete();
 
@@ -401,6 +421,7 @@ public class TeleopDualDrivers extends LinearOpMode {
         clawServoPosition = CLAW_OPEN_POS; // keep claw position
         chassis.runToPosition(-robotAutoUnloadMovingDistance, true); // move out from junction
         sliderTargetPosition = WALL_POSITION;
+        slider.setPosition(sliderTargetPosition);
     }
 
     /**
@@ -415,6 +436,7 @@ public class TeleopDualDrivers extends LinearOpMode {
      * @param coneLocation: the target cone high location.
      */
     private void loadCone(int coneLocation) {
+        slider.setPower(SLIDER_MOTOR_POWER);
         clawServo.setPosition(CLAW_OPEN_POS);
         slider.setPosition(coneLocation);
         chassis.runToPosition(-robotAutoLoadMovingDistance, true); // moving to loading position
@@ -424,6 +446,7 @@ public class TeleopDualDrivers extends LinearOpMode {
         sleep(200); // wait to make sure clawServo is at grep position
         clawServoPosition = CLAW_CLOSE_POS; // keep claw position
         sliderTargetPosition = LOW_JUNCTION_POS;
+        slider.setPosition(sliderTargetPosition);
     }
 
 }

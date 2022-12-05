@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode.Reno;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.util.Range;
@@ -38,7 +39,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackables;
  */
 
 @Autonomous(name= "Camera" , group = "Concept")
-//@Disabled
+@Disabled
 public class CameraVuforia extends LinearOpMode
 {
    //MyHardware robot = new MyHardware();

@@ -29,6 +29,7 @@
 
 package org.firstinspires.ftc.teamcode.Reno;
 
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
@@ -51,7 +52,7 @@ import java.util.List;
  * is explained below.
  */
 @TeleOp(name = "Nap: camera 3", group = "Concept")
-
+@Disabled
 public class TensorFlowObjectDetectionWebcam extends LinearOpMode {
     private static final String TFOD_MODEL_ASSET = "UltimateGoal.tflite";
     private static final String LABEL_FIRST_ELEMENT = "Quad";

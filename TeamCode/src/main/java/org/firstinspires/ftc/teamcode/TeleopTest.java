@@ -54,6 +54,7 @@
 
 package org.firstinspires.ftc.teamcode;
 
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.ColorSensor;
@@ -80,7 +81,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
  */
 
 @TeleOp(name="TeleopTest", group="Concept")
-//@Disabled
+@Disabled
 public class TeleopTest extends LinearOpMode {
     // Declare OpMode members.
     private final ElapsedTime runtime = new ElapsedTime();

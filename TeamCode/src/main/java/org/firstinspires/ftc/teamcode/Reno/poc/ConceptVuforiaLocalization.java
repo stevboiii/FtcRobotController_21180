@@ -35,6 +35,7 @@ import static org.firstinspires.ftc.robotcore.external.navigation.AxesOrder.XZY;
 import static org.firstinspires.ftc.robotcore.external.navigation.AxesReference.EXTRINSIC;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
@@ -80,7 +81,7 @@ import java.util.List;
  */
 
 @Autonomous(name="POC - Vuforia Localization", group ="Concept")
-//@Disabled
+@Disabled
 public class ConceptVuforiaLocalization extends LinearOpMode {
 
     /*

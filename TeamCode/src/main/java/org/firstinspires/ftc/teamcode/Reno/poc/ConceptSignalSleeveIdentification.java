@@ -76,7 +76,7 @@ import java.util.concurrent.TimeUnit;
  * using Media Transfer; ADB; etc)
  */
 @Autonomous(name="POC: Signal Sleeve", group ="Concept")
-//@Disabled
+@Disabled
 public class ConceptSignalSleeveIdentification extends LinearOpMode {
 
     //----------------------------------------------------------------------------------------------
