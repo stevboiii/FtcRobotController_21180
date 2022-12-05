@@ -127,7 +127,7 @@ public class TeleopDualDrivers extends LinearOpMode {
     double robotAutoUnloadMovingDistance = 3.5; // in INCH
 
     // debug flags, turn it off for formal version to save time of logging
-    boolean debugFlag = true;
+    boolean debugFlag = false;
 
     // voltage management
     LynxModule ctrlHub;

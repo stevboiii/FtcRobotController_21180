@@ -53,7 +53,7 @@ public class ChassisWith4Motors {
     HardwareMap hardwareMap = null;
     private final ElapsedTime runtime = new ElapsedTime();
     static final double MAX_WAIT_TIME = 8.0; // in seconds
-    private final boolean debugFlag = true;
+    private final boolean debugFlag = false;
 
     // Motors variables
     public DcMotor FrontLeftDrive = null;
