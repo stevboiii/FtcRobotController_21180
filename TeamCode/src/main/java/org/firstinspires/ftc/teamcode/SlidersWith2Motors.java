@@ -33,6 +33,7 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.util.ElapsedTime;
+import com.qualcomm.robotcore.util.Range;
 
 
 /**
@@ -88,6 +89,7 @@ public class SlidersWith2Motors
      * @param sliderMotorPosition the target position for slider left motor and right motor.
      */
     public void setPosition(int sliderMotorPosition) {
+        sliderMotorPosition = Range.clip(sliderMotorPosition, SLIDER_MIN_POS, FOUR_STAGE_SLIDER_MAX_POS);
         RightSliderMotor.setTargetPosition(sliderMotorPosition);
         LeftSliderMotor.setTargetPosition(sliderMotorPosition);
     }
@@ -127,6 +129,7 @@ public class SlidersWith2Motors
      * @param p set motors power to p.
      */
     public void setPower(double p) {
+        p = Range.clip(p, -1, 1);
         RightSliderMotor.setPower(p);
         LeftSliderMotor.setPower(p);
     }

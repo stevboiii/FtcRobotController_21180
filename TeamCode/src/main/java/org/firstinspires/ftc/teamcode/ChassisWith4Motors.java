@@ -243,6 +243,7 @@ public class ChassisWith4Motors {
      * @param p: the power value set to motors (0.0 ~ 1.0)
      */
     public void setPowers(double p) {
+        p = Range.clip(p, -1, 1);
         FrontLeftDrive.setPower(p);
         FrontRightDrive.setPower(p);
         BackLeftDrive.setPower(p);
@@ -396,6 +397,7 @@ public class ChassisWith4Motors {
      * @param p the power set to front left motor and back left motor
      */
     private void leftMotorSetPower(double p) {
+        p = Range.clip(p, -1, 1);
         FrontLeftDrive.setPower(p);
         BackLeftDrive.setPower(p);
     }
@@ -406,6 +408,7 @@ public class ChassisWith4Motors {
      * @param p the power set to front left right motor and back right motor
      */
     private void rightMotorSetPower(double p) {
+        p = Range.clip(p, -1, 1);
         FrontRightDrive.setPower(p);
         BackRightDrive.setPower(p);
     }
@@ -416,6 +419,7 @@ public class ChassisWith4Motors {
      * @param p the power set to front left right motor and front right motor
      */
     private void frontMotorSetPower(double p) {
+        p = Range.clip(p, -1, 1);
         FrontRightDrive.setPower(p);
         FrontLeftDrive.setPower(p);
     }
@@ -426,6 +430,7 @@ public class ChassisWith4Motors {
      * @param p the power set to back left right motor and back right motor
      */
     private void backMotorSetPower(double p) {
+        p = Range.clip(p, -1, 1);
         BackRightDrive.setPower(p);
         BackLeftDrive.setPower(p);
     }
@@ -638,20 +643,6 @@ public class ChassisWith4Motors {
     public double getAveragePower() {
         return (Math.abs(FrontLeftDrive.getPower()) + Math.abs(FrontRightDrive.getPower()) +
                 Math.abs(BackLeftDrive.getPower()) + Math.abs(BackRightDrive.getPower()))/4.0;
-    }
-
-    /**
-     * Get IMU accelerations.
-     * @return the sum of acceleration in three directions
-     */
-    public double getIMUAcceleration() {
-        double xAcc = imu.getAcceleration().xAccel;
-        double yAcc = imu.getAcceleration().yAccel;
-        double zAcc = imu.getAcceleration().zAccel;
-
-        Logging.log("IMU Accelerations: x = %.2f, y = %.2f, z = %.2f", xAcc, yAcc, zAcc);
-
-        return Math.sqrt(Math.pow(xAcc, 2) + Math.pow(yAcc, 2) + Math.pow(zAcc, 2));
     }
 }
 
