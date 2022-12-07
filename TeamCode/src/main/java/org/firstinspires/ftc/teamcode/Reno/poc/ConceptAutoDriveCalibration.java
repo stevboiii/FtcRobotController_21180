@@ -30,6 +30,7 @@
 package org.firstinspires.ftc.teamcode.Reno.poc;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.OpModeManagerImpl;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -41,7 +42,7 @@ import org.firstinspires.ftc.teamcode.Reno.HardwareRobot;
 import org.firstinspires.ftc.teamcode.Reno.RobotLocation;
 
 @Autonomous(name="POC: Auto Drive Calibration", group="Concept")
-//@Disabled
+@Disabled
 public class ConceptAutoDriveCalibration extends LinearOpMode {
 
     /* Declare OpMode members. */

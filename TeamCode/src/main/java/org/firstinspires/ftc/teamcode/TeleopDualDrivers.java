@@ -288,10 +288,14 @@ public class TeleopDualDrivers extends LinearOpMode {
             }
 
             // use right stick_Y to lift or down slider continuously
-            sliderTargetPosition -= (int)((sliderUpDown) * motorPositionInc);
-            if (!sliderSkipLimitation) {
-                sliderTargetPosition = Range.clip(sliderTargetPosition, SLIDER_MIN_POS,
-                        FOUR_STAGE_SLIDER_MAX_POS);
+            if (Math.abs(sliderUpDown) > 0) {
+                sliderTargetPosition -= (int) ((sliderUpDown) * motorPositionInc);
+                if (!sliderSkipLimitation) {
+                    sliderTargetPosition = Range.clip(sliderTargetPosition, SLIDER_MIN_POS,
+                            FOUR_STAGE_SLIDER_MAX_POS);
+                }
+                slider.setPosition(sliderTargetPosition);
+                slider.setPower(SLIDER_MOTOR_POWER);
             }
 
             if (sliderResetPosition) {

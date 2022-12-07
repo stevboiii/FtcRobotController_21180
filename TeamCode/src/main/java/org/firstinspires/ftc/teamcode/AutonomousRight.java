@@ -90,7 +90,7 @@ public class AutonomousRight extends LinearOpMode {
 
     // slider position variables
     private final SlidersWith2Motors slider = new SlidersWith2Motors();
-    static final int coneStack5th = (int)(SlidersWith2Motors.COUNTS_PER_INCH * 6.1); // the 5th cone position in the cone stack. The lowest cone is the 1th one.
+    static final int coneStack5th = (int)(SlidersWith2Motors.COUNTS_PER_INCH * 5.8); // the 5th cone position in the cone stack. The lowest cone is the 1th one.
     static final int coneLoadStackGap = (int)(SlidersWith2Motors.COUNTS_PER_INCH *  1.4);
     static final int GROUND_POSITION = 0; // Ground(0 inch), beacon pick up position
     static final int WALL_POSITION = (int)(SlidersWith2Motors.COUNTS_PER_INCH * 8.0);  // 7.5 inch
@@ -111,8 +111,8 @@ public class AutonomousRight extends LinearOpMode {
     // variables for autonomous
     double matCenterToJunctionDistance = 14;
     double robotAutoLoadMovingDistance = 1.0; // in INCH
-    double movingDistBeforeDrop = 3.2; // in INCH
-    double movingDistAfterDrop = matCenterToJunctionDistance - movingDistBeforeDrop - 2.0; // in INCH
+    double movingDistBeforeDrop = 3.5; // in INCH
+    double movingDistAfterDrop = matCenterToJunctionDistance - movingDistBeforeDrop - 1.0; // in INCH
     static final double matCenterToConeStack = 27.5; // inch
 
     // camera and sleeve color
@@ -300,7 +300,7 @@ public class AutonomousRight extends LinearOpMode {
             chassis.rotateIMUTargetAngle(45.0 * autonomousStartLocation);
 
             // unload cone & adjust
-            autoUnloadCone(movingDistBeforeDrop - 0.5, movingDistAfterDrop - 0.5);
+            autoUnloadCone(movingDistBeforeDrop - 0.2, movingDistAfterDrop - 0.8);
             Logging.log("Autonomous - cone %d has been unloaded.", autoLoop + 2);
         }
 
