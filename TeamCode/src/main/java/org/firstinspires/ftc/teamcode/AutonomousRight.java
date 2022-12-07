@@ -78,7 +78,7 @@ import org.openftc.easyopencv.OpenCvCameraRotation;
  * Remove or comment out the @Disabled line to add this opmode to the Driver Station OpMode list
  */
 
-@Autonomous(name="AutonomousRight", group="Concept")
+@Autonomous(name="Autonomous_Right", group="Concept")
 //@Disabled
 public class AutonomousRight extends LinearOpMode {
 

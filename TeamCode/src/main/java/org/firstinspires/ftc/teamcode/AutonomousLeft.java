@@ -70,7 +70,7 @@ import org.openftc.easyopencv.OpenCvCameraRotation;
  * Use this one for autonomous when robot located at left side of game field.
  */
 
-@Autonomous(name="AutonomousLeft", group="Concept")
+@Autonomous(name="Autonomous_Left", group="Concept")
 //@Disabled
 public class AutonomousLeft extends AutonomousRight {
 

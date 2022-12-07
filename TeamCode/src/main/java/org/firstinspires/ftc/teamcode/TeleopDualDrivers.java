@@ -80,7 +80,7 @@ import java.util.List;
  * Remove or comment out the @Disabled line to add this opmode to the Driver Station OpMode list
  */
 
-@TeleOp(name="TeleopDualDrivers", group="Concept")
+@TeleOp(name="Teleop_DualDrivers", group="Concept")
 //@Disabled
 public class TeleopDualDrivers extends LinearOpMode {
     // Declare OpMode members.
@@ -127,7 +127,7 @@ public class TeleopDualDrivers extends LinearOpMode {
     double robotAutoUnloadMovingDistance = 3.5; // in INCH
 
     // debug flags, turn it off for formal version to save time of logging
-    boolean debugFlag = false;
+    boolean debugFlag = true;
 
     // voltage management
     LynxModule ctrlHub;
