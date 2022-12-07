@@ -356,7 +356,7 @@ public class AutonomousRight extends LinearOpMode {
         int sliderTargetPosition = slider.getPosition();
         int moveSlider = sliderTargetPosition - SLIDER_MOVE_DOWN_POSITION;
         moveSlider = Math.max(moveSlider, SlidersWith2Motors.SLIDER_MIN_POS);
-        sleep(500); // wait for avoiding junction shaking
+        sleep(1000); // wait for avoiding junction shaking
         slider.setPosition(moveSlider);
         slider.waitRunningComplete();
 
