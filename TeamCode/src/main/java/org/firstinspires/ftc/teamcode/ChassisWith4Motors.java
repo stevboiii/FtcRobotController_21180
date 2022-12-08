@@ -501,7 +501,7 @@ public class ChassisWith4Motors {
             }
         }
         setPowers(0.0); //stop moving
-        Logging.log("Autonomous -power = %.2f, global angle = %.3f", drivePower, getAngle());
+        Logging.log("Drive power = %.2f, global angle = %.3f", drivePower, getAngle());
     }
 
     /**
