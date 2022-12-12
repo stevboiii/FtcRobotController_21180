@@ -56,11 +56,13 @@ package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.openftc.easyopencv.OpenCvCamera;
 import org.openftc.easyopencv.OpenCvCameraFactory;
 import org.openftc.easyopencv.OpenCvCameraRotation;
@@ -112,7 +114,7 @@ public class AutonomousRight extends LinearOpMode {
     double robotAutoLoadMovingDistance = 1.0; // in INCH
     double matCenterToJunctionDistance = 14.5;
     double movingDistBeforeDrop = 3.5; // in INCH
-    double movingDistAfterDrop = matCenterToJunctionDistance - movingDistBeforeDrop - 2.0; // in INCH
+    double movingDistAfterDrop = matCenterToJunctionDistance - movingDistBeforeDrop - 2.8; // 2.8 INCH for inertia adjust
     double matCenterToConeStack = 27.5; // inch
     double moveToMatCenterAfterPick = matCenterToConeStack - robotAutoLoadMovingDistance - 1.0; // 1 inch for inertia adjust
 
@@ -126,6 +128,10 @@ public class AutonomousRight extends LinearOpMode {
 
     // variables for location shift
     double[] xyShift = {0.0, 0.0};
+
+    // distance sensor
+    private DistanceSensor frontCenterDS;
+    private double fcDSValue = 0.0; // front center distance sensor value.
 
 
     @Override
@@ -174,6 +180,8 @@ public class AutonomousRight extends LinearOpMode {
 
         armServo = hardwareMap.get(Servo.class, "ArmServo");
         clawServo = hardwareMap.get(Servo.class, "ClawServo");
+
+        frontCenterDS = hardwareMap.get(DistanceSensor.class, "FrontCenter");
 
         // claw servo motor initial
         clawServoPosition = CLAW_CLOSE_POS;
@@ -242,6 +250,8 @@ public class AutonomousRight extends LinearOpMode {
         // lift slider during rotating robot 45 degrees left
         slider.setPosition(HIGH_JUNCTION_POS);
         chassis.rotateIMUTargetAngle(45.0 * autonomousStartLocation);
+        fcDSValue = frontCenterDS.getDistance(DistanceUnit.INCH);
+        Logging.log("fcDistance sensor value before moving V to junction: %.2f ", fcDSValue);
         slider.waitRunningComplete();
 
         //drive forward and let V to touch junction
@@ -250,6 +260,8 @@ public class AutonomousRight extends LinearOpMode {
 
         // drop cone and back to the center of mat
         autoUnloadCone(movingDistBeforeDrop, movingDistAfterDrop);
+        fcDSValue = frontCenterDS.getDistance(DistanceUnit.INCH);
+        Logging.log("fcDistance sensor value after unloading pre-cone: %.2f ", fcDSValue);
 
         for(int autoLoop = 0; autoLoop < 2; autoLoop++) {
             Logging.log("Autonomous - loop index: %d ", autoLoop);
@@ -267,7 +279,9 @@ public class AutonomousRight extends LinearOpMode {
             // drive robot to loading area. xyShift is according to the testing from 135 degrees turning.
             chassis.runToPosition(matCenterToConeStack - xyShift[1], true);
             Logging.log("Autonomous - Robot has arrived loading area.");
-
+            
+            fcDSValue = frontCenterDS.getDistance(DistanceUnit.INCH);
+            Logging.log("fcDistance sensor value before loading: %.2f ", fcDSValue);
             // load cone
             autoLoadCone(coneStack5th - coneLoadStackGap * autoLoop);
 
@@ -302,9 +316,11 @@ public class AutonomousRight extends LinearOpMode {
             // Make sure it is 45 degree before V leaving junction
             chassis.rotateIMUTargetAngle(45.0 * autonomousStartLocation);
 
-            // unload cone & adjust
-            autoUnloadCone(movingDistBeforeDrop - 0.2, movingDistAfterDrop - 0.8);
+            // unload cone & adjust, 0.2 inch for cone thickness adjust
+            autoUnloadCone(movingDistBeforeDrop - 0.2, movingDistAfterDrop);
             Logging.log("Autonomous - cone %d has been unloaded.", autoLoop + 2);
+            fcDSValue = frontCenterDS.getDistance(DistanceUnit.INCH);
+            Logging.log("fcDistance sensor value after unloading: %.2f ", fcDSValue);
         }
 
         //rotate 45 degrees to keep orientation at 90
