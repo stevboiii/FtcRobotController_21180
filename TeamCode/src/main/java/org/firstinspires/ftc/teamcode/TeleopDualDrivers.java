@@ -57,7 +57,6 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
@@ -132,7 +131,7 @@ public class TeleopDualDrivers extends LinearOpMode {
     // voltage management
     LynxModule ctrlHub;
     LynxModule exHub;
-    private static double powerRampRate = 0.3/100; // 0.2 per 100 ms
+    private final double powerRampRate = 0.3/100; // 0.2 per 100 ms
 
 
     @Override
@@ -150,8 +149,8 @@ public class TeleopDualDrivers extends LinearOpMode {
         clawServo = hardwareMap.get(Servo.class, "ClawServo");
 
         // power control
-        ctrlHub = (LynxModule) hardwareMap.get(LynxModule.class, "Control Hub");
-        exHub = (LynxModule) hardwareMap.get(LynxModule.class, "Control Hub");
+        ctrlHub = hardwareMap.get(LynxModule.class, "Control Hub");
+        exHub = hardwareMap.get(LynxModule.class, "Control Hub");
         double ctrlHubCurrent, ctrlHubVolt, exHubCurrent, exHubVolt, auVolt;
         double maxCtrlCurrent = 0.0, minCtrlVolt = 15.0, maxExCurrent = 0.0, minExVolt = 15.0, minAuVolt = 15.0;
 
@@ -168,8 +167,8 @@ public class TeleopDualDrivers extends LinearOpMode {
         boolean sliderLowJunctionPosition;
         boolean sliderMediumJunctionPosition;
         boolean sliderHighJunctionPosition;
-        boolean sliderSkipLimitation = false;
-        boolean sliderResetPosition = false;
+        boolean sliderSkipLimitation;
+        boolean sliderResetPosition;
         boolean clawClose;
         boolean clawOpen;
         boolean autoLoadConeOn;

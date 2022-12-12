@@ -202,6 +202,9 @@ public class AutonomousRight extends LinearOpMode {
 
         // run until the end of the match (driver presses STOP)
         if (opModeIsActive()) {
+            camera.stopRecordingPipeline();
+            camera.closeCameraDevice();
+
             autonomousCore();
 
             Logging.log("Autonomous - total Run Time: " + runtime);
@@ -305,13 +308,13 @@ public class AutonomousRight extends LinearOpMode {
         }
 
         //rotate 45 degrees to keep orientation at 90
-        chassis.rotateIMUTargetAngle(90.0 * autonomousStartLocation);
+        chassis.rotateIMUTargetAngle(-90.0 * autonomousStartLocation);
 
         // lower slider in prep for tele-op
         slider.setPosition(GROUND_POSITION);
 
         // drive to final parking lot
-        chassis.runToPosition(-parkingLotDis * autonomousStartLocation, true);
+        chassis.runToPosition(parkingLotDis * autonomousStartLocation, true);
         Logging.log("Autonomous - Arrived at parking lot Mat: %.2f", parkingLotDis);
 
         slider.waitRunningComplete();

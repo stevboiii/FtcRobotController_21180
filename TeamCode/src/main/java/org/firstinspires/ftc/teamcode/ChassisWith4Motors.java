@@ -94,12 +94,6 @@ public class ChassisWith4Motors {
     double timeMS = 0.0;
     final int INERTIA_WAIT_TIME = 500; // in ms
 
-    // variables for reading current encoder positions just after a turn.
-    int frontLeftPos;
-    int frontRightPos;
-    int backLeftPos;
-    int backRightPos;
-
     /**
      * Init slider motors hardware, and set their behaviors.
      *
@@ -376,18 +370,13 @@ public class ChassisWith4Motors {
 
         rotation = getAngle();
         if (debugFlag) {
-            Logging.log("Required turning degrees: %.2f.", degrees);
             Logging.log("IMU angle before turn stop %.2f.", lastAngles.firstAngle);
             Logging.log("Rotated angle is %.2f.", rotation);
         }
 
         // reset angle tracking on new heading.
         resetAngle();
-        frontLeftPos = FrontLeftDrive.getCurrentPosition();
-        frontRightPos = FrontRightDrive.getCurrentPosition();
-        backLeftPos = BackLeftDrive.getCurrentPosition();
-        backRightPos = BackRightDrive.getCurrentPosition();
-
+        Logging.log("Required turning degrees: %.2f.", degrees);
         Logging.log("IMU angle after turning stop is %.2f.", lastAngles.firstAngle);
     }
 

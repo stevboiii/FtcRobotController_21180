@@ -18,7 +18,7 @@ public class ObjectDetection extends OpenCvPipeline {
 
     boolean debug = false;
 
-    public static boolean stopConeDetectPipeLine = true;
+    public boolean stopConeDetectPipeLine = true;
 
     // for sleeve color detect
     public enum ParkingLot {
@@ -138,7 +138,7 @@ public class ObjectDetection extends OpenCvPipeline {
         else if (Math.abs(sumColors.val[0] - maxColor) < Math.ulp(0)) {
             parkingLot = ParkingLot.LEFT;
             brushColor = RED;
-            parkingLotDistance = -24.0;
+            parkingLotDistance = -23.0;
         } else if (Math.abs(sumColors.val[1] - maxColor) < Math.ulp(0)) {
             parkingLot = ParkingLot.CENTER;
             brushColor = GREEN;
@@ -146,7 +146,7 @@ public class ObjectDetection extends OpenCvPipeline {
         } else {
             parkingLot = ParkingLot.RIGHT;
             brushColor = BLUE;
-            parkingLotDistance = 24.0;
+            parkingLotDistance = 23.0;
         }
         Logging.log("Sleeve position: %s", parkingLot.toString());
 
