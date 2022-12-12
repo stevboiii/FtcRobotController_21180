@@ -97,7 +97,7 @@ public class AutonomousRight extends LinearOpMode {
     static final int MEDIUM_JUNCTION_POS = (int)(SlidersWith2Motors.COUNTS_PER_INCH * 24.5); //23.5 inch
     static final int LOW_JUNCTION_POS = (int)(SlidersWith2Motors.COUNTS_PER_INCH * 14.7); // 13.5 inch
     static final int HIGH_JUNCTION_POS = (int)(SlidersWith2Motors.COUNTS_PER_INCH * 34.5); //33.5 inch
-    static final int SLIDER_MOVE_DOWN_POSITION = SlidersWith2Motors.COUNTS_PER_INCH * 3; // move down 6 inch to unload cone
+    static final int SLIDER_MOVE_DOWN_POSITION = SlidersWith2Motors.COUNTS_PER_INCH * 4; // move down 6 inch to unload cone
 
     // claw servo motor variables
     private Servo clawServo = null;
@@ -109,11 +109,12 @@ public class AutonomousRight extends LinearOpMode {
     private Servo armServo = null;
 
     // variables for autonomous
-    double matCenterToJunctionDistance = 14;
     double robotAutoLoadMovingDistance = 1.0; // in INCH
+    double matCenterToJunctionDistance = 14.5;
     double movingDistBeforeDrop = 3.5; // in INCH
-    double movingDistAfterDrop = matCenterToJunctionDistance - movingDistBeforeDrop - 1.0; // in INCH
-    static final double matCenterToConeStack = 27.5; // inch
+    double movingDistAfterDrop = matCenterToJunctionDistance - movingDistBeforeDrop - 2.0; // in INCH
+    double matCenterToConeStack = 27.5; // inch
+    double moveToMatCenterAfterPick = matCenterToConeStack - robotAutoLoadMovingDistance - 1.0; // 1 inch for inertia adjust
 
     // camera and sleeve color
     ObjectDetection.ParkingLot myParkingLot = ObjectDetection.ParkingLot.UNKNOWN;
@@ -233,7 +234,7 @@ public class AutonomousRight extends LinearOpMode {
         chassis.rotateIMUTargetAngle(0.0);
 
         // driving back to mat center
-        chassis.runToPosition(-14.5, true);
+        chassis.runToPosition(-14, true);
 
         // lift slider during rotating robot 45 degrees left
         slider.setPosition(HIGH_JUNCTION_POS);
@@ -273,9 +274,8 @@ public class AutonomousRight extends LinearOpMode {
             slider.waitRunningComplete(); // make sure slider has been lifted.
 
             // lift slider during driving back to mat center.
-            // 1.5 inch has been moved back during autoLoadCone including inertia.
             slider.setPosition(MEDIUM_JUNCTION_POS);
-            chassis.runToPosition(-(matCenterToConeStack - 1.5), true);
+            chassis.runToPosition(-moveToMatCenterAfterPick, true);
             Logging.log("Autonomous - Robot arrived the mat center near high junction.");
 
             // lift slider during left turning 135 degree facing to high junction.

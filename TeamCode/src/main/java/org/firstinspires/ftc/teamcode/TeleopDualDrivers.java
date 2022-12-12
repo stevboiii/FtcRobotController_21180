@@ -104,10 +104,10 @@ public class TeleopDualDrivers extends LinearOpMode {
     static final int WALL_POSITION = (int)(SlidersWith2Motors.COUNTS_PER_INCH * 7.5);  // 7.5 inch
     static final int MEDIUM_JUNCTION_POS = (int)(SlidersWith2Motors.COUNTS_PER_INCH * 24.5); //23.5 inch
     static final int HIGH_JUNCTION_POS = (int)(SlidersWith2Motors.COUNTS_PER_INCH * 34.5); //33.5 inch
-    static final int SLIDER_MOVE_DOWN_POSITION = SlidersWith2Motors.COUNTS_PER_INCH * 3; // move down 3 inch to unload cone
+    static final int SLIDER_MOVE_DOWN_POSITION = SlidersWith2Motors.COUNTS_PER_INCH * 4; // move down 3 inch to unload cone
     static final int LOW_JUNCTION_POS = (int)(SlidersWith2Motors.COUNTS_PER_INCH * 14.7); // 13.5 inch
     static final int POSITION_COUNTS_FOR_ONE_REVOLUTION = 538; // for 312 rpm motor
-    int motorPositionInc = POSITION_COUNTS_FOR_ONE_REVOLUTION / 6;
+    int motorPositionInc = POSITION_COUNTS_FOR_ONE_REVOLUTION / 10;
     int sliderTargetPosition = 0;
 
     // claw servo motor variables
@@ -164,7 +164,6 @@ public class TeleopDualDrivers extends LinearOpMode {
         float robotMovingRightLeft;
         float robotTurn;
         float sliderUpDown;
-        boolean sliderGroundPosition;
         boolean sliderWallPosition;
         boolean sliderLowJunctionPosition;
         boolean sliderMediumJunctionPosition;
@@ -178,10 +177,7 @@ public class TeleopDualDrivers extends LinearOpMode {
         boolean autoLoad5thConeStackOn;
         boolean autoUnloadConeOn;
 
-        boolean dualDriverMode = true;
-        Gamepad myGamePad;
-
-        // bulk reading
+        // bulk reading setting - auto refresh mode
         List<LynxModule> allHubs = hardwareMap.getAll(LynxModule.class);
         for (LynxModule hub : allHubs) {
             hub.setBulkCachingMode(LynxModule.BulkCachingMode.AUTO);
@@ -196,21 +192,6 @@ public class TeleopDualDrivers extends LinearOpMode {
 
         // run until the end of the match (driver presses STOP)
         while (opModeIsActive()) {
-            // Game pad buttons design
-            if (gamepad1.start && (gamepad1.left_trigger > 0)) {
-                dualDriverMode = false;
-            }
-
-            if (gamepad1.start && (gamepad1.right_trigger > 0)) {
-                dualDriverMode = true;
-            }
-
-            if (dualDriverMode) {
-                myGamePad = gamepad2;
-            }
-            else {
-                myGamePad = gamepad1;
-            }
 
             //gamepad1 buttons
             robotMovingBackForth = gamepad1.left_stick_y;
@@ -222,24 +203,19 @@ public class TeleopDualDrivers extends LinearOpMode {
             autoUnloadConeOn     = gamepad1.right_bumper;
 
             // gamepad1(single driver) or gamepad2(dual driver) buttons
-            sliderUpDown                = myGamePad.right_stick_y;
-            sliderWallPosition          = myGamePad.x;
-            sliderLowJunctionPosition   = myGamePad.a;
-            sliderMediumJunctionPosition= myGamePad.b;
-            sliderHighJunctionPosition  = myGamePad.y;
-            clawClose                   = myGamePad.dpad_up;
-            clawOpen                    = myGamePad.dpad_down;
+            sliderUpDown                = gamepad2.right_stick_y;
+            sliderWallPosition          = gamepad2.x;
+            sliderLowJunctionPosition   = gamepad2.a;
+            sliderMediumJunctionPosition= gamepad2.b;
+            sliderHighJunctionPosition  = gamepad2.y;
+            clawClose                   = gamepad2.dpad_up;
+            clawOpen                    = gamepad2.dpad_down;
 
-            sliderGroundPosition         = myGamePad.dpad_left || myGamePad.dpad_right;
+            sliderSkipLimitation = gamepad2.left_bumper;
+            sliderResetPosition = (gamepad2.right_bumper && gamepad2.left_bumper);
 
-            if (dualDriverMode)
-            {
-                sliderSkipLimitation = gamepad2.left_bumper;
-                sliderResetPosition = (gamepad2.right_bumper && gamepad2.left_bumper);
-            }
 
             double maxDrivePower;
-
             double chassisCurrentPower = chassis.getAveragePower();
             double deltaTime = runtime.milliseconds() - timeStamp;
             double maxP = chassisCurrentPower + powerRampRate * deltaTime;
@@ -277,12 +253,6 @@ public class TeleopDualDrivers extends LinearOpMode {
             // use X button to move the slider for wall position
             if (sliderWallPosition) {
                 sliderTargetPosition = WALL_POSITION;
-                slider.setPosition(sliderTargetPosition);
-                slider.setPower(SLIDER_MOTOR_POWER);
-            }
-
-            if (sliderGroundPosition) {
-                sliderTargetPosition = GROUND_CONE_POSITION;
                 slider.setPosition(sliderTargetPosition);
                 slider.setPower(SLIDER_MOTOR_POWER);
             }
@@ -364,9 +334,6 @@ public class TeleopDualDrivers extends LinearOpMode {
                 Logging.log("Extend hub current = %.2f, max = %.2f", exHubCurrent, maxExCurrent);
                 Logging.log("Extend hub volt = %.2f, min = %.2f", exHubVolt, minExVolt);
                 Logging.log("Auxiliary voltage = %.2f, min = %.2f", auVolt, minAuVolt);
-
-                // config log
-                telemetry.addData("Dual driver mode: ", dualDriverMode ? "On" : "Off");
 
                 // imu log
                 telemetry.addData("imu heading ", "%.2f", chassis.lastAngles.firstAngle);
