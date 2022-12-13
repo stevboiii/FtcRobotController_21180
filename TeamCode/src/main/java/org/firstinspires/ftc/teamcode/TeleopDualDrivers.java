@@ -100,6 +100,7 @@ public class TeleopDualDrivers extends LinearOpMode {
     static final int SLIDER_MIN_POS = 0;
     static final int GROUND_CONE_POSITION = SlidersWith2Motors.COUNTS_PER_INCH; // 1 inch
     static final int coneLoadStackGap = (int)(SlidersWith2Motors.COUNTS_PER_INCH *  1.4);
+    static final int GROUND_JUNCTION_POS = (int)(GROUND_CONE_POSITION + SlidersWith2Motors.COUNTS_PER_INCH);
     static final int WALL_POSITION = (int)(SlidersWith2Motors.COUNTS_PER_INCH * 7.5);  // 7.5 inch
     static final int MEDIUM_JUNCTION_POS = (int)(SlidersWith2Motors.COUNTS_PER_INCH * 24.5); //23.5 inch
     static final int HIGH_JUNCTION_POS = (int)(SlidersWith2Motors.COUNTS_PER_INCH * 34.5); //33.5 inch
@@ -164,6 +165,7 @@ public class TeleopDualDrivers extends LinearOpMode {
         float robotTurn;
         float sliderUpDown;
         boolean sliderWallPosition;
+        boolean sliderGroundJunctionPosition;
         boolean sliderLowJunctionPosition;
         boolean sliderMediumJunctionPosition;
         boolean sliderHighJunctionPosition;
@@ -203,12 +205,13 @@ public class TeleopDualDrivers extends LinearOpMode {
 
             // gamepad1(single driver) or gamepad2(dual driver) buttons
             sliderUpDown                = gamepad2.right_stick_y;
+            sliderGroundJunctionPosition=gamepad2.dpad_left;
             sliderWallPosition          = gamepad2.x;
             sliderLowJunctionPosition   = gamepad2.a;
             sliderMediumJunctionPosition= gamepad2.b;
             sliderHighJunctionPosition  = gamepad2.y;
             clawClose                   = gamepad2.dpad_up;
-            clawOpen                    = gamepad2.dpad_down;
+            clawOpen                    = gamepad2.dpad_down || gamepad1.a;
 
             sliderSkipLimitation = gamepad2.left_bumper;
             sliderResetPosition = (gamepad2.right_bumper && gamepad2.left_bumper);
@@ -252,6 +255,12 @@ public class TeleopDualDrivers extends LinearOpMode {
             // use X button to move the slider for wall position
             if (sliderWallPosition) {
                 sliderTargetPosition = WALL_POSITION;
+                slider.setPosition(sliderTargetPosition);
+                slider.setPower(SLIDER_MOTOR_POWER);
+            }
+            // use dpad left to get to the ground junction position
+            if (sliderGroundJunctionPosition) {
+                sliderTargetPosition = GROUND_JUNCTION_POS;
                 slider.setPosition(sliderTargetPosition);
                 slider.setPower(SLIDER_MOTOR_POWER);
             }
@@ -415,7 +424,7 @@ public class TeleopDualDrivers extends LinearOpMode {
         Logging.log("Auto load - Cone has been loaded.");
         sleep(200); // wait to make sure clawServo is at grep position
         clawServoPosition = CLAW_CLOSE_POS; // keep claw position
-        sliderTargetPosition = LOW_JUNCTION_POS;
+        sliderTargetPosition = WALL_POSITION;
         slider.setPosition(sliderTargetPosition);
     }
 
