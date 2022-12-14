@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode;
 
+import androidx.annotation.NonNull;
+
 import com.qualcomm.robotcore.hardware.Gamepad;
 
 
@@ -26,7 +28,7 @@ public class GamePadButtons {
     public boolean autoLoad5thConeStack;
     public boolean autoUnloadCone;
 
-    public void checkGamepadButtons(Gamepad gamepad1, Gamepad gamepad2) {
+    public void checkGamepadButtons(@NonNull Gamepad gamepad1, @NonNull Gamepad gamepad2) {
         //gamepad1 buttons
         robotDrive              = gamepad1.left_stick_y;
         robotStrafe             = gamepad1.left_stick_x;

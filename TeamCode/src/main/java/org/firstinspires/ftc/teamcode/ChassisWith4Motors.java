@@ -29,8 +29,11 @@
 
 package org.firstinspires.ftc.teamcode;
 
+import android.util.Log;
+
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
@@ -38,6 +41,7 @@ import com.qualcomm.robotcore.util.Range;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 
 
@@ -47,6 +51,11 @@ import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
  * This hardware class assumes the following device names have been configured on the robot:
  * Note:  All names are case sensitive.
  * Motors type: GoBILDA 312 RPM Yellow Jacket.
+ *
+ * Need config below hardware names:
+ * 1. IMU - imu
+ * 2. Distance sensor - fcds
+ * 3. Wheel motors - names from initial function parameters.
  */
 public class ChassisWith4Motors {
     //private
@@ -94,6 +103,10 @@ public class ChassisWith4Motors {
     double timeMS = 0.0;
     final int INERTIA_WAIT_TIME = 500; // in ms
 
+    //distance sensor
+    private DistanceSensor frontCenterDS = null;
+
+
     /**
      * Init slider motors hardware, and set their behaviors.
      *
@@ -124,13 +137,7 @@ public class ChassisWith4Motors {
         BackLeftDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         BackRightDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
-        //reset encode number to zero
-        FrontLeftDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        FrontRightDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        BackLeftDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        BackRightDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-
-        robotRunWithPositionModeOn(false); // turn off encoder mode as default
+        runWithoutEncoders(); // turn off encoder mode as default
 
         // IMU
 
@@ -168,36 +175,43 @@ public class ChassisWith4Motors {
         pidDrive.setOutputRange(0, MAX_CORRECTION_POWER);
         pidDrive.enable();
 
+        // Distance sensors
+        frontCenterDS = hardwareMap.get(DistanceSensor.class, "fcds");
+
     }
 
     /**
-     * Set wheels motors to stop and reset encode to set the current encoder position to zero.
-     * And then set to run to position mode if withPositionMode is on.
-     * Otherwise, set to run without encode mode.
+     * Set to run to position mode for chassis motors
      *
-     * @param withPositionMode: flag for wheels motors run with position mode on,
-     *                          or off(run without encode)
      */
-    private void robotRunWithPositionModeOn(boolean withPositionMode) {
-        if (withPositionMode) {
-            FrontLeftDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-            FrontLeftDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+    private void runToPositionMode() {
+        resetEncoders();
+        FrontLeftDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        FrontRightDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        BackLeftDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        BackRightDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+    }
 
-            FrontRightDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-            FrontRightDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+    /**
+     * Set chassis motors with run using encoders mode
+     */
+    private void runWithoutEncoders() {
+        resetEncoders();
+        FrontLeftDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        FrontRightDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        BackLeftDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        BackRightDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+    }
 
-            BackLeftDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-            BackLeftDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-
-            BackRightDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-            BackRightDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        } else {
-            // set back to WITHOUT ENCODER mode
-            FrontLeftDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-            FrontRightDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-            BackLeftDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-            BackRightDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        }
+    /**
+     * Set chassis motors with run using encoders mode
+     */
+    private void runUsingEncoders() {
+        resetEncoders();
+        FrontLeftDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        FrontRightDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        BackLeftDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        BackRightDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
     }
 
     /**
@@ -279,6 +293,10 @@ public class ChassisWith4Motors {
         return globalAngle;
     }
 
+    /**
+     * Check the first angle of IMU orientation in x-y plane
+     * @return the value of first angle from IMU orientation
+     */
     public double getIMUFirstAngle() {
         Orientation imuAngles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
         return imuAngles.firstAngle;
@@ -304,8 +322,7 @@ public class ChassisWith4Motors {
      */
     private void rotate(double degrees) {
         resetAngle();
-        resetEncoders();
-        robotRunWithPositionModeOn(false); // make sure it is the mode of Run without encoder
+        runWithoutEncoders(); // make sure it is the mode of Run without encoder
         double power = AUTO_ROTATE_POWER;
         // if degrees > 359 we cap at 359 with same sign as original degrees.
         if (Math.abs(degrees) > 359.99) {
@@ -451,7 +468,7 @@ public class ChassisWith4Motors {
             }
 
             if (speedRampOn) {
-                double currDistance = Math.abs(FrontLeftDrive.getCurrentPosition()) / COUNTS_PER_INCH_DRIVE;
+                double currDistance = Math.abs(getEncoderDistance());
                 drivePower = MAX_POWER;
                 double rampUpPower = MAX_POWER;
                 double rampDownPower = MAX_POWER;
@@ -544,11 +561,11 @@ public class ChassisWith4Motors {
         int tSign = (int) Math.copySign(1, targetDistance);
         setTargetPositions(targetPosition, isBackForth);
 
-        robotRunWithPositionModeOn(true); // turn on encoder mode,and reset encoders
+        runToPositionMode(); // turn on encoder mode, and reset encoders
 
         setPowerWithPIDControl(targetDistance, tSign, isBackForth);
 
-        robotRunWithPositionModeOn(false); // turn off encoder mode
+        runWithoutEncoders(); // turn off encoder mode
 
         if (debugFlag) {
             Logging.log("Required moving distance %.2f.", targetDistance);
@@ -632,6 +649,66 @@ public class ChassisWith4Motors {
     public double getAveragePower() {
         return (Math.abs(FrontLeftDrive.getPower()) + Math.abs(FrontRightDrive.getPower()) +
                 Math.abs(BackLeftDrive.getPower()) + Math.abs(BackRightDrive.getPower()))/4.0;
+    }
+
+    /**
+     * Get the front center distance sensor value.
+     * @return the value of front center distance, in inch
+     */
+    public double getFcDSValue() {
+        return frontCenterDS.getDistance(DistanceUnit.INCH);
+    }
+
+    /**
+     * Driving robot through distance sensor
+     *
+     * @param targetDS the target distance for disntance sensor.
+     * @param targetEncoder the target distance for motors encoders.
+     * @param range only check the target distance from distance sensor within the range
+     *             of (targetDistance- range) to (targetDistance + range)
+     * @param tolerance the tolerance for distance sensor to stop robot
+     */
+    public void runWithDS(double targetDS, double targetEncoder, double range, double tolerance) {
+        runUsingEncoders();
+        double driveDirection = Math.copySign(1, targetEncoder);
+
+        targetEncoder = Math.abs(targetEncoder);
+        double currEnDist = 0.0;
+
+        // controlled by encoders
+        while(targetEncoder - currEnDist > range) {
+            drivingWithPID(SHORT_DISTANCE_POWER * driveDirection, 0.0, 0.0, true);
+            currEnDist = Math.abs(getEncoderDistance());
+            if (debugFlag) {
+                Logging.log("Target DS = %.2f, target Encoder = %.2f, currEnDis = %.2f, range = %.2f",
+                        targetDS, targetEncoder, currEnDist, range);
+            }
+        }
+
+        // controlled by distance sensor
+        double currDS = getFcDSValue();
+        while (((currDS - targetDS) * driveDirection > tolerance) && (currEnDist - targetEncoder < range)) {
+            drivingWithPID(SHORT_DISTANCE_POWER * driveDirection, 0.0, 0.0, true);
+            currEnDist = Math.abs(getEncoderDistance());
+            currDS = getFcDSValue();
+            if (debugFlag) {
+                Logging.log("Target DS = %.2f, curEnrDis = %.2f, Curr Sensor dist = %.2f, tolerance = %.2f",
+                        targetDS, currEnDist, currDS, tolerance);
+            }
+        }
+        setPowers(0);
+        runWithoutEncoders();
+    }
+
+    /**
+     * check the current encoder positions of wheel motors
+     * @return the average motors encoder position
+     */
+    private double getEncoderDistance() {
+        return (FrontLeftDrive.getCurrentPosition() +
+                FrontRightDrive.getCurrentPosition() +
+                BackRightDrive.getCurrentPosition() +
+                BackLeftDrive.getCurrentPosition()) / 4.0 / COUNTS_PER_INCH_DRIVE;
     }
 }
 
