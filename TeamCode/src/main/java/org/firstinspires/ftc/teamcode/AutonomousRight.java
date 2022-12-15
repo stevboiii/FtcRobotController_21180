@@ -251,7 +251,7 @@ public class AutonomousRight extends LinearOpMode {
         Logging.log("Autonomous - Robot V reached junction.");
 
         // drop cone and back to the center of mat
-        autoUnloadCone(movingDistBeforeDrop, movingDistAfterDrop);
+        autoUnloadCone(movingDistBeforeDrop + 0.5, movingDistAfterDrop);
 
         for(int autoLoop = 0; autoLoop < 2; autoLoop++) {
             Logging.log("Autonomous - loop index: %d ", autoLoop);
@@ -362,7 +362,7 @@ public class AutonomousRight extends LinearOpMode {
         int sliderTargetPosition = slider.getPosition();
         int moveSlider = sliderTargetPosition - SLIDER_MOVE_DOWN_POSITION;
         moveSlider = Math.max(moveSlider, SlidersWith2Motors.SLIDER_MIN_POS);
-        sleep(1000); // wait for avoiding junction shaking
+        sleep(800); // wait for avoiding junction shaking
         slider.setPosition(moveSlider);
         slider.waitRunningComplete();
 

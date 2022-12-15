@@ -99,7 +99,7 @@ public class TeleopDualDrivers extends LinearOpMode {
     static final int FOUR_STAGE_SLIDER_MAX_POS = 4200;  // with 312 RPM motor.
     static final int SLIDER_MIN_POS = 0;
     static final int GROUND_CONE_POSITION = SlidersWith2Motors.COUNTS_PER_INCH; // 1 inch
-    static final int coneLoadStackGap = (int)(SlidersWith2Motors.COUNTS_PER_INCH *  1.4);
+    static final int coneLoadStackGap = (int)(SlidersWith2Motors.COUNTS_PER_INCH *  1.2);
     static final int GROUND_JUNCTION_POS = (int)(GROUND_CONE_POSITION + SlidersWith2Motors.COUNTS_PER_INCH);
     static final int WALL_POSITION = (int)(SlidersWith2Motors.COUNTS_PER_INCH * 7.5);  // 7.5 inch
     static final int MEDIUM_JUNCTION_POS = (int)(SlidersWith2Motors.COUNTS_PER_INCH * 24.5); //23.5 inch
@@ -387,7 +387,7 @@ public class TeleopDualDrivers extends LinearOpMode {
         Logging.log("Auto load - Cone has been loaded.");
         sleep(200); // wait to make sure clawServo is at grep position
         clawServoPosition = CLAW_CLOSE_POS; // keep claw position
-        sliderTargetPosition = WALL_POSITION;
+        sliderTargetPosition = LOW_JUNCTION_POS;
         slider.setPosition(sliderTargetPosition);
     }
 

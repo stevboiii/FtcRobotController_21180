@@ -75,7 +75,7 @@ public class ChassisWith4Motors {
     static final double MAX_POWER = 1.0 - MAX_CORRECTION_POWER;
     static final double RAMP_START_POWER = 0.35;
     static final double RAMP_END_POWER = 0.2;
-    static final double SHORT_DISTANCE_POWER = 0.35;
+    static final double SHORT_DISTANCE_POWER = 0.4;
     static final double MIN_ROTATE_POWER = 0.21;
     static final double AUTO_ROTATE_POWER = 0.9;
 
@@ -176,7 +176,7 @@ public class ChassisWith4Motors {
         pidDrive.enable();
 
         // Distance sensors
-        frontCenterDS = hardwareMap.get(DistanceSensor.class, "fcds");
+        //frontCenterDS = hardwareMap.get(DistanceSensor.class, "fcds");
 
     }
 
@@ -344,6 +344,10 @@ public class ChassisWith4Motors {
         pidRotate.setOutputRange(MIN_ROTATE_POWER, power);
         pidRotate.setTolerance(1.5);
         pidRotate.enable();
+
+        if (Math.abs(degrees) < 1.5) {
+            return;
+        }
 
         // getAngle() returns + when rotating counter clockwise (left) and - when rotating
         // clockwise (right).
@@ -656,7 +660,7 @@ public class ChassisWith4Motors {
      * @return the value of front center distance, in inch
      */
     public double getFcDSValue() {
-        return frontCenterDS.getDistance(DistanceUnit.INCH);
+        return 0; //frontCenterDS.getDistance(DistanceUnit.INCH);
     }
 
     /**
