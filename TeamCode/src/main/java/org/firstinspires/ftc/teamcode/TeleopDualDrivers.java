@@ -262,7 +262,7 @@ public class TeleopDualDrivers extends LinearOpMode {
 
             //  auto driving, grip cone, and lift slider
             if(gpButtons.autoLoadGroundCone) {
-                loadCone(GROUND_CONE_POSITION); // Always on ground during teleop mode
+                loadCone(GROUND_CONE_POSITION - 40); // Always on ground during teleop mode
             }
 
             //  auto driving, grip cone, and lift slider

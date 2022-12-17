@@ -345,7 +345,7 @@ public class ChassisWith4Motors {
         pidRotate.setTolerance(1.5);
         pidRotate.enable();
 
-        if (Math.abs(degrees) < 1.5) {
+        if (Math.abs(degrees) < 1.0) {
             return;
         }
 

@@ -92,7 +92,7 @@ public class AutonomousRight extends LinearOpMode {
 
     // slider position variables
     private final SlidersWith2Motors slider = new SlidersWith2Motors();
-    static final int coneStack5th = (int)(SlidersWith2Motors.COUNTS_PER_INCH * 5.8); // the 5th cone position in the cone stack. The lowest cone is the 1th one.
+    static final int coneStack5th = (int)(SlidersWith2Motors.COUNTS_PER_INCH * 5.0); // the 5th cone position in the cone stack. The lowest cone is the 1th one.
     static final int coneLoadStackGap = (int)(SlidersWith2Motors.COUNTS_PER_INCH *  1.4);
     static final int GROUND_POSITION = 0; // Ground(0 inch), beacon pick up position
     static final int WALL_POSITION = (int)(SlidersWith2Motors.COUNTS_PER_INCH * 8.0);  // 7.5 inch
@@ -114,9 +114,9 @@ public class AutonomousRight extends LinearOpMode {
     double robotAutoLoadMovingDistance = 1.0; // in INCH
     double matCenterToJunctionDistance = 14.5;
     double movingDistBeforeDrop = 3.5; // in INCH
-    double movingDistAfterDrop = matCenterToJunctionDistance - movingDistBeforeDrop - 2.8; // 2.8 INCH for inertia adjust
-    double matCenterToConeStack = 27.5; // inch
-    double moveToMatCenterAfterPick = matCenterToConeStack - robotAutoLoadMovingDistance - 1.0; // 1 inch for inertia adjust
+    double movingDistAfterDrop = matCenterToJunctionDistance - movingDistBeforeDrop - 3.2; // 2.8 INCH for inertia adjust
+    double matCenterToConeStack = 28; // inch
+    double moveToMatCenterAfterPick = matCenterToConeStack - robotAutoLoadMovingDistance - 2; // 1 inch for inertia adjust
 
     // camera and sleeve color
     ObjectDetection.ParkingLot myParkingLot = ObjectDetection.ParkingLot.UNKNOWN;
