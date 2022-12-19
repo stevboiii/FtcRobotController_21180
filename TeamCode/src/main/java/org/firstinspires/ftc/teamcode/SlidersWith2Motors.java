@@ -53,17 +53,17 @@ public class SlidersWith2Motors
     //private
     HardwareMap hardwareMap =  null;
     private final ElapsedTime period  = new ElapsedTime();
-    static final double MAX_WAIT_TIME = 8.0; // in seconds
+    final double MAX_WAIT_TIME = 8.0; // in seconds
 
     // slider motor variables
     public DcMotor RightSliderMotor = null;
     public DcMotor LeftSliderMotor = null;
-    static final double SLIDER_MOTOR_POWER = 0.9; // save some powers
+    final double SLIDER_MOTOR_POWER = 0.9; // save some powers
 
     // slider position variables
-    static final int COUNTS_PER_INCH = 120; // verified by testing.
-    static final int FOUR_STAGE_SLIDER_MAX_POS = 4200;  // with 312 RPM motor.
-    static final int SLIDER_MIN_POS = 0;
+    final int COUNTS_PER_INCH = 120; // verified by testing.
+    final int FOUR_STAGE_SLIDER_MAX_POS = 4200;  // with 312 RPM motor.
+    final int SLIDER_MIN_POS = 0;
 
     /**
      * Init slider motors hardware, and set their behaviors.

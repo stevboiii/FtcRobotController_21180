@@ -29,11 +29,11 @@ public class ObjectDetection extends OpenCvPipeline {
     }
 
     // TOPLEFT anchor point for the bounding box
-    private static final Point SLEEVE_TOPLEFT_ANCHOR_POINT = new Point(20, 140);
+    private final Point SLEEVE_TOPLEFT_ANCHOR_POINT = new Point(20, 140);
 
     // Width and height for the bounding box
-    private static final int SLEEVE_REGION_WIDTH = 30;
-    private static final int SLEEVE_REGION_HEIGHT = 50;
+    private final int SLEEVE_REGION_WIDTH = 30;
+    private final int SLEEVE_REGION_HEIGHT = 50;
 
     // Anchor point definitions
     Point sleeve_pointA = new Point(
@@ -52,15 +52,15 @@ public class ObjectDetection extends OpenCvPipeline {
     public volatile double hChannelAve = 0;
 
     //check if cone has been detected.
-    private static final double cameraToConeDistance = 13.0; // inch
-    private static final double cameraViewAngle = 0.67;
+    private final double cameraToConeDistance = 13.0; // inch
+    private final double cameraViewAngle = 0.67;
 
     // TOP-LEFT anchor point for the bounding box
-    public static Point Object_TOPLEFT_POINT = new Point(0, 0);
+    public Point Object_TOPLEFT_POINT = new Point(0, 0);
 
     // Width and height for the bounding box
-    public static int REGION_WIDTH = 320;
-    public static int REGION_HEIGHT = 240;
+    public int REGION_WIDTH = 320;
+    public int REGION_HEIGHT = 240;
 
     // Color definitions
     private final Scalar

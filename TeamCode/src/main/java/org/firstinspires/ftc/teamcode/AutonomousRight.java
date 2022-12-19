@@ -54,18 +54,19 @@
 
 package org.firstinspires.ftc.teamcode;
 
+import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 
-import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.openftc.easyopencv.OpenCvCamera;
 import org.openftc.easyopencv.OpenCvCameraFactory;
 import org.openftc.easyopencv.OpenCvCameraRotation;
+
+import java.util.List;
 
 /**
  * This file contains an minimal example of a Linear "OpMode". An OpMode is a 'program' that runs in either
@@ -88,23 +89,23 @@ public class AutonomousRight extends LinearOpMode {
 
     // Declare OpMode members.
     private final ElapsedTime runtime = new ElapsedTime();
-    private final ChassisWith4Motors chassis = new ChassisWith4Motors();
+    public final ChassisWith4Motors chassis = new ChassisWith4Motors();
 
     // slider position variables
     private final SlidersWith2Motors slider = new SlidersWith2Motors();
-    static final int coneStack5th = (int)(SlidersWith2Motors.COUNTS_PER_INCH * 5.0); // the 5th cone position in the cone stack. The lowest cone is the 1th one.
-    static final int coneLoadStackGap = (int)(SlidersWith2Motors.COUNTS_PER_INCH *  1.4);
-    static final int GROUND_POSITION = 0; // Ground(0 inch), beacon pick up position
-    static final int WALL_POSITION = (int)(SlidersWith2Motors.COUNTS_PER_INCH * 8.0);  // 7.5 inch
-    static final int MEDIUM_JUNCTION_POS = (int)(SlidersWith2Motors.COUNTS_PER_INCH * 24.5); //23.5 inch
-    static final int LOW_JUNCTION_POS = (int)(SlidersWith2Motors.COUNTS_PER_INCH * 14.7); // 13.5 inch
-    static final int HIGH_JUNCTION_POS = (int)(SlidersWith2Motors.COUNTS_PER_INCH * 34.5); //33.5 inch
-    static final int SLIDER_MOVE_DOWN_POSITION = SlidersWith2Motors.COUNTS_PER_INCH * 4; // move down 6 inch to unload cone
+    final int coneStack5th = (int)(slider.COUNTS_PER_INCH * 5.0); // the 5th cone position in the cone stack. The lowest cone is the 1th one.
+    final int coneLoadStackGap = (int)(slider.COUNTS_PER_INCH *  1.4);
+    final int GROUND_POSITION = 0; // Ground(0 inch), beacon pick up position
+    final int WALL_POSITION = (int)(slider.COUNTS_PER_INCH * 8.0);  // 7.5 inch
+    final int MEDIUM_JUNCTION_POS = (int)(slider.COUNTS_PER_INCH * 24.5); //23.5 inch
+    final int LOW_JUNCTION_POS = (int)(slider.COUNTS_PER_INCH * 14.7); // 13.5 inch
+    final int HIGH_JUNCTION_POS = (int)(slider.COUNTS_PER_INCH * 34.5); //33.5 inch
+    final int SLIDER_MOVE_DOWN_POSITION = slider.COUNTS_PER_INCH * 4; // move down 6 inch to unload cone
 
     // claw servo motor variables
     private Servo clawServo = null;
-    static final double CLAW_OPEN_POS = 0.31;     // Maximum rotational position
-    static final double CLAW_CLOSE_POS = 0.08;
+    final double CLAW_OPEN_POS = 0.31;     // Maximum rotational position
+    final double CLAW_CLOSE_POS = 0.08;
     double clawServoPosition = CLAW_OPEN_POS;
 
     // arm servo variables, not used in current prototype version.
@@ -196,6 +197,12 @@ public class AutonomousRight extends LinearOpMode {
             telemetry.update();
         }
 
+        // bulk reading setting - auto refresh mode
+        List<LynxModule> allHubs = hardwareMap.getAll(LynxModule.class);
+        for (LynxModule hub : allHubs) {
+            hub.setBulkCachingMode(LynxModule.BulkCachingMode.AUTO);
+        }
+
         // Wait for the game to start (driver presses PLAY)
         waitForStart();
         runtime.reset();
@@ -226,9 +233,9 @@ public class AutonomousRight extends LinearOpMode {
      * 5. Load cone
      * 6. Move robot to parking area
      */
-    private void autonomousCore() {
+    public void autonomousCore() {
 
-        slider.setPower(SlidersWith2Motors.SLIDER_MOTOR_POWER);
+        slider.setPower(slider.SLIDER_MOTOR_POWER);
         slider.setPosition(LOW_JUNCTION_POS);
 
         //move center of robot to the edge of 3rd mat
@@ -361,7 +368,7 @@ public class AutonomousRight extends LinearOpMode {
         // move down slider a little bit to unload cone
         int sliderTargetPosition = slider.getPosition();
         int moveSlider = sliderTargetPosition - SLIDER_MOVE_DOWN_POSITION;
-        moveSlider = Math.max(moveSlider, SlidersWith2Motors.SLIDER_MIN_POS);
+        moveSlider = Math.max(moveSlider, slider.SLIDER_MIN_POS);
         sleep(800); // wait for avoiding junction shaking
         slider.setPosition(moveSlider);
         slider.waitRunningComplete();
@@ -369,8 +376,8 @@ public class AutonomousRight extends LinearOpMode {
         clawServo.setPosition(CLAW_OPEN_POS); // unload cone
         sleep(100); // make sure cone has been unloaded
         slider.setPosition(sliderTargetPosition);
-        chassis.runToPosition(-moveDistanceAfterDrop, true); // move out from junction
-        //chassis.runWithDS(20, -moveDistanceAfterDrop, 2, 0.2);
+        //chassis.runToPosition(-moveDistanceAfterDrop, true); // move out from junction
+        chassis.runWithEncoderAndDistanceSensor(14, -moveDistanceAfterDrop, 2, 0.2);
         Logging.log("fcDistance sensor value after unloading: %.2f ", chassis.getFcDSValue());
         slider.setPosition(WALL_POSITION);
         Logging.log("Auto unload - Cone has been unloaded.");

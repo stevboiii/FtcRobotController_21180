@@ -96,27 +96,27 @@ public class TeleopDualDrivers extends LinearOpMode {
     static final double SLIDER_MOTOR_POWER = 0.7;
 
     // slider position variables
-    static final int FOUR_STAGE_SLIDER_MAX_POS = 4200;  // with 312 RPM motor.
-    static final int SLIDER_MIN_POS = 0;
-    static final int GROUND_CONE_POSITION = SlidersWith2Motors.COUNTS_PER_INCH; // 1 inch
-    static final int coneLoadStackGap = (int)(SlidersWith2Motors.COUNTS_PER_INCH *  1.2);
-    static final int GROUND_JUNCTION_POS = (int)(GROUND_CONE_POSITION + SlidersWith2Motors.COUNTS_PER_INCH);
-    static final int WALL_POSITION = (int)(SlidersWith2Motors.COUNTS_PER_INCH * 7.5);  // 7.5 inch
-    static final int MEDIUM_JUNCTION_POS = (int)(SlidersWith2Motors.COUNTS_PER_INCH * 24.5); //23.5 inch
-    static final int HIGH_JUNCTION_POS = (int)(SlidersWith2Motors.COUNTS_PER_INCH * 34.5); //33.5 inch
-    static final int SLIDER_MOVE_DOWN_POSITION = SlidersWith2Motors.COUNTS_PER_INCH * 4; // move down 3 inch to unload cone
-    static final int LOW_JUNCTION_POS = (int)(SlidersWith2Motors.COUNTS_PER_INCH * 14.7); // 13.5 inch
-    static final int POSITION_COUNTS_FOR_ONE_REVOLUTION = 538; // for 312 rpm motor
+    final int FOUR_STAGE_SLIDER_MAX_POS = 4200;  // with 312 RPM motor.
+    final int SLIDER_MIN_POS = 0;
+    final int GROUND_CONE_POSITION = slider.COUNTS_PER_INCH; // 1 inch
+    final int coneLoadStackGap = (int)(slider.COUNTS_PER_INCH *  1.2);
+    final int GROUND_JUNCTION_POS = (int)(GROUND_CONE_POSITION + slider.COUNTS_PER_INCH);
+    final int WALL_POSITION = (int)(slider.COUNTS_PER_INCH * 7.5);  // 7.5 inch
+    final int MEDIUM_JUNCTION_POS = (int)(slider.COUNTS_PER_INCH * 24.5); //23.5 inch
+    final int HIGH_JUNCTION_POS = (int)(slider.COUNTS_PER_INCH * 34.5); //33.5 inch
+    final int SLIDER_MOVE_DOWN_POSITION = slider.COUNTS_PER_INCH * 4; // move down 3 inch to unload cone
+    final int LOW_JUNCTION_POS = (int)(slider.COUNTS_PER_INCH * 14.7); // 13.5 inch
+    final int POSITION_COUNTS_FOR_ONE_REVOLUTION = 538; // for 312 rpm motor
     int motorPositionInc = POSITION_COUNTS_FOR_ONE_REVOLUTION / 10;
     int sliderTargetPosition = 0;
 
     // claw servo motor variables
     private Servo clawServo = null;
-    static final double CLAW_INCREMENT = -0.24;  // amount to slew servo each CYCLE_MS cycle
-    static final double CLAW_OPEN_POS = 0.31;
-    static final double CLAW_CLOSE_POS = 0.08;
-    static final double CLAW_MAX_POS = CLAW_OPEN_POS; // Maximum rotational position
-    static final double CLAW_MIN_POS = CLAW_CLOSE_POS;  // Minimum rotational position
+    final double CLAW_INCREMENT = -0.24;  // amount to slew servo each CYCLE_MS cycle
+    final double CLAW_OPEN_POS = 0.31;
+    final double CLAW_CLOSE_POS = 0.08;
+    final double CLAW_MAX_POS = CLAW_OPEN_POS; // Maximum rotational position
+    final double CLAW_MIN_POS = CLAW_CLOSE_POS;  // Minimum rotational position
     double clawServoPosition = CLAW_OPEN_POS;
 
     // arm servo variables, not used in current prototype version.
@@ -293,6 +293,8 @@ public class TeleopDualDrivers extends LinearOpMode {
                 maxExCurrent = Math.max(exHubCurrent, maxExCurrent);
                 minCtrlVolt = Math.min(ctrlHubVolt, minCtrlVolt);
                 minExVolt = Math.min(exHubVolt, minExVolt);
+
+                telemetry.addData("Front Center distance sensor", "%.2f", chassis.getFcDSValue());
 
                 telemetry.addData("Max Ctrl hub current = ", "%.2f", maxCtrlCurrent);
                 telemetry.addData("Min Ctrl hub Volt = ", "%.2f", minCtrlVolt);

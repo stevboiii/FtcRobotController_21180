@@ -32,6 +32,7 @@ package org.firstinspires.ftc.teamcode;
 import android.util.Log;
 
 import com.qualcomm.hardware.bosch.BNO055IMU;
+import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.hardware.HardwareMap;
@@ -56,13 +57,14 @@ import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
  * 1. IMU - imu
  * 2. Distance sensor - fcds
  * 3. Wheel motors - names from initial function parameters.
+ * 4. color sensor (Rev Color Sensor V3) - cs
  */
 public class ChassisWith4Motors {
     //private
     HardwareMap hardwareMap = null;
     private final ElapsedTime runtime = new ElapsedTime();
-    static final double MAX_WAIT_TIME = 8.0; // in seconds
-    private final boolean debugFlag = false;
+    final double MAX_WAIT_TIME = 8.0; // in seconds
+    private final boolean debugFlag = true;
 
     // Motors variables
     public DcMotor FrontLeftDrive = null;
@@ -71,26 +73,26 @@ public class ChassisWith4Motors {
     public DcMotor BackRightDrive = null;
 
     // Driving motor variables
-    static final double MAX_CORRECTION_POWER = 0.12;
-    static final double MAX_POWER = 1.0 - MAX_CORRECTION_POWER;
-    static final double RAMP_START_POWER = 0.35;
-    static final double RAMP_END_POWER = 0.2;
-    static final double SHORT_DISTANCE_POWER = 0.4;
-    static final double MIN_ROTATE_POWER = 0.21;
-    static final double AUTO_ROTATE_POWER = 0.9;
+    final double MAX_CORRECTION_POWER = 0.12;
+    final double MAX_POWER = 1.0 - MAX_CORRECTION_POWER;
+    final double RAMP_START_POWER = 0.35;
+    final double RAMP_END_POWER = 0.2;
+    final double SHORT_DISTANCE_POWER = 0.4;
+    final double MIN_ROTATE_POWER = 0.21;
+    final double AUTO_ROTATE_POWER = 0.9;
 
     // Position variables for autonomous
-    static final double COUNTS_PER_MOTOR_REV = 537.7;   // eg: GoBILDA 312 RPM Yellow Jacket
-    static final double DRIVE_GEAR_REDUCTION = 1.0;     // No External Gearing.
-    static final double WHEEL_DIAMETER_INCHES = 4.0;     // For figuring circumference
-    static final double COUNTS_PER_INCH_DRIVE = (COUNTS_PER_MOTOR_REV * DRIVE_GEAR_REDUCTION) /
+    final double COUNTS_PER_MOTOR_REV = 537.7;   // eg: GoBILDA 312 RPM Yellow Jacket
+    final double DRIVE_GEAR_REDUCTION = 1.0;     // No External Gearing.
+    final double WHEEL_DIAMETER_INCHES = 4.0;     // For figuring circumference
+    final double COUNTS_PER_INCH_DRIVE = (COUNTS_PER_MOTOR_REV * DRIVE_GEAR_REDUCTION) /
             (WHEEL_DIAMETER_INCHES * 3.1415); // Back-forth driving for 1 INCH. It is 42.8
-    static final double COUNTS_PER_INCH_STRAFE = 55; // robot strafe 1 INCH. the value is based on test
+    final double COUNTS_PER_INCH_STRAFE = 55; // robot strafe 1 INCH. the value is based on test
 
     // power control variables
-    static final double RAMP_UP_DISTANCE = 10.0; // ramp up in the first 10 inch
-    static final double RAMP_DOWN_DISTANCE = 9.0; // slow down in the final 9 inch
-    static final double SHORT_DISTANCE = 6.0; // consistent low power for short driving
+    final double RAMP_UP_DISTANCE = 10.0; // ramp up in the first 10 inch
+    final double RAMP_DOWN_DISTANCE = 9.0; // slow down in the final 9 inch
+    final double SHORT_DISTANCE = 6.0; // consistent low power for short driving
 
     // imu
     private BNO055IMU imu = null;
@@ -103,8 +105,9 @@ public class ChassisWith4Motors {
     double timeMS = 0.0;
     final int INERTIA_WAIT_TIME = 500; // in ms
 
-    //distance sensor
+    //sensors
     private DistanceSensor frontCenterDS = null;
+    private ColorSensor colorSensor = null;
 
 
     /**
@@ -176,8 +179,45 @@ public class ChassisWith4Motors {
         pidDrive.enable();
 
         // Distance sensors
-        //frontCenterDS = hardwareMap.get(DistanceSensor.class, "fcds");
+        frontCenterDS = hardwareMap.get(DistanceSensor.class, "fcds");
+        colorSensor = hardwareMap.get(ColorSensor.class, "cs");
 
+    }
+
+    /**
+     * Run distance with color sensor, distance sensor, and motor encoders
+     * Run forward until see blue or red line
+     * Turn robot
+     * run forward until distance sensor reach cone.
+     */
+    public void runWithMultiSensors() {
+
+        runUsingEncoders();
+        float blue = (float)colorSensor.blue();
+        float red = (float)colorSensor.red();
+        float r1 = red;
+        float b1 = blue;
+        while ((red/r1 < 1.4) && (blue/b1 < 1.4) && (Math.abs(getEncoderDistance()) < 20))
+        {
+            drivingWithPID(-SHORT_DISTANCE_POWER, 0 ,0, false); // turn off PID to speed up while loop.
+            r1 = red;
+            b1 = blue;
+            blue = (float)colorSensor.blue();
+            red = (float)colorSensor.red();
+            Logging.log("Red = %.1f, Blue = %.1f", red, blue);
+        }
+        setPowers(0);
+        rotateIMUTargetAngle(90);
+        runUsingEncoders();
+        double dist = getFcDSValue();
+        while ((dist > 4.5) && (Math.abs(getEncoderDistance()) < 20))
+        {
+            drivingWithPID(-SHORT_DISTANCE_POWER, 0 ,0, true);
+            //Logging.log("Red = %d, Green = %d, Blue = %d", colorSensor.red(), colorSensor.green(), colorSensor.blue());
+            dist = getFcDSValue();
+            Logging.log("Distance = %.2f", dist);
+        }
+        setPowers(0);
     }
 
     /**
@@ -660,7 +700,7 @@ public class ChassisWith4Motors {
      * @return the value of front center distance, in inch
      */
     public double getFcDSValue() {
-        return 0; //frontCenterDS.getDistance(DistanceUnit.INCH);
+        return frontCenterDS.getDistance(DistanceUnit.INCH);
     }
 
     /**
@@ -672,7 +712,7 @@ public class ChassisWith4Motors {
      *             of (targetDistance- range) to (targetDistance + range)
      * @param tolerance the tolerance for distance sensor to stop robot
      */
-    public void runWithDS(double targetDS, double targetEncoder, double range, double tolerance) {
+    public void runWithEncoderAndDistanceSensor(double targetDS, double targetEncoder, double range, double tolerance) {
         runUsingEncoders();
         double driveDirection = Math.copySign(1, targetEncoder);
 
@@ -681,18 +721,23 @@ public class ChassisWith4Motors {
 
         // controlled by encoders
         while(targetEncoder - currEnDist > range) {
-            drivingWithPID(SHORT_DISTANCE_POWER * driveDirection, 0.0, 0.0, true);
+            drivingWithPID(-SHORT_DISTANCE_POWER * driveDirection, 0.0, 0.0, true);
             currEnDist = Math.abs(getEncoderDistance());
             if (debugFlag) {
+                Logging.log("drive Direction = %.2f", driveDirection);
                 Logging.log("Target DS = %.2f, target Encoder = %.2f, currEnDis = %.2f, range = %.2f",
                         targetDS, targetEncoder, currEnDist, range);
+                Logging.log(" curEnrDis = %.2f, Curr Sensor dist = %.2f",
+                        Math.abs(getEncoderDistance()), getFcDSValue());
             }
         }
 
         // controlled by distance sensor
         double currDS = getFcDSValue();
+        Logging.log(" curEnrDis = %.2f, Curr Sensor dist = %.2f",
+                Math.abs(getEncoderDistance()), getFcDSValue());
         while (((currDS - targetDS) * driveDirection > tolerance) && (currEnDist - targetEncoder < range)) {
-            drivingWithPID(SHORT_DISTANCE_POWER * driveDirection, 0.0, 0.0, true);
+            drivingWithPID(-SHORT_DISTANCE_POWER * driveDirection, 0.0, 0.0, true);
             currEnDist = Math.abs(getEncoderDistance());
             currDS = getFcDSValue();
             if (debugFlag) {
