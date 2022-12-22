@@ -57,7 +57,6 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 
@@ -89,11 +88,11 @@ public class TeleopDualDrivers extends LinearOpMode {
     private final ChassisWith4Motors chassis = new ChassisWith4Motors();
 
     // Driving motor variables
-    static final double HIGH_SPEED_POWER = 0.6;
+    final double HIGH_SPEED_POWER = 0.6;
 
     // slider motor power variables
     private final SlidersWith2Motors slider = new SlidersWith2Motors();
-    static final double SLIDER_MOTOR_POWER = 0.7;
+    final double SLIDER_MOTOR_POWER = 0.7;
 
     // slider position variables
     final int FOUR_STAGE_SLIDER_MAX_POS = 4200;  // with 312 RPM motor.
