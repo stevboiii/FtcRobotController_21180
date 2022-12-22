@@ -68,6 +68,8 @@ public class SlidersWith2Motors
     /**
      * Init slider motors hardware, and set their behaviors.
      * @param hardwareMap the Hardware Mappings.
+     * @param rightMotorName the name string for right slider DC motor
+     * @param leftMotorName the name string for left slider DC motor
      */
     public void init(HardwareMap hardwareMap, String rightMotorName, String leftMotorName) {
         // Save reference to Hardware map

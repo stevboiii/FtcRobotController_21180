@@ -57,9 +57,7 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
-import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.VoltageUnit;
@@ -79,9 +77,9 @@ import java.util.List;
  * Remove or comment out the @Disabled line to add this opmode to the Driver Station OpMode list
  */
 
-@TeleOp(name="Teleop_DualDrivers", group="Concept")
+@TeleOp(name="Teleop_Test", group="Concept")
 //@Disabled
-public class TeleopDualDrivers extends LinearOpMode {
+public class TeleopTest extends LinearOpMode {
     // Declare OpMode members.
     private final ElapsedTime runtime = new ElapsedTime();
 
@@ -93,7 +91,6 @@ public class TeleopDualDrivers extends LinearOpMode {
 
     // slider motor power variables
     private final SlidersWith2Motors slider = new SlidersWith2Motors();
-    static final double SLIDER_MOTOR_POWER = 0.7;
 
     // slider position variables
     final int FOUR_STAGE_SLIDER_MAX_POS = 4200;  // with 312 RPM motor.
@@ -113,10 +110,6 @@ public class TeleopDualDrivers extends LinearOpMode {
     //claw and arm unit
     private final ArmClawUnit armClaw = new ArmClawUnit();
 
-    // variables for auto load and unload cone
-    double robotAutoLoadMovingDistance = 1.0; // in INCH
-    double robotAutoUnloadMovingDistance = 3.5; // in INCH
-
     // debug flags, turn it off for formal version to save time of logging
     boolean debugFlag = true;
 
@@ -135,7 +128,6 @@ public class TeleopDualDrivers extends LinearOpMode {
         // Initialize the hardware variables. Note that the strings used here as parameters
         // to 'get' must correspond to the names assigned during the robot configuration
         // step (using the FTC Robot Controller app on the phone).
-        slider.init(hardwareMap, "RightSlider", "LeftSlider");
 
         chassis.init(hardwareMap, "FrontLeft", "FrontRight",
                 "BackLeft", "BackRight");
@@ -147,6 +139,7 @@ public class TeleopDualDrivers extends LinearOpMode {
         exHub = hardwareMap.get(LynxModule.class, "Control Hub");
         double ctrlHubCurrent, ctrlHubVolt, exHubCurrent, exHubVolt, auVolt;
         double maxCtrlCurrent = 0.0, minCtrlVolt = 15.0, maxExCurrent = 0.0, minExVolt = 15.0, minAuVolt = 15.0;
+
 
         // bulk reading setting - auto refresh mode
         List<LynxModule> allHubs = hardwareMap.getAll(LynxModule.class);
@@ -181,89 +174,31 @@ public class TeleopDualDrivers extends LinearOpMode {
 
             chassis.drivingWithPID(drive, turn, strafe, true);
 
-            // use Y button to lift up the slider reaching high junction
-            if (gpButtons.sliderHighJunction) {
-                sliderTargetPosition = HIGH_JUNCTION_POS;
-                slider.setPosition(sliderTargetPosition);
-                slider.setPower(SLIDER_MOTOR_POWER);
-            }
-
-            // use B button to lift up the slider reaching medium junction
-            if (gpButtons.sliderMediumJunction) {
-                sliderTargetPosition = MEDIUM_JUNCTION_POS;
-                slider.setPosition(sliderTargetPosition);
-                slider.setPower(SLIDER_MOTOR_POWER);
-            }
-
-            // use A button to lift up the slider reaching low junction
-            if (gpButtons.sliderLowJunction) {
-                sliderTargetPosition = LOW_JUNCTION_POS;
-                slider.setPosition(sliderTargetPosition);
-                slider.setPower(SLIDER_MOTOR_POWER);
-            }
-
-            // use X button to move the slider for wall position
-            if (gpButtons.sliderWallPosition) {
-                sliderTargetPosition = WALL_POSITION;
-                slider.setPosition(sliderTargetPosition);
-                slider.setPower(SLIDER_MOTOR_POWER);
-            }
-            // use dpad left to get to the ground junction position
-            if (gpButtons.sliderGroundJunction) {
-                sliderTargetPosition = GROUND_JUNCTION_POS;
-                slider.setPosition(sliderTargetPosition);
-                slider.setPower(SLIDER_MOTOR_POWER);
-            }
-
-            // use right stick_Y to lift or down slider continuously
-            if (Math.abs(gpButtons.sliderUpDown) > 0) {
-                sliderTargetPosition -= (int) ((gpButtons.sliderUpDown) * motorPositionInc);
-                if (!gpButtons.sliderSkipLimitation) {
-                    sliderTargetPosition = Range.clip(sliderTargetPosition, SLIDER_MIN_POS,
-                            FOUR_STAGE_SLIDER_MAX_POS);
-                }
-                slider.setPosition(sliderTargetPosition);
-                slider.setPower(SLIDER_MOTOR_POWER);
-            }
-
-            if (gpButtons.sliderResetEncoder) {
-                slider.resetEncoders();
-                sliderTargetPosition = SLIDER_MIN_POS;
-                slider.setPosition(sliderTargetPosition);
-                slider.setPower(SLIDER_MOTOR_POWER);
-            }
 
             // Set position only when button is hit.
             if (gpButtons.clawClose) {
                 armClaw.clawClose();
             }
 
+
             // Set position only when button is hit.
-            if (gpButtons.clawOpen) {
-                armClaw.clawOpen();
+            if (gpButtons.armLeft) {
+                armClaw.setArmPosition(armClaw.ARM_LEFT);
             }
 
-            //  auto driving, grip cone, and lift slider
-            if(gpButtons.autoLoadGroundCone) {
-                loadCone(GROUND_CONE_POSITION - 40); // Always on ground during teleop mode
+            // Set position only when button is hit.
+            if (gpButtons.armRight) {
+                armClaw.setArmPosition(armClaw.ARM_RIGHT);
             }
 
-            //  auto driving, grip cone, and lift slider
-            if(gpButtons.autoLoad34thConeStack) {
-                loadCone(GROUND_CONE_POSITION + coneLoadStackGap * 2); // Always on ground during teleop mode
-            }
-
-            //  auto driving, grip cone, and lift slider
-            if(gpButtons.autoLoad5thConeStack) {
-                loadCone(GROUND_CONE_POSITION + coneLoadStackGap * 3); // Always on ground during teleop mode
-            }
-
-            //  auto driving, unload cone
-            if(gpButtons.autoUnloadCone) {
-                unloadCone();
+            // Set position only when button is hit.
+            if (gpButtons.armForward) {
+                armClaw.setArmPosition(armClaw.ARM_FORWARD);
             }
 
             if (debugFlag) {
+
+                telemetry.addData("ARM", "position = %.2f", armClaw.getArmPosition());
                 ctrlHubCurrent = ctrlHub.getCurrent(CurrentUnit.AMPS);
                 ctrlHubVolt = ctrlHub.getInputVoltage(VoltageUnit.VOLTS);
                 exHubCurrent = exHub.getCurrent(CurrentUnit.AMPS);
@@ -296,17 +231,6 @@ public class TeleopDualDrivers extends LinearOpMode {
                 telemetry.addData("global heading ", "%.2f", chassis.globalAngle);
                 telemetry.addData("Correction  ", "%.2f", chassis.correction);
 
-                // claw servo log
-                telemetry.addData("Status", "Claw Servo position %.2f", armClaw.getClawPosition());
-
-                // slider motors log
-                telemetry.addData("Status", "slider motor Target position %d",
-                        sliderTargetPosition);
-                telemetry.addData("Status", "Right slider motor current position %d",
-                        slider.RightSliderMotor.getCurrentPosition());
-                telemetry.addData("Status", "Left slider motor current position %d",
-                        slider.LeftSliderMotor.getCurrentPosition());
-
                 // drive motors log
                 telemetry.addData("Max driving power ", "%.2f", maxDrivePower);
             }
@@ -316,61 +240,6 @@ public class TeleopDualDrivers extends LinearOpMode {
             telemetry.update(); // update message at the end of while loop
             Logging.log("While loop time in ms = %.1f.", deltaTime);
         }
-
-
-        // The motor stop on their own but power is still applied. Turn off motor.
-        slider.stop();
         chassis.setPowers(0.0);
-    }
-
-    /**
-     * 1. Robot moving back to aim at junction for unloading cone
-     * 2. Slider moving down a little bit to put cone in junction pole
-     * 3. Open claw to fall down cone
-     * 4. Lift slider from junction pole
-     * 5. Robot moving back to leave junction
-     * 6. Slider moving down to get ready to grip another cone
-     */
-    private void unloadCone() {
-        chassis.runToPosition(-robotAutoUnloadMovingDistance, true); // moving back in inch
-
-        // move down slider a little bit to unload cone
-        sliderTargetPosition = slider.getPosition();
-        int moveSlider = sliderTargetPosition - SLIDER_MOVE_DOWN_POSITION;
-        moveSlider = Math.max(moveSlider, GROUND_CONE_POSITION);
-        slider.setPower(SLIDER_MOTOR_POWER);
-        slider.setPosition(moveSlider);
-        slider.waitRunningComplete();
-
-        armClaw.clawOpen(); // unload  cone
-        sleep(100); // to make sure clawServo is at open position
-        slider.setPosition(sliderTargetPosition);
-        chassis.runToPosition(-robotAutoUnloadMovingDistance, true); // move out from junction
-        sliderTargetPosition = WALL_POSITION;
-        slider.setPosition(sliderTargetPosition);
-    }
-
-    /**
-     * During autonomous, cone may be located with different height position
-     * 1. Lift slider and open claw to get read to load a cone
-     * 2. Robot moving back to aim at cone for loading
-     * 2. Slider moving down to load the cone
-     * 3. Close claw to grip the cone
-     * 4. Lift slider to low junction position for unloading
-     * 5. Robot moving back to leave junction
-     * 6. Slider moving down to get ready to grip another cone
-     * @param coneLocation: the target cone high location.
-     */
-    private void loadCone(int coneLocation) {
-        slider.setPower(SLIDER_MOTOR_POWER);
-        armClaw.clawOpen();
-        slider.setPosition(coneLocation);
-        chassis.runToPosition(-robotAutoLoadMovingDistance, true); // moving to loading position
-        slider.waitRunningComplete();
-        armClaw.clawClose();
-        Logging.log("Auto load - Cone has been loaded.");
-        sleep(200); // wait to make sure clawServo is at grep position
-        sliderTargetPosition = LOW_JUNCTION_POS;
-        slider.setPosition(sliderTargetPosition);
     }
 }

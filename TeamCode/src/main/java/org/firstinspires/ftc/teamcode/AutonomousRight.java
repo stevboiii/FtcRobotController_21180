@@ -102,14 +102,8 @@ public class AutonomousRight extends LinearOpMode {
     final int HIGH_JUNCTION_POS = (int)(slider.COUNTS_PER_INCH * 34.5); //33.5 inch
     final int SLIDER_MOVE_DOWN_POSITION = slider.COUNTS_PER_INCH * 4; // move down 6 inch to unload cone
 
-    // claw servo motor variables
-    private Servo clawServo = null;
-    final double CLAW_OPEN_POS = 0.31;     // Maximum rotational position
-    final double CLAW_CLOSE_POS = 0.08;
-    double clawServoPosition = CLAW_OPEN_POS;
-
-    // arm servo variables, not used in current prototype version.
-    private Servo armServo = null;
+    //claw and arm unit
+    private final ArmClawUnit armClaw = new ArmClawUnit();
 
     // variables for autonomous
     double robotAutoLoadMovingDistance = 1.0; // in INCH
@@ -174,12 +168,8 @@ public class AutonomousRight extends LinearOpMode {
         chassis.init(hardwareMap, "FrontLeft", "FrontRight",
                 "BackLeft", "BackRight");
 
-        armServo = hardwareMap.get(Servo.class, "ArmServo");
-        clawServo = hardwareMap.get(Servo.class, "ClawServo");
-
-        // claw servo motor initial
-        clawServoPosition = CLAW_CLOSE_POS;
-        clawServo.setPosition(clawServoPosition);
+        armClaw.init(hardwareMap, "ArmServo", "ClawServo");
+        armClaw.clawClose();
 
         runtime.reset();
         while ((ObjectDetection.ParkingLot.UNKNOWN == myParkingLot) &&
@@ -343,11 +333,11 @@ public class AutonomousRight extends LinearOpMode {
      * @param coneLocation: the target cone high location.
      */
     private void autoLoadCone(int coneLocation) {
-        clawServo.setPosition(CLAW_OPEN_POS);
+        armClaw.clawOpen();
         slider.setPosition(coneLocation);
         chassis.runToPosition(-robotAutoLoadMovingDistance, true); // back a little bit to avoid stuck.
         slider.waitRunningComplete();
-        clawServo.setPosition(CLAW_CLOSE_POS);
+        armClaw.clawClose();
         Logging.log("Auto load - Cone has been loaded.");
         sleep(200); // wait to make sure clawServo is at grep position
     }
@@ -373,7 +363,7 @@ public class AutonomousRight extends LinearOpMode {
         slider.setPosition(moveSlider);
         slider.waitRunningComplete();
 
-        clawServo.setPosition(CLAW_OPEN_POS); // unload cone
+        armClaw.clawOpen();; // unload cone
         sleep(100); // make sure cone has been unloaded
         slider.setPosition(sliderTargetPosition);
         //chassis.runToPosition(-moveDistanceAfterDrop, true); // move out from junction
