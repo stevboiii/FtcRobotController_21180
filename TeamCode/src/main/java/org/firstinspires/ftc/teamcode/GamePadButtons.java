@@ -19,8 +19,6 @@ public class GamePadButtons {
     public boolean sliderLowJunction;
     public boolean sliderMediumJunction;
     public boolean sliderHighJunction;
-    public boolean sliderSkipLimitation;
-    public boolean sliderResetEncoder;
     public boolean clawClose;
     public boolean clawOpen;
     public boolean armLeft;
@@ -48,15 +46,13 @@ public class GamePadButtons {
         sliderLowJunction       = gamepad2.a;
         sliderMediumJunction    = gamepad2.b;
         sliderHighJunction      = gamepad2.y;
-        sliderSkipLimitation    = gamepad2.left_bumper;
-        sliderResetEncoder      = (gamepad2.right_bumper && gamepad2.left_bumper);
 
         // gamepad1 or gamepad2
-        clawClose               = gamepad2.dpad_up;
-        clawOpen                = gamepad2.dpad_down || gamepad1.a;
-        armLeft                 = (gamepad2.left_stick_x < 0);
-        armRight                 = (gamepad2.left_stick_x > 0);
-        armForward              = (gamepad2.left_stick_y < 0);
+        clawClose               = (gamepad2.left_stick_y < 0);
+        clawOpen                = (gamepad2.left_stick_y > 0) || gamepad1.a;
+        armLeft                 = (gamepad2.dpad_left);
+        armRight                = (gamepad2.dpad_right);
+        armForward              = (gamepad2.dpad_up || gamepad2.dpad_down);
     }
 
 }

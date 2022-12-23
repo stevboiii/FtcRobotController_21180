@@ -58,8 +58,6 @@ import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.ElapsedTime;
-import com.qualcomm.robotcore.util.Range;
-
 import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.VoltageUnit;
 
@@ -92,22 +90,6 @@ public class TeleopDualDrivers extends LinearOpMode {
 
     // slider motor power variables
     private final SlidersWith2Motors slider = new SlidersWith2Motors();
-    final double SLIDER_MOTOR_POWER = 0.7;
-
-    // slider position variables
-    final int FOUR_STAGE_SLIDER_MAX_POS = 4200;  // with 312 RPM motor.
-    final int SLIDER_MIN_POS = 0;
-    final int GROUND_CONE_POSITION = slider.COUNTS_PER_INCH; // 1 inch
-    final int coneLoadStackGap = (int)(slider.COUNTS_PER_INCH *  1.2);
-    final int GROUND_JUNCTION_POS = (int)(GROUND_CONE_POSITION + slider.COUNTS_PER_INCH);
-    final int WALL_POSITION = (int)(slider.COUNTS_PER_INCH * 7.5);  // 7.5 inch
-    final int MEDIUM_JUNCTION_POS = (int)(slider.COUNTS_PER_INCH * 24.5); //23.5 inch
-    final int HIGH_JUNCTION_POS = (int)(slider.COUNTS_PER_INCH * 34.5); //33.5 inch
-    final int SLIDER_MOVE_DOWN_POSITION = slider.COUNTS_PER_INCH * 4; // move down 3 inch to unload cone
-    final int LOW_JUNCTION_POS = (int)(slider.COUNTS_PER_INCH * 14.7); // 13.5 inch
-    final int POSITION_COUNTS_FOR_ONE_REVOLUTION = 538; // for 312 rpm motor
-    int motorPositionInc = POSITION_COUNTS_FOR_ONE_REVOLUTION / 10;
-    int sliderTargetPosition = 0;
 
     //claw and arm unit
     private final ArmClawUnit armClaw = new ArmClawUnit();
@@ -182,54 +164,39 @@ public class TeleopDualDrivers extends LinearOpMode {
 
             // use Y button to lift up the slider reaching high junction
             if (gpButtons.sliderHighJunction) {
-                sliderTargetPosition = HIGH_JUNCTION_POS;
-                slider.setPosition(sliderTargetPosition);
-                slider.setPower(SLIDER_MOTOR_POWER);
+                slider.setPosition(FieldParams.HIGH_JUNCTION_POS);
+                slider.setPower(slider.SLIDER_MOTOR_POWER);
             }
 
             // use B button to lift up the slider reaching medium junction
             if (gpButtons.sliderMediumJunction) {
-                sliderTargetPosition = MEDIUM_JUNCTION_POS;
-                slider.setPosition(sliderTargetPosition);
-                slider.setPower(SLIDER_MOTOR_POWER);
+                slider.setPosition(FieldParams.MEDIUM_JUNCTION_POS);
+                slider.setPower(slider.SLIDER_MOTOR_POWER);
             }
 
             // use A button to lift up the slider reaching low junction
             if (gpButtons.sliderLowJunction) {
-                sliderTargetPosition = LOW_JUNCTION_POS;
-                slider.setPosition(sliderTargetPosition);
-                slider.setPower(SLIDER_MOTOR_POWER);
+                slider.setPosition(FieldParams.LOW_JUNCTION_POS);
+                slider.setPower(slider.SLIDER_MOTOR_POWER);
             }
 
             // use X button to move the slider for wall position
             if (gpButtons.sliderWallPosition) {
-                sliderTargetPosition = WALL_POSITION;
-                slider.setPosition(sliderTargetPosition);
-                slider.setPower(SLIDER_MOTOR_POWER);
+                slider.setPosition(FieldParams.WALL_POSITION);
+                slider.setPower(slider.SLIDER_MOTOR_POWER);
             }
             // use dpad left to get to the ground junction position
             if (gpButtons.sliderGroundJunction) {
-                sliderTargetPosition = GROUND_JUNCTION_POS;
-                slider.setPosition(sliderTargetPosition);
-                slider.setPower(SLIDER_MOTOR_POWER);
+                slider.setPosition(FieldParams.GROUND_JUNCTION_POS);
+                slider.setPower(slider.SLIDER_MOTOR_POWER);
             }
 
             // use right stick_Y to lift or down slider continuously
             if (Math.abs(gpButtons.sliderUpDown) > 0) {
-                sliderTargetPosition -= (int) ((gpButtons.sliderUpDown) * motorPositionInc);
-                if (!gpButtons.sliderSkipLimitation) {
-                    sliderTargetPosition = Range.clip(sliderTargetPosition, SLIDER_MIN_POS,
-                            FOUR_STAGE_SLIDER_MAX_POS);
-                }
-                slider.setPosition(sliderTargetPosition);
-                slider.setPower(SLIDER_MOTOR_POWER);
-            }
-
-            if (gpButtons.sliderResetEncoder) {
-                slider.resetEncoders();
-                sliderTargetPosition = SLIDER_MIN_POS;
-                slider.setPosition(sliderTargetPosition);
-                slider.setPower(SLIDER_MOTOR_POWER);
+                int sliderPosition = slider.getPosition();
+                sliderPosition -= ((gpButtons.sliderUpDown) * slider.manualUpdatePos) * slider.COUNTS_PER_INCH;
+                slider.setCountPosition(sliderPosition);
+                slider.setPower(slider.SLIDER_MOTOR_POWER);
             }
 
             // Set position only when button is hit.
@@ -242,19 +209,34 @@ public class TeleopDualDrivers extends LinearOpMode {
                 armClaw.clawOpen();
             }
 
+            // turn arm left
+            if (gpButtons.armLeft) {
+                armClaw.armTurnLeft();
+            }
+
+            // turn arm right
+            if (gpButtons.armRight) {
+                armClaw.armTurnRight();
+            }
+
+            // turn arm forward
+            if (gpButtons.armForward) {
+                armClaw.armTurnForward();
+            }
+
             //  auto driving, grip cone, and lift slider
             if(gpButtons.autoLoadGroundCone) {
-                loadCone(GROUND_CONE_POSITION - 40); // Always on ground during teleop mode
+                loadCone(FieldParams.GROUND_CONE_POSITION); // Always on ground during teleop mode
             }
 
             //  auto driving, grip cone, and lift slider
             if(gpButtons.autoLoad34thConeStack) {
-                loadCone(GROUND_CONE_POSITION + coneLoadStackGap * 2); // Always on ground during teleop mode
+                loadCone(FieldParams.GROUND_CONE_POSITION + FieldParams.coneLoadStackGap * 2); // Always on ground during teleop mode
             }
 
             //  auto driving, grip cone, and lift slider
             if(gpButtons.autoLoad5thConeStack) {
-                loadCone(GROUND_CONE_POSITION + coneLoadStackGap * 3); // Always on ground during teleop mode
+                loadCone(FieldParams.GROUND_CONE_POSITION + FieldParams.coneLoadStackGap * 3); // Always on ground during teleop mode
             }
 
             //  auto driving, unload cone
@@ -298,9 +280,6 @@ public class TeleopDualDrivers extends LinearOpMode {
                 // claw servo log
                 telemetry.addData("Status", "Claw Servo position %.2f", armClaw.getClawPosition());
 
-                // slider motors log
-                telemetry.addData("Status", "slider motor Target position %d",
-                        sliderTargetPosition);
                 telemetry.addData("Status", "Right slider motor current position %d",
                         slider.RightSliderMotor.getCurrentPosition());
                 telemetry.addData("Status", "Left slider motor current position %d",
@@ -334,19 +313,16 @@ public class TeleopDualDrivers extends LinearOpMode {
         chassis.runToPosition(-robotAutoUnloadMovingDistance, true); // moving back in inch
 
         // move down slider a little bit to unload cone
-        sliderTargetPosition = slider.getPosition();
-        int moveSlider = sliderTargetPosition - SLIDER_MOVE_DOWN_POSITION;
-        moveSlider = Math.max(moveSlider, GROUND_CONE_POSITION);
-        slider.setPower(SLIDER_MOTOR_POWER);
-        slider.setPosition(moveSlider);
+        double sliderInchPosition = slider.getPosition() / (double)slider.COUNTS_PER_INCH;
+        slider.setPower(slider.SLIDER_MOTOR_POWER);
+        slider.setPosition(sliderInchPosition - FieldParams.SLIDER_MOVE_DOWN_POSITION);
         slider.waitRunningComplete();
 
         armClaw.clawOpen(); // unload  cone
         sleep(100); // to make sure clawServo is at open position
-        slider.setPosition(sliderTargetPosition);
+        slider.setPosition(sliderInchPosition);
         chassis.runToPosition(-robotAutoUnloadMovingDistance, true); // move out from junction
-        sliderTargetPosition = WALL_POSITION;
-        slider.setPosition(sliderTargetPosition);
+        slider.setPosition(FieldParams.WALL_POSITION);
     }
 
     /**
@@ -358,10 +334,10 @@ public class TeleopDualDrivers extends LinearOpMode {
      * 4. Lift slider to low junction position for unloading
      * 5. Robot moving back to leave junction
      * 6. Slider moving down to get ready to grip another cone
-     * @param coneLocation: the target cone high location.
+     * @param coneLocation: the target cone high location in inch.
      */
-    private void loadCone(int coneLocation) {
-        slider.setPower(SLIDER_MOTOR_POWER);
+    private void loadCone(double coneLocation) {
+        slider.setPower(slider.SLIDER_MOTOR_POWER);
         armClaw.clawOpen();
         slider.setPosition(coneLocation);
         chassis.runToPosition(-robotAutoLoadMovingDistance, true); // moving to loading position
@@ -369,7 +345,6 @@ public class TeleopDualDrivers extends LinearOpMode {
         armClaw.clawClose();
         Logging.log("Auto load - Cone has been loaded.");
         sleep(200); // wait to make sure clawServo is at grep position
-        sliderTargetPosition = LOW_JUNCTION_POS;
-        slider.setPosition(sliderTargetPosition);
+        slider.setPosition(FieldParams.LOW_JUNCTION_POS);
     }
 }

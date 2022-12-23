@@ -58,8 +58,8 @@ public class ArmClawUnit
 
     // arm servo variables, not used in current prototype version.
     private Servo armServo = null;
-    final double ARM_FORWARD = 0.2;
-    final double ARM_LEFT = 0.4;
+    final double ARM_FORWARD = 0.32;
+    final double ARM_LEFT = 0.64;
     final double ARM_RIGHT = 0.0;
 
     /**
@@ -127,6 +127,27 @@ public class ArmClawUnit
      */
     public double getClawPosition() {
         return clawServo.getPosition();
+    }
+
+    /**
+     * turn the ARM servo motor position to left
+     */
+    public void armTurnLeft() {
+        setArmPosition(ARM_LEFT);
+    }
+
+    /**
+     * turn the ARM servo motor position to right
+     */
+    public void armTurnRight() {
+        setArmPosition(ARM_RIGHT);
+    }
+
+    /**
+     * turn the ARM servo motor position to forward
+     */
+    public void armTurnForward() {
+        setArmPosition(ARM_FORWARD);
     }
 }
 
