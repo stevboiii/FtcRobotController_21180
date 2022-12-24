@@ -58,7 +58,7 @@ public class SlidersWith2Motors
     // slider motor variables
     public DcMotor RightSliderMotor = null;
     public DcMotor LeftSliderMotor = null;
-    final double SLIDER_MOTOR_POWER = 0.9; // save some powers
+    final double SLIDER_MOTOR_POWER = 0.95; // save some powers
     final int COUNTS_PER_INCH = 120; // verified by testing.
     final double manualUpdatePos = 0.5; // 0.5 inch
 

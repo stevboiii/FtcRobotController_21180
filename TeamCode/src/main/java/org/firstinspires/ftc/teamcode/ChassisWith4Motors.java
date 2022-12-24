@@ -89,7 +89,7 @@ public class ChassisWith4Motors {
 
     // power control variables
     final double RAMP_UP_DISTANCE = 10.0; // ramp up in the first 10 inch
-    final double RAMP_DOWN_DISTANCE = 9.0; // slow down in the final 9 inch
+    final double RAMP_DOWN_DISTANCE = 10.0; // slow down in the final 9 inch
     final double SHORT_DISTANCE = 6.0; // consistent low power for short driving
 
     // imu
@@ -501,16 +501,17 @@ public class ChassisWith4Motors {
         }
         correction = 0.0;
         setPowers(RAMP_START_POWER); // p is always positive for RUN_TO_POSITION mode.
-        sleep(10); // let motors to start moving before checking isBusy.
+        sleep(100); // let motors to start moving before checking isBusy.
 
         // in seconds
-        while (robotIsBusy() && ((runtime.seconds() - curTime) < MAX_WAIT_TIME)) {
+        while (robotIsBusy() || (getEncoderDistance(isBF) / tDistanceAbs < 0.5) &&
+                ((runtime.seconds() - curTime) < MAX_WAIT_TIME)) {
             if (0 != targetSign) { // no pid if sign = 0;
                 correction = pidDrive.performPID(getAngle());
             }
 
             if (speedRampOn) {
-                double currDistance = Math.abs(getEncoderDistance());
+                double currDistance = Math.abs(getEncoderDistance(isBF));
                 drivePower = MAX_POWER;
                 double rampUpPower = MAX_POWER;
                 double rampDownPower = MAX_POWER;
@@ -535,7 +536,6 @@ public class ChassisWith4Motors {
             }
 
             if (debugFlag) {
-
                 Logging.log("power = %.2f, correction = %.2f, global angle = %.3f, last angle = %.2f",
                         drivePower, correction, getAngle(), lastAngles.firstAngle);
             }
@@ -598,7 +598,7 @@ public class ChassisWith4Motors {
         if (Math.abs(targetDistance) < 0.4) {
             return;
         }
-        double countsPerInch = isBackForth ? COUNTS_PER_INCH_DRIVE : COUNTS_PER_INCH_STRAFE;
+        double countsPerInch = isBackForth? COUNTS_PER_INCH_DRIVE : COUNTS_PER_INCH_STRAFE;
         int targetPosition = (int) (targetDistance * countsPerInch);
         int tSign = (int) Math.copySign(1, targetDistance);
         setTargetPositions(targetPosition, isBackForth);
@@ -756,6 +756,26 @@ public class ChassisWith4Motors {
                 FrontRightDrive.getCurrentPosition() +
                 BackRightDrive.getCurrentPosition() +
                 BackLeftDrive.getCurrentPosition()) / 4.0 / COUNTS_PER_INCH_DRIVE;
+    }
+
+    /**
+     * check the current encoder positions of wheel motors
+     * @return the average motors encoder position
+     */
+    private double getEncoderDistance( boolean isBF) {
+        double dis;
+        double aveEncoder = (Math.abs(FrontLeftDrive.getCurrentPosition()) +
+                Math.abs(FrontRightDrive.getCurrentPosition()) +
+                Math.abs(BackRightDrive.getCurrentPosition()) +
+                Math.abs(BackLeftDrive.getCurrentPosition())) / 4.0;
+
+        if (isBF) {
+            dis = aveEncoder / COUNTS_PER_INCH_DRIVE;
+        }
+        else {
+            dis = aveEncoder / COUNTS_PER_INCH_STRAFE;
+        }
+        return dis;
     }
 }
 

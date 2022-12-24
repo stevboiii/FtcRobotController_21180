@@ -58,9 +58,9 @@ public class ArmClawUnit
 
     // arm servo variables, not used in current prototype version.
     private Servo armServo = null;
-    final double ARM_FORWARD = 0.32;
-    final double ARM_LEFT = 0.64;
-    final double ARM_RIGHT = 0.0;
+    final double ARM_FORWARD = 0.395;
+    final double ARM_LEFT = 0.73;
+    final double ARM_RIGHT = 0.06;
 
     /**
      * Init slider motors hardware, and set their behaviors.

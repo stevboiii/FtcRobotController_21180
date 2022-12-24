@@ -41,11 +41,11 @@ public class GamePadButtons {
 
         // gamepad1(single driver) or gamepad2(dual driver) buttons
         sliderUpDown            = gamepad2.right_stick_y;
-        sliderGroundJunction    = gamepad2.dpad_left;
         sliderWallPosition      = gamepad2.x;
         sliderLowJunction       = gamepad2.a;
         sliderMediumJunction    = gamepad2.b;
         sliderHighJunction      = gamepad2.y;
+        sliderGroundJunction    = gamepad2.right_bumper;
 
         // gamepad1 or gamepad2
         clawClose               = (gamepad2.left_stick_y < 0);

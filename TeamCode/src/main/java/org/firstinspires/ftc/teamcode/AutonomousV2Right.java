@@ -95,14 +95,12 @@ public class AutonomousV2Right extends AutonomousRight {
     @Override
     public void autonomousCore() {
 
+        // slider setting
         slider.setPower(slider.SLIDER_MOTOR_POWER);
-        slider.setPosition(FieldParams.LOW_JUNCTION_POS);
+        slider.setPosition(FieldParams.HIGH_JUNCTION_POS);
 
         //move center of robot to the center of 3rd mat near high junction
         chassis.runToPosition(FieldParams.INIT_POSITION_TO_MAT_CENTER * autonomousStartLocation, false);
-
-        // lift slider
-        slider.setPosition(FieldParams.HIGH_JUNCTION_POS);
 
         // turn robot to make sure it is at 0 degree before backing to high junction
         sleep(100);
@@ -117,18 +115,18 @@ public class AutonomousV2Right extends AutonomousRight {
         }
 
         // driving back to high junction
-        chassis.runToPosition(-FieldParams.HALF_MAT + FieldParams.ARM_LOCATION_BIAS, true);
+        chassis.runToPosition(FieldParams.HALF_MAT - FieldParams.ARM_LOCATION_BIAS, true);
 
         slider.waitRunningComplete();
 
         // drop cone and back to the center of mat
         autoUnloadCone();
 
-        for(int autoLoop = 0; autoLoop < 2; autoLoop++) {
+        for(int autoLoop = 0; autoLoop < 4; autoLoop++) {
             Logging.log("Autonomous - loop index: %d ", autoLoop);
 
-            // drive robot to loading area. xyShift is according to the testing from 135 degrees turning.
-            chassis.runToPosition(FieldParams.HIGH_JUNCTION_TO_CONE_STACK, true);
+            // drive robot to loading area.
+            chassis.runToPosition(-FieldParams.HIGH_JUNCTION_TO_CONE_STACK, true);
             Logging.log("Autonomous - Robot has arrived loading area.");
 
             Logging.log("fcDistance sensor value before loading: %.2f ", chassis.getFcDSValue());
@@ -137,7 +135,7 @@ public class AutonomousV2Right extends AutonomousRight {
 
             // lift slider during driving back to mat center.
             slider.setPosition(FieldParams.HIGH_JUNCTION_POS);
-            chassis.runToPosition(-FieldParams.HIGH_JUNCTION_TO_CONE_STACK, true);
+            chassis.runToPosition(FieldParams.HIGH_JUNCTION_TO_CONE_STACK, true);
             Logging.log("Autonomous - Robot arrived the high junction.");
 
             slider.waitRunningComplete();
@@ -161,7 +159,7 @@ public class AutonomousV2Right extends AutonomousRight {
         slider.setPosition(FieldParams.GROUND_CONE_POSITION);
 
         // drive to final parking lot
-        chassis.runToPosition((parkingLotDis * autonomousStartLocation + FieldParams.HALF_MAT), true);
+        chassis.runToPosition(-(parkingLotDis * autonomousStartLocation + FieldParams.HALF_MAT), true);
         Logging.log("Autonomous - Arrived at parking lot Mat: %.2f", parkingLotDis);
 
         slider.waitRunningComplete();
@@ -182,7 +180,7 @@ public class AutonomousV2Right extends AutonomousRight {
     private void autoLoadCone(double coneLocation) {
         armClaw.clawOpen();
         slider.setPosition(coneLocation);
-        chassis.runToPosition(-robotAutoLoadMovingDistance, true); // back a little bit to avoid stuck.
+        chassis.runToPosition(robotAutoLoadMovingDistance, true); // back a little bit to avoid stuck.
         slider.waitRunningComplete();
         armClaw.clawClose();
         Logging.log("Auto load - Cone has been loaded.");
