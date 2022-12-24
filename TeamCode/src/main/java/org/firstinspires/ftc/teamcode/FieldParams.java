@@ -47,5 +47,13 @@ public class FieldParams
     static final double HIGH_JUNCTION_POS = 34.5;
     static final double WALL_POSITION = 7.5;
     static final double SLIDER_MOVE_DOWN_POSITION = 4.0;
+
+    // autonomous driving distance
+    static final double HALF_MAT = 12.0;
+    static final double CHASSIS_WIDTH = 15.4;
+    static final double CHASSIS_LENGTH = 17.0;
+    static final double ARM_LOCATION_BIAS = 2.0; // Arm joint location to the center of chassis.
+    static final double INIT_POSITION_TO_MAT_CENTER = 5 * HALF_MAT - CHASSIS_WIDTH / 2.0;
+    static final double HIGH_JUNCTION_TO_CONE_STACK = 4 * HALF_MAT - CHASSIS_LENGTH / 2.0 - ARM_LOCATION_BIAS;
 }
 

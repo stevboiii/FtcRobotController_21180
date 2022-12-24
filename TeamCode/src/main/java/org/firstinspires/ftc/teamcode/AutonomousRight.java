@@ -89,8 +89,8 @@ public class AutonomousRight extends LinearOpMode {
     // Declare OpMode members.
     private final ElapsedTime runtime = new ElapsedTime();
     public final ChassisWith4Motors chassis = new ChassisWith4Motors();
-    private final SlidersWith2Motors slider = new SlidersWith2Motors();
-    private final ArmClawUnit armClaw = new ArmClawUnit();
+    public final SlidersWith2Motors slider = new SlidersWith2Motors();
+    public final ArmClawUnit armClaw = new ArmClawUnit();
 
     // variables for autonomous
     double robotAutoLoadMovingDistance = 1.0; // in INCH
