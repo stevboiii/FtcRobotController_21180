@@ -77,6 +77,7 @@ public class ChassisWith4Motors {
     final double RAMP_START_POWER = 0.35;
     final double RAMP_END_POWER = 0.2;
     final double SHORT_DISTANCE_POWER = 0.4;
+    final double LONG_DISTANCE_POWER = 0.5;
     final double MIN_ROTATE_POWER = 0.21;
     final double AUTO_ROTATE_POWER = 0.9;
 
@@ -621,25 +622,31 @@ public class ChassisWith4Motors {
                     BackLeftDrive.getCurrentPosition(), BackRightDrive.getCurrentPosition());
         }
     }
-    //used in autonomous to go to a certain junction, the distance the robot will have to run is larger than EncoderRange
-    public void runToJunction(double EncoderRange, double DSrange, double Sensor) {
-        runUsingEncoders();
-        double driveDirection = Math.copySign(1, EncoderRange);
 
-        EncoderRange = Math.abs(EncoderRange);
+    /**
+     * used in autonomous to go to a certain junction, the distance the robot will have to run
+     * is larger than EncoderRange.
+     *
+     * @param encoderRange Input value for the target distance in inch, which is totally controlled by encoders.
+     * @param sensorRange Input value for distance controlled range in inch.
+     * @param threshold Stop driving when distance sensor value less than it.
+     */
+    public void runToJunction(double encoderRange, double sensorRange, double threshold) {
+        runUsingEncoders();
+        double driveDirection = Math.copySign(1, encoderRange);
+
+        encoderRange = Math.abs(encoderRange);
         double currEnDist = 0.0;
 
         // controlled by encoders
-        while(EncoderRange - currEnDist > 0) {
-            drivingWithPID(-SHORT_DISTANCE_POWER * driveDirection, 0.0, 0.0, true);
+        while(encoderRange - currEnDist > 0) {
+            drivingWithPID(-LONG_DISTANCE_POWER * driveDirection, 0.0, 0.0, true);
             currEnDist = Math.abs(getEncoderDistance());
         }
 
         // controlled by distance sensor
-        Logging.log(" curEnrDis = %.2f, Curr Sensor dist = %.2f",
-                Math.abs(getEncoderDistance()), getRcDsValue());
-        while (getRcDsValue() > Sensor && getEncoderDistance() < EncoderRange + DSrange ) {
-            drivingWithPID(-SHORT_DISTANCE_POWER / 2 * driveDirection, 0.0, 0.0, true);
+        while ((getRcDsValue() > threshold) && (getEncoderDistance() < encoderRange + sensorRange)) {
+            drivingWithPID(-RAMP_END_POWER * driveDirection, 0.0, 0.0, true);
             Logging.log("getRcDsValue = %.2f", getRcDsValue());
         }
         Logging.log("getRcDsValue = %.2f", getRcDsValue());
@@ -728,6 +735,11 @@ public class ChassisWith4Motors {
     public double getFcDSValue() {
         return frontCenterDS.getDistance(DistanceUnit.INCH);
     }
+
+    /**
+     * Get the right center distance sensor value.
+     * @return the value of right center distance sensor value, in inch
+     */
     public double getRcDsValue() {
         return rightCenterDS.getDistance(DistanceUnit.INCH);
     }

@@ -51,9 +51,9 @@ public class FieldParams
     // autonomous driving distance
     static final double HALF_MAT = 12.0;
     static final double CHASSIS_WIDTH = 14;
-    static final double CHASSIS_LENGTH = 16.0;
+    static final double ARM_LENGTH = 12;
     static final double ARM_LOCATION_BIAS = 2.0; // Arm joint location to the center of chassis.
     static final double INIT_POSITION_TO_MAT_CENTER = 5 * HALF_MAT - CHASSIS_WIDTH / 2.0;
-    static final double HIGH_JUNCTION_TO_CONE_STACK = 4 * HALF_MAT - CHASSIS_LENGTH / 2.0 - ARM_LOCATION_BIAS;
+    static final double HIGH_JUNCTION_TO_CONE_STACK = 4 * HALF_MAT - ARM_LENGTH;
 }
 

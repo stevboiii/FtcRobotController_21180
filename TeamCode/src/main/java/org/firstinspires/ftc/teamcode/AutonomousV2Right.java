@@ -135,7 +135,7 @@ public class AutonomousV2Right extends AutonomousRight {
 
             // lift slider during driving back to mat center.
             slider.setPosition(FieldParams.HIGH_JUNCTION_POS);
-            chassis.runToJunction(30, 6, 20);
+            chassis.runToJunction(FieldParams.HIGH_JUNCTION_TO_CONE_STACK - 6.0, 6.0, 20);
             Logging.log("Autonomous - Robot arrived the high junction.");
 
             slider.waitRunningComplete();
@@ -159,7 +159,7 @@ public class AutonomousV2Right extends AutonomousRight {
         slider.setPosition(FieldParams.GROUND_CONE_POSITION);
 
         // drive to final parking lot
-        chassis.runToPosition(-(parkingLotDis * autonomousStartLocation + FieldParams.HALF_MAT), true);
+        chassis.runToPosition(-(parkingLotDis * autonomousStartLocation + FieldParams.HALF_MAT - FieldParams.ARM_LOCATION_BIAS), true);
         Logging.log("Autonomous - Arrived at parking lot Mat: %.2f", parkingLotDis);
 
         slider.waitRunningComplete();
