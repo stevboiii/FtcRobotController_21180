@@ -135,7 +135,7 @@ public class AutonomousV2Right extends AutonomousRight {
 
             // lift slider during driving back to mat center.
             slider.setPosition(FieldParams.HIGH_JUNCTION_POS);
-            chassis.runToPosition(FieldParams.HIGH_JUNCTION_TO_CONE_STACK, true);
+            chassis.runToJunction(30, 6, 20);
             Logging.log("Autonomous - Robot arrived the high junction.");
 
             slider.waitRunningComplete();

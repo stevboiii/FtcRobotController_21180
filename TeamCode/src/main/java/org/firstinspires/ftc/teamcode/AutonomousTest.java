@@ -67,6 +67,6 @@ public class AutonomousTest extends AutonomousRight {
 
     @Override
     public void autonomousCore() {
-        chassis.runWithMultiSensors();
+        chassis.runToJunction(30, 30, 20);
     }
 }
