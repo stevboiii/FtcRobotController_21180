@@ -107,6 +107,10 @@ public class ChassisWith4Motors {
     //sensors
     private DistanceSensor frontCenterDS = null;
     private DistanceSensor rightCenterDS = null;
+
+    private DistanceSensor frontRightDS = null;
+    private DistanceSensor frontLeftDS = null;
+
     private ColorSensor colorSensor = null;
 
 
@@ -183,6 +187,9 @@ public class ChassisWith4Motors {
         // Distance sensors
         frontCenterDS = hardwareMap.get(DistanceSensor.class, "fcds");
         rightCenterDS = hardwareMap.get(DistanceSensor.class, "rcds");
+
+        frontLeftDS = hardwareMap.get(DistanceSensor.class, "flds");
+        frontRightDS = hardwareMap.get(DistanceSensor.class, "frds");
         colorSensor = hardwareMap.get(ColorSensor.class, "cs");
     }
 
@@ -211,12 +218,12 @@ public class ChassisWith4Motors {
         setPowers(0);
         rotateIMUTargetAngle(90);
         runUsingEncoders();
-        double dist = getFcDSValue();
+        double dist = getFcDsValue();
         while ((dist > 4.5) && (Math.abs(getEncoderDistance()) < 20))
         {
             drivingWithPID(-SHORT_DISTANCE_POWER, 0 ,0, true);
             //Logging.log("Red = %d, Green = %d, Blue = %d", colorSensor.red(), colorSensor.green(), colorSensor.blue());
-            dist = getFcDSValue();
+            dist = getFcDsValue();
             Logging.log("Distance = %.2f", dist);
         }
         setPowers(0);
@@ -623,6 +630,69 @@ public class ChassisWith4Motors {
                     BackLeftDrive.getCurrentPosition(), BackRightDrive.getCurrentPosition());
         }
     }
+    //used in autonomous to go to a certain junction, the distance the robot will have to run is larger than EncoderRange
+    public void runToJunction(double EncoderRange, double DSrange, double Sensor) {
+        runUsingEncoders();
+        double driveDirection = Math.copySign(1, EncoderRange);
+
+        EncoderRange = Math.abs(EncoderRange);
+        double currEnDist = 0.0;
+
+        // controlled by encoders
+        while(EncoderRange - currEnDist > 0) {
+            drivingWithPID(-SHORT_DISTANCE_POWER * driveDirection, 0.0, 0.0, true);
+            currEnDist = Math.abs(getEncoderDistance());
+        }
+
+        // controlled by distance sensor
+        Logging.log(" curEnrDis = %.2f, Curr Sensor dist = %.2f",
+                Math.abs(getEncoderDistance()), getRcDsValue());
+        while (getRcDsValue() > Sensor && getEncoderDistance() < EncoderRange + DSrange ) {
+            drivingWithPID(-SHORT_DISTANCE_POWER / 2 * driveDirection, 0.0, 0.0, true);
+            Logging.log("getRcDsValue = %.2f", getRcDsValue());
+        }
+        Logging.log("getRcDsValue = %.2f", getRcDsValue());
+        setPowers(0.0);
+        runWithoutEncoders();
+    }
+    public void runToConestack(double DistanceSensor, double DriveRange) {
+        runUsingEncoders();
+        double driveDirection = Math.copySign(1, DriveRange);
+
+        float blue = (float)colorSensor.blue();
+        float red = (float)colorSensor.red();
+
+        DriveRange = Math.abs(DriveRange);
+        double currEnDist = 0.0;
+
+        // controlled by encoders
+        while(blue < 200 && red < 200) {
+            drivingWithPID(-SHORT_DISTANCE_POWER * driveDirection, 0.0, 0.0, true);
+        }
+
+        while (getFcDsValue() > DistanceSensor && (getFrDsValue() + getFlDsValue()) / 2 > DistanceSensor) {
+            drivingWithPID(-SHORT_DISTANCE_POWER / 2 * driveDirection, 0.0, 0.0, true);
+            Logging.log("getFcDsValue = %.2f", getFcDsValue());
+        }
+        Logging.log("getFrDsValue = %2f, getFlDsValue = %2f, getFcDsValue = %2f", getFrDsValue(), getFlDsValue(), getFcDsValue());
+        setPowers(0.0);
+        if (getFcDsValue() < (getFrDsValue() + getFlDsValue()) / 2) {
+            return;
+        }
+        else {
+            if (getFlDsValue() < getFrDsValue()) {
+                runToPosition(-0.7, false);
+            }
+            else if (getFrDsValue() < getFlDsValue()) {
+                runToPosition(0.7, false);
+            }
+            else {
+                return;
+            }
+        }
+        setPowers(0.0);
+        runWithoutEncoders();
+    }
 
     /**
      * used in autonomous to go to a certain junction, the distance the robot will have to run
@@ -719,8 +789,17 @@ public class ChassisWith4Motors {
      * Get the front center distance sensor value.
      * @return the value of front center distance, in inch
      */
-    public double getFcDSValue() {
+    public double getFcDsValue() {
         return frontCenterDS.getDistance(DistanceUnit.INCH);
+    }
+    public double getFlDsValue() {
+        return frontLeftDS.getDistance(DistanceUnit.INCH);
+    }
+    public double getFrDsValue() {
+        return frontRightDS.getDistance(DistanceUnit.INCH);
+    }
+    public double getRcDsValue() {
+        return rightCenterDS.getDistance(DistanceUnit.INCH);
     }
 
     /**
@@ -756,18 +835,18 @@ public class ChassisWith4Motors {
                 Logging.log("Target DS = %.2f, target Encoder = %.2f, currEnDis = %.2f, range = %.2f",
                         targetDS, targetEncoder, currEnDist, range);
                 Logging.log(" curEnrDis = %.2f, Curr Sensor dist = %.2f",
-                        Math.abs(getEncoderDistance()), getFcDSValue());
+                        Math.abs(getEncoderDistance()), getFcDsValue());
             }
         }
 
         // controlled by distance sensor
-        double currDS = getFcDSValue();
+        double currDS = getFcDsValue();
         Logging.log(" curEnrDis = %.2f, Curr Sensor dist = %.2f",
-                Math.abs(getEncoderDistance()), getFcDSValue());
+                Math.abs(getEncoderDistance()), getFcDsValue());
         while (((currDS - targetDS) * driveDirection > tolerance) && (currEnDist - targetEncoder < range)) {
             drivingWithPID(-SHORT_DISTANCE_POWER * driveDirection, 0.0, 0.0, true);
             currEnDist = Math.abs(getEncoderDistance());
-            currDS = getFcDSValue();
+            currDS = getFcDsValue();
             if (debugFlag) {
                 Logging.log("Target DS = %.2f, curEnrDis = %.2f, Curr Sensor dist = %.2f, tolerance = %.2f",
                         targetDS, currEnDist, currDS, tolerance);
