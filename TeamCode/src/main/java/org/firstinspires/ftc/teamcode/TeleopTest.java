@@ -27,6 +27,8 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.AngularVelocity;
 import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.VoltageUnit;
 
@@ -177,9 +179,17 @@ public class TeleopTest extends LinearOpMode {
                 Logging.log("Auxiliary voltage = %.2f, min = %.2f", auVolt, minAuVolt);
 
                 // imu log
-                telemetry.addData("imu heading ", "%.2f", chassis.lastAngles.firstAngle);
+                chassis.getAngle();
+                telemetry.addData("imu heading yaw ", "%.2f", chassis.lastAngles.getYaw(AngleUnit.DEGREES));
+                telemetry.addData("imu heading Roll ", "%.2f", chassis.lastAngles.getRoll(AngleUnit.DEGREES));
+                telemetry.addData("imu heading pitch ", "%.2f", chassis.lastAngles.getPitch(AngleUnit.DEGREES));
                 telemetry.addData("global heading ", "%.2f", chassis.globalAngle);
                 telemetry.addData("Correction  ", "%.2f", chassis.correction);
+
+                AngularVelocity angularVelocity = chassis.imu.getRobotAngularVelocity(AngleUnit.DEGREES);
+                telemetry.addData("Yaw (Z) velocity", "%.2f Deg/Sec", angularVelocity.zRotationRate);
+                telemetry.addData("Pitch (X) velocity", "%.2f Deg/Sec", angularVelocity.xRotationRate);
+                telemetry.addData("Roll (Y) velocity", "%.2f Deg/Sec", angularVelocity.yRotationRate);
 
                 // drive motors log
                 telemetry.addData("Max driving power ", "%.2f", maxDrivePower);

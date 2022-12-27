@@ -30,10 +30,12 @@
 package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.hardware.bosch.BNO055IMU;
+import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.hardware.HardwareMap;
+import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 
@@ -42,6 +44,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
+import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
 
 
 /**
@@ -95,8 +98,8 @@ public class ChassisWith4Motors {
     final double SHORT_DISTANCE = 6.0; // consistent low power for short driving
 
     // imu
-    private BNO055IMU imu = null;
-    Orientation lastAngles = new Orientation();
+    public IMU imu = null;
+    YawPitchRollAngles lastAngles;
     double globalAngle = 0.0;
     double correction = 0.0;
     double rotation = 0.0;
@@ -148,13 +151,23 @@ public class ChassisWith4Motors {
         // Retrieve and initialize the IMU. We expect the IMU to be attached to an I2C port
         // on a Core Device Interface Module, configured to be a sensor of type "AdaFruit IMU",
         // and named "imu".
-        imu = hardwareMap.get(BNO055IMU.class, "imu");
-        BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
-        parameters.mode = BNO055IMU.SensorMode.IMU;
-        parameters.angleUnit = BNO055IMU.AngleUnit.DEGREES;
-        parameters.accelUnit = BNO055IMU.AccelUnit.METERS_PERSEC_PERSEC;
-        parameters.loggingEnabled = false;
-        imu.initialize(parameters);
+        imu = hardwareMap.get(IMU.class, "imu");
+
+        /* The next two lines define Hub orientation.
+         * The Default Orientation (shown) is when a hub is mounted horizontally with the printed logo pointing UP and the USB port pointing FORWARD.
+         *
+         * To Do:  EDIT these two lines to match YOUR mounting configuration.
+         */
+        RevHubOrientationOnRobot.LogoFacingDirection logoDirection = RevHubOrientationOnRobot.LogoFacingDirection.LEFT;
+        RevHubOrientationOnRobot.UsbFacingDirection  usbDirection  = RevHubOrientationOnRobot.UsbFacingDirection.DOWN;
+
+        RevHubOrientationOnRobot orientationOnRobot = new RevHubOrientationOnRobot(logoDirection, usbDirection);
+
+        // Now initialize the IMU with this mounting orientation
+        // Note: if you choose two conflicting directions, this initialization will cause a code exception.
+        imu.initialize(new IMU.Parameters(orientationOnRobot));
+        imu.resetYaw(); // reset Yaw when start initialization
+        resetAngle(); // make sure lastangle is initialized.
 
         // Set PID proportional value to start reducing power at about 50 degrees of rotation.
         // P by itself may stall before turn completed so we add a bit of I (integral) which
@@ -164,14 +177,6 @@ public class ChassisWith4Motors {
         // Set PID proportional value to produce non-zero correction value when robot veers off
         // straight line. P value controls how sensitive the correction is.
         pidDrive = new PIDController(.04, 0, 0);
-
-        // make sure the imu gyro is calibrated before continuing.
-        double loopStartTime = runtime.seconds();
-        while (!imu.isGyroCalibrated() &&
-                (runtime.seconds() - loopStartTime) < MAX_WAIT_TIME) {
-            Thread.yield(); // idle
-        }
-        Logging.log("imu calib status", imu.getCalibrationStatus().toString());
 
         // Set up parameters for driving in a straight line.
         pidDrive.setInputRange(-90, 90);
@@ -183,7 +188,6 @@ public class ChassisWith4Motors {
         frontCenterDS = hardwareMap.get(DistanceSensor.class, "fcds");
         rightCenterDS = hardwareMap.get(DistanceSensor.class, "rcds");
         colorSensor = hardwareMap.get(ColorSensor.class, "cs");
-
     }
 
     /**
@@ -304,7 +308,7 @@ public class ChassisWith4Motors {
      * Resets the cumulative angle tracking to zero.
      */
     public void resetAngle() {
-        lastAngles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
+        lastAngles = imu.getRobotYawPitchRollAngles();
         globalAngle = 0;
     }
 
@@ -319,9 +323,9 @@ public class ChassisWith4Motors {
         // returned as 0 to +180 or 0 to -180 rolling back to -179 or +179 when rotation passes
         // 180 degrees. We detect this transition and track the total cumulative angle of rotation.
 
-        Orientation angles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
+        YawPitchRollAngles angles = imu.getRobotYawPitchRollAngles();
 
-        double deltaAngle = angles.firstAngle - lastAngles.firstAngle;
+        double deltaAngle = angles.getYaw(AngleUnit.DEGREES) - lastAngles.getYaw(AngleUnit.DEGREES);
 
         if (deltaAngle < -180)
             deltaAngle += 360;
@@ -339,9 +343,9 @@ public class ChassisWith4Motors {
      * Check the first angle of IMU orientation in x-y plane
      * @return the value of first angle from IMU orientation
      */
-    public double getIMUFirstAngle() {
-        Orientation imuAngles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
-        return imuAngles.firstAngle;
+    public double getIMUYawAngle() {
+        YawPitchRollAngles imuAngles = imu.getRobotYawPitchRollAngles();
+        return imuAngles.getYaw(AngleUnit.DEGREES);
     }
 
     /**
@@ -350,10 +354,10 @@ public class ChassisWith4Motors {
      * @param imuTargetAngle the target angle of imu after rotation.
      */
     public void rotateIMUTargetAngle(double imuTargetAngle) {
-        double imuFirstAngle = getIMUFirstAngle();
-        rotate(-AngleUnit.DEGREES.normalize(imuFirstAngle) + imuTargetAngle);
+        double imuYawAngle = getIMUYawAngle();
+        rotate(-AngleUnit.DEGREES.normalize(imuYawAngle) + imuTargetAngle);
         if (debugFlag) {
-            Logging.log("imu angle before rotation: %.2f", imuFirstAngle);
+            Logging.log("imu angle before rotation: %.2f", imuYawAngle);
         }
     }
 
@@ -433,14 +437,14 @@ public class ChassisWith4Motors {
 
         rotation = getAngle();
         if (debugFlag) {
-            Logging.log("IMU angle before turn stop %.2f.", lastAngles.firstAngle);
+            Logging.log("IMU angle before turn stop %.2f.", lastAngles.getYaw(AngleUnit.DEGREES));
             Logging.log("Rotated angle is %.2f.", rotation);
         }
 
         // reset angle tracking on new heading.
         resetAngle();
         Logging.log("Required turning degrees: %.2f.", degrees);
-        Logging.log("IMU angle after turning stop is %.2f.", lastAngles.firstAngle);
+        Logging.log("IMU angle after turning stop is %.2f.", lastAngles.getYaw(AngleUnit.DEGREES));
     }
 
     /**
@@ -541,7 +545,7 @@ public class ChassisWith4Motors {
 
             if (debugFlag) {
                 Logging.log("power = %.2f, correction = %.2f, global angle = %.3f, last angle = %.2f",
-                        drivePower, correction, getAngle(), lastAngles.firstAngle);
+                        drivePower, correction, getAngle(), lastAngles.getYaw(AngleUnit.DEGREES));
             }
 
             if (isBF) { // left motors have same power

@@ -58,6 +58,8 @@ import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.ElapsedTime;
+
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.VoltageUnit;
 
@@ -273,7 +275,8 @@ public class TeleopDualDrivers extends LinearOpMode {
                 Logging.log("Auxiliary voltage = %.2f, min = %.2f", auVolt, minAuVolt);
 
                 // imu log
-                telemetry.addData("imu heading ", "%.2f", chassis.lastAngles.firstAngle);
+                chassis.getAngle(); // update last angles and global angle before logging
+                telemetry.addData("imu heading yaw ", "%.2f", chassis.lastAngles.getYaw(AngleUnit.DEGREES));
                 telemetry.addData("global heading ", "%.2f", chassis.globalAngle);
                 telemetry.addData("Correction  ", "%.2f", chassis.correction);
 
