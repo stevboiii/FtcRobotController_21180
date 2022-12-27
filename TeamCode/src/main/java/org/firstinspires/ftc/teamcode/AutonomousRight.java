@@ -227,7 +227,7 @@ public class AutonomousRight extends LinearOpMode {
         // lift slider during rotating robot 45 degrees left
         slider.setPosition(FieldParams.HIGH_JUNCTION_POS);
         chassis.rotateIMUTargetAngle(45.0 * autonomousStartLocation);
-        Logging.log("fcDistance sensor value before moving V to junction: %.2f ", chassis.getFcDSValue());
+        Logging.log("fcDistance sensor value before moving V to junction: %.2f ", chassis.getFcDsValue());
         slider.waitRunningComplete();
 
         //drive forward and let V to touch junction
@@ -254,7 +254,7 @@ public class AutonomousRight extends LinearOpMode {
             chassis.runToPosition(matCenterToConeStack - xyShift[1], true);
             Logging.log("Autonomous - Robot has arrived loading area.");
 
-            Logging.log("fcDistance sensor value before loading: %.2f ", chassis.getFcDSValue());
+            Logging.log("fcDistance sensor value before loading: %.2f ", chassis.getFcDsValue());
             // load cone
             autoLoadCone(FieldParams.coneStack5th - FieldParams.coneLoadStackGap * autoLoop);
 
@@ -353,7 +353,7 @@ public class AutonomousRight extends LinearOpMode {
         slider.setPosition(sliderInchPos);
         //chassis.runToPosition(-moveDistanceAfterDrop, true); // move out from junction
         chassis.runWithEncoderAndDistanceSensor(14, -moveDistanceAfterDrop, 2, 0.2);
-        Logging.log("fcDistance sensor value after unloading: %.2f ", chassis.getFcDSValue());
+        Logging.log("fcDistance sensor value after unloading: %.2f ", chassis.getFcDsValue());
         slider.setPosition(FieldParams.WALL_POSITION);
         Logging.log("Auto unload - Cone has been unloaded.");
     }

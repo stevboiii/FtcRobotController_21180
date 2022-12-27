@@ -129,13 +129,15 @@ public class AutonomousV2Right extends AutonomousRight {
             chassis.runToPosition(-FieldParams.HIGH_JUNCTION_TO_CONE_STACK, true);
             Logging.log("Autonomous - Robot has arrived loading area.");
 
-            Logging.log("fcDistance sensor value before loading: %.2f ", chassis.getFcDSValue());
+            Logging.log("fcDistance sensor value before loading: %.2f ", chassis.getFcDsValue());
             // load cone
             autoLoadCone(FieldParams.coneStack5th - FieldParams.coneLoadStackGap * autoLoop);
 
             // lift slider during driving back to mat center.
             slider.setPosition(FieldParams.HIGH_JUNCTION_POS);
+
             chassis.runToJunction(FieldParams.HIGH_JUNCTION_TO_CONE_STACK - 6.0, 6.0, 20);
+
             Logging.log("Autonomous - Robot arrived the high junction.");
 
             slider.waitRunningComplete();
