@@ -381,7 +381,7 @@ public class ChassisWith4Motors {
         // turning the robot back toward the setpoint value.
 
         double tolerance = 1.0;
-        double power = AUTO_ROTATE_POWER;
+        double rotatePower = AUTO_ROTATE_POWER;
         pidRotate.reset();
         pidRotate.setInputRange(0, degrees * 1.2);
         pidRotate.setSetpoint(degrees); // be sure input range has been set before
@@ -401,7 +401,7 @@ public class ChassisWith4Motors {
         do {
             int[] motorsPos = {0, 0, 0, 0};
             double[] motorsPowerCorrection = {0.0, 0.0, 0.0, 0.0};
-            double[] motorPowers = {power, power, power, power};
+            double[] motorPowers = {rotatePower, rotatePower, rotatePower, rotatePower};
             motorsPos[0] = FrontLeftDrive.getCurrentPosition();
             motorsPos[1] = FrontRightDrive.getCurrentPosition();
             motorsPos[2] = BackLeftDrive.getCurrentPosition();
@@ -409,12 +409,12 @@ public class ChassisWith4Motors {
 
             calculateRotatePowerCorrection(motorsPos, motorsPowerCorrection);
 
-            power = pidRotate.performPID(getAngle()); // power will be + on left turn.
+            rotatePower = pidRotate.performPID(getAngle()); // power will be + on left turn.
 
             for (int i = 0; i < 4; i++) {
-                motorPowers[i] = Range.clip(Math.abs(power) + motorsPowerCorrection[i],
-                        0.0, Math.abs(power) * 1.1);
-                motorPowers[i] = Math.copySign(Math.min(motorPowers[i], 1.0), power);
+                motorPowers[i] = Range.clip(Math.abs(rotatePower) + motorsPowerCorrection[i],
+                        0.0, Math.abs(rotatePower) * 1.1);
+                motorPowers[i] = Math.copySign(Math.min(motorPowers[i], 1.0), rotatePower);
             }
             if (debugFlag) {
                 Logging.log("Positions: FL = %d, FR = %d, BL = %d, BR = %d",
