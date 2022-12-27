@@ -68,7 +68,6 @@ public class TeleopTest extends LinearOpMode {
     // voltage management
     LynxModule ctrlHub;
     LynxModule exHub;
-    private final double powerRampRate = 0.3/100; // 0.2 per 100 ms
 
 
     @Override
@@ -115,6 +114,7 @@ public class TeleopTest extends LinearOpMode {
             double maxDrivePower;
             double chassisCurrentPower = chassis.getAveragePower();
             double deltaTime = runtime.milliseconds() - timeStamp;
+            double powerRampRate = 0.3 / 100; // 0.3 per 100 ms
             double maxP = chassisCurrentPower + powerRampRate * deltaTime;
             timeStamp = runtime.milliseconds();
 

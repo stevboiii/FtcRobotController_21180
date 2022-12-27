@@ -29,7 +29,6 @@
 
 package org.firstinspires.ftc.teamcode;
 
-import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -40,10 +39,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
-import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
 
 
@@ -193,7 +189,7 @@ public class ChassisWith4Motors {
     /**
      * Run distance with color sensor, distance sensor, and motor encoders
      * Run forward until see blue or red line
-     * Turn robot
+     * Turn robot to 90 degree
      * run forward until distance sensor reach cone.
      */
     public void runWithMultiSensors() {
@@ -369,7 +365,7 @@ public class ChassisWith4Motors {
     private void rotate(double degrees) {
         resetAngle();
         runWithoutEncoders(); // make sure it is the mode of Run without encoder
-        double power = AUTO_ROTATE_POWER;
+
         // if degrees > 359 we cap at 359 with same sign as original degrees.
         if (Math.abs(degrees) > 359.99) {
             degrees = Math.floorMod(360, (int) degrees);
@@ -384,14 +380,16 @@ public class ChassisWith4Motors {
         // on target tolerance. If the controller overshoots, it will reverse the sign of the output
         // turning the robot back toward the setpoint value.
 
+        double tolerance = 1.0;
+        double power = AUTO_ROTATE_POWER;
         pidRotate.reset();
-        pidRotate.setInputRange(0, degrees);
+        pidRotate.setInputRange(0, degrees * 1.2);
         pidRotate.setSetpoint(degrees); // be sure input range has been set before
-        pidRotate.setOutputRange(MIN_ROTATE_POWER, power);
-        pidRotate.setTolerance(1.5);
+        pidRotate.setOutputRange(MIN_ROTATE_POWER, AUTO_ROTATE_POWER);
+        pidRotate.setTolerance(tolerance);
         pidRotate.enable();
 
-        if (Math.abs(degrees) < 1.0) {
+        if (Math.abs(degrees) < tolerance) {
             return;
         }
 
@@ -509,7 +507,6 @@ public class ChassisWith4Motors {
         }
         correction = 0.0;
         setPowers(RAMP_START_POWER); // p is always positive for RUN_TO_POSITION mode.
-        sleep(100); // let motors to start moving before checking isBusy.
 
         // in seconds
         while (robotIsBusy() || (getEncoderDistance(isBF) / tDistanceAbs < 0.5) &&
@@ -656,20 +653,6 @@ public class ChassisWith4Motors {
         Logging.log("getRcDsValue = %.2f", getRcDsValue());
         setPowers(0.0);
         runWithoutEncoders();
-    }
-
-    /**
-     * Sleeps for the given amount of milliseconds, or until the thread is interrupted.
-     * This is simple shorthand for the operating-system-provided sleep() method.
-     *
-     * @param milliseconds amount of time to sleep, in milliseconds
-     */
-    private void sleep(long milliseconds) {
-        try {
-            Thread.sleep(milliseconds);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
     }
 
     /**
