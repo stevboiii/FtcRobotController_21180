@@ -68,7 +68,8 @@ public class AutonomousTest extends AutonomousRight {
     @Override
     public void autonomousCore() {
 
-        chassis.runToConestack(1, 36);
+        chassis.logColorSensor();
+        chassis.runToConeStack(8, 3);
 
     }
 }

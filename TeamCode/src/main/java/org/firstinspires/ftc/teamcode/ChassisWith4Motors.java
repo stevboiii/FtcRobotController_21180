@@ -105,9 +105,9 @@ public class ChassisWith4Motors {
     final int INERTIA_WAIT_TIME = 500; // in ms
 
     //sensors
+    final double DISTANCE_SENSOR_ALIGN = 5.5;
     private DistanceSensor frontCenterDS = null;
     private DistanceSensor rightCenterDS = null;
-
     private DistanceSensor frontRightDS = null;
     private DistanceSensor frontLeftDS = null;
 
@@ -206,7 +206,7 @@ public class ChassisWith4Motors {
         float red = (float)colorSensor.red();
         float r1 = red;
         float b1 = blue;
-        while ((red/r1 < 1.4) && (blue/b1 < 1.4) && (Math.abs(getEncoderDistance()) < 20))
+        while ((red/r1 < 1.4) && (blue/b1 < 1.4) && (getEncoderDistance() < 20))
         {
             drivingWithPID(-SHORT_DISTANCE_POWER, 0 ,0, false); // turn off PID to speed up while loop.
             r1 = red;
@@ -219,7 +219,7 @@ public class ChassisWith4Motors {
         rotateIMUTargetAngle(90);
         runUsingEncoders();
         double dist = getFcDsValue();
-        while ((dist > 4.5) && (Math.abs(getEncoderDistance()) < 20))
+        while ((dist > 4.5) && (getEncoderDistance() < 20))
         {
             drivingWithPID(-SHORT_DISTANCE_POWER, 0 ,0, true);
             //Logging.log("Red = %d, Green = %d, Blue = %d", colorSensor.red(), colorSensor.green(), colorSensor.blue());
@@ -523,7 +523,7 @@ public class ChassisWith4Motors {
             }
 
             if (speedRampOn) {
-                double currDistance = Math.abs(getEncoderDistance(isBF));
+                double currDistance = getEncoderDistance(isBF);
                 drivePower = MAX_POWER;
                 double rampUpPower = MAX_POWER;
                 double rampDownPower = MAX_POWER;
@@ -630,68 +630,60 @@ public class ChassisWith4Motors {
                     BackLeftDrive.getCurrentPosition(), BackRightDrive.getCurrentPosition());
         }
     }
-    //used in autonomous to go to a certain junction, the distance the robot will have to run is larger than EncoderRange
-    public void runToJunction(double EncoderRange, double DSrange, double Sensor) {
+
+    /**
+     * Driving robot to the cone stack during autonomous period
+     * @param checkCsDistance The distance value to check color sensor from robot to cone stack.
+     * @param reachConeDistance the front center distance sensor value when robot reaching cone stack.
+     */
+    public void runToConeStack(double checkCsDistance, double reachConeDistance) {
+        float blue0 = (float)colorSensor.blue();
+        float red0 = (float)colorSensor.red();
+        double FcDs = getFcDsValue();
+        double FlDs = getFlDsValue();
+        double FrDs = getFrDsValue();
+
         runUsingEncoders();
-        double driveDirection = Math.copySign(1, EncoderRange);
+        Logging.log("getEncoderDistance = %.2f", getEncoderDistance());
+        while ((FcDs > checkCsDistance) && (FlDs > checkCsDistance) && (FrDs > checkCsDistance)) {
+            drivingWithPID(-SHORT_DISTANCE_POWER, 0.0, 0.0, true);
+            Logging.log("robot has not approached cone, FcDs = %2f, FlDs = %2f, FrDs = %2f", FcDs, FlDs, FrDs);
+            FcDs = getFcDsValue();
+            FlDs = getFlDsValue();
+            FrDs = getFrDsValue();
+        }
+        Logging.log("getFrDsValue = %.2f, getFlDsValue = %.2f, getFcDsValue = %.2f",
+                FrDs, FlDs, FcDs);
 
-        EncoderRange = Math.abs(EncoderRange);
-        double currEnDist = 0.0;
-
-        // controlled by encoders
-        while(EncoderRange - currEnDist > 0) {
-            drivingWithPID(-SHORT_DISTANCE_POWER * driveDirection, 0.0, 0.0, true);
-            currEnDist = Math.abs(getEncoderDistance());
+        if ((FcDs > FrDs) || (FcDs > FlDs)) {
+            // stop robot and strafe the robot
+            setPowers(0.0);
+            double sign = Math.copySign(1, (FrDs - FlDs));
+            Logging.log("cone is to the %s of robot.", (sign > 0) ? "left" : "right");
+            while ((colorSensor.blue() / blue0 < 1.4) || (colorSensor.red() / red0 < 1.4)) {
+                drivingWithPID(0.0, 0.0, RAMP_END_POWER * sign, true);
+                logColorSensor();
+            }
+            setPowers(0.0);
+            Logging.log("robot is on coloured tape after strafe.");
         }
 
-        // controlled by distance sensor
-        Logging.log(" curEnrDis = %.2f, Curr Sensor dist = %.2f",
-                Math.abs(getEncoderDistance()), getRcDsValue());
-        while (getRcDsValue() > Sensor && getEncoderDistance() < EncoderRange + DSrange ) {
-            drivingWithPID(-SHORT_DISTANCE_POWER / 2 * driveDirection, 0.0, 0.0, true);
-            Logging.log("getRcDsValue = %.2f", getRcDsValue());
+        // driving forward to reaching cone
+        while (FcDs > reachConeDistance) {
+            drivingWithPID(-RAMP_END_POWER, 0.0, 0.0, true);
+            Logging.log("FcDs = %.2f", FcDs);
+            FcDs = getFcDsValue();
         }
-        Logging.log("getRcDsValue = %.2f", getRcDsValue());
         setPowers(0.0);
+        Logging.log("robot is ready for cone pick up.");
         runWithoutEncoders();
     }
-    public void runToConestack(double DistanceSensor, double DriveRange) {
-        runUsingEncoders();
-        double driveDirection = Math.copySign(1, DriveRange);
 
-        float blue = (float)colorSensor.blue();
-        float red = (float)colorSensor.red();
-
-        DriveRange = Math.abs(DriveRange);
-        double currEnDist = 0.0;
-
-        // controlled by encoders
-        while(blue < 200 && red < 200) {
-            drivingWithPID(-SHORT_DISTANCE_POWER * driveDirection, 0.0, 0.0, true);
-        }
-
-        while (getFcDsValue() > DistanceSensor && (getFrDsValue() + getFlDsValue()) / 2 > DistanceSensor) {
-            drivingWithPID(-SHORT_DISTANCE_POWER / 2 * driveDirection, 0.0, 0.0, true);
-            Logging.log("getFcDsValue = %.2f", getFcDsValue());
-        }
-        Logging.log("getFrDsValue = %2f, getFlDsValue = %2f, getFcDsValue = %2f", getFrDsValue(), getFlDsValue(), getFcDsValue());
-        setPowers(0.0);
-        if (getFcDsValue() < (getFrDsValue() + getFlDsValue()) / 2) {
-            return;
-        }
-        else {
-            if (getFlDsValue() < getFrDsValue()) {
-                runToPosition(-0.7, false);
-            }
-            else if (getFrDsValue() < getFlDsValue()) {
-                runToPosition(0.7, false);
-            }
-            else {
-                return;
-            }
-        }
-        setPowers(0.0);
-        runWithoutEncoders();
+    /**
+     * logging blue and red values in log file.
+     */
+    public void logColorSensor() {
+        Logging.log("color sensor blue = %d, red = %d", colorSensor.blue(), colorSensor.red());
     }
 
     /**
@@ -712,7 +704,7 @@ public class ChassisWith4Motors {
         // controlled by encoders
         while(encoderRange - currEnDist > 0) {
             drivingWithPID(-LONG_DISTANCE_POWER * driveDirection, 0.0, 0.0, true);
-            currEnDist = Math.abs(getEncoderDistance());
+            currEnDist = getEncoderDistance();
         }
 
         // controlled by distance sensor
@@ -792,14 +784,21 @@ public class ChassisWith4Motors {
     public double getFcDsValue() {
         return frontCenterDS.getDistance(DistanceUnit.INCH);
     }
+
+    /**
+     * Get the front Left distance sensor value.
+     * @return the value of front left distance, in inch
+     */
     public double getFlDsValue() {
-        return frontLeftDS.getDistance(DistanceUnit.INCH);
+        return frontLeftDS.getDistance(DistanceUnit.INCH) + DISTANCE_SENSOR_ALIGN;
     }
+
+    /**
+     * Get the front right distance sensor value.
+     * @return the value of front right distance, in inch
+     */
     public double getFrDsValue() {
-        return frontRightDS.getDistance(DistanceUnit.INCH);
-    }
-    public double getRcDsValue() {
-        return rightCenterDS.getDistance(DistanceUnit.INCH);
+        return frontRightDS.getDistance(DistanceUnit.INCH) + DISTANCE_SENSOR_ALIGN;
     }
 
     /**
@@ -829,23 +828,23 @@ public class ChassisWith4Motors {
         // controlled by encoders
         while(targetEncoder - currEnDist > range) {
             drivingWithPID(-SHORT_DISTANCE_POWER * driveDirection, 0.0, 0.0, true);
-            currEnDist = Math.abs(getEncoderDistance());
+            currEnDist = getEncoderDistance();
             if (debugFlag) {
                 Logging.log("drive Direction = %.2f", driveDirection);
                 Logging.log("Target DS = %.2f, target Encoder = %.2f, currEnDis = %.2f, range = %.2f",
                         targetDS, targetEncoder, currEnDist, range);
                 Logging.log(" curEnrDis = %.2f, Curr Sensor dist = %.2f",
-                        Math.abs(getEncoderDistance()), getFcDsValue());
+                        getEncoderDistance(), getFcDsValue());
             }
         }
 
         // controlled by distance sensor
         double currDS = getFcDsValue();
         Logging.log(" curEnrDis = %.2f, Curr Sensor dist = %.2f",
-                Math.abs(getEncoderDistance()), getFcDsValue());
+                getEncoderDistance(), getFcDsValue());
         while (((currDS - targetDS) * driveDirection > tolerance) && (currEnDist - targetEncoder < range)) {
             drivingWithPID(-SHORT_DISTANCE_POWER * driveDirection, 0.0, 0.0, true);
-            currEnDist = Math.abs(getEncoderDistance());
+            currEnDist = getEncoderDistance();
             currDS = getFcDsValue();
             if (debugFlag) {
                 Logging.log("Target DS = %.2f, curEnrDis = %.2f, Curr Sensor dist = %.2f, tolerance = %.2f",
@@ -861,10 +860,10 @@ public class ChassisWith4Motors {
      * @return the average motors encoder position
      */
     private double getEncoderDistance() {
-        return (FrontLeftDrive.getCurrentPosition() +
-                FrontRightDrive.getCurrentPosition() +
-                BackRightDrive.getCurrentPosition() +
-                BackLeftDrive.getCurrentPosition()) / 4.0 / COUNTS_PER_INCH_DRIVE;
+        return (Math.abs(FrontLeftDrive.getCurrentPosition()) +
+                Math.abs(FrontRightDrive.getCurrentPosition()) +
+                Math.abs(BackRightDrive.getCurrentPosition()) +
+                Math.abs(BackLeftDrive.getCurrentPosition())) / 4.0 / COUNTS_PER_INCH_DRIVE;
     }
 
     /**

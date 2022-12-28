@@ -165,6 +165,8 @@ public class TeleopTest extends LinearOpMode {
                 minExVolt = Math.min(exHubVolt, minExVolt);
 
                 telemetry.addData("Front Center distance sensor", "%.2f", chassis.getFcDsValue());
+                telemetry.addData("Front Left distance sensor", "%.2f", chassis.getFlDsValue());
+                telemetry.addData("Front Right distance sensor", "%.2f", chassis.getFrDsValue());
 
                 telemetry.addData("Max Ctrl hub current = ", "%.2f", maxCtrlCurrent);
                 telemetry.addData("Min Ctrl hub Volt = ", "%.2f", minCtrlVolt);
