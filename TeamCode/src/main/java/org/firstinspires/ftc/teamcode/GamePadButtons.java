@@ -24,6 +24,10 @@ public class GamePadButtons {
     public boolean armLeft;
     public boolean armRight;
     public boolean armForward;
+    public boolean armFrontLoad;
+    public boolean armFrontUnload;
+    public boolean armBackLoad;
+    public boolean armBackUnload;
     public boolean autoLoadGroundCone;
     public boolean autoLoad34thConeStack;
     public boolean autoLoad5thConeStack;
@@ -50,9 +54,18 @@ public class GamePadButtons {
         // gamepad1 or gamepad2
         clawClose               = (gamepad2.left_stick_y < 0);
         clawOpen                = (gamepad2.left_stick_y > 0) || gamepad1.a;
-        armLeft                 = (gamepad2.dpad_left);
-        armRight                = (gamepad2.dpad_right);
-        armForward              = (gamepad2.dpad_up || gamepad2.dpad_down);
+        if (ArmClawUnit.ArmMode.SWING == ArmClawUnit.armMode) {
+            armLeft = gamepad2.dpad_left;
+            armRight = gamepad2.dpad_right;
+            armForward = (gamepad2.dpad_up || gamepad2.dpad_down);
+        }
+
+        if (ArmClawUnit.ArmMode.FLIP == ArmClawUnit.armMode) {
+            armFrontLoad = gamepad2.dpad_up;
+            armFrontUnload = gamepad2.dpad_right;
+            armBackUnload= gamepad2.dpad_left;
+            armBackLoad= gamepad2.dpad_down;
+        }
     }
 
 }

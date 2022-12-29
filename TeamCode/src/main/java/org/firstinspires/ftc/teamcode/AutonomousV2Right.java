@@ -18,6 +18,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+
 /* Copyright (c) 2017 FIRST. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
@@ -47,24 +48,11 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
- /*
-  * PID controller and IMU codes are copied from
-  * https://stemrobotics.cs.pdx.edu/node/7268%3Froot=4196.html
-  */
 
 package org.firstinspires.ftc.teamcode;
 
-import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
-import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.util.ElapsedTime;
 
-import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
-import org.openftc.easyopencv.OpenCvCamera;
-import org.openftc.easyopencv.OpenCvCameraFactory;
-import org.openftc.easyopencv.OpenCvCameraRotation;
-
-import java.util.List;
 
 /**
  * This file contains an minimal example of a Linear "OpMode". An OpMode is a 'program' that runs in either
@@ -79,19 +67,10 @@ import java.util.List;
  * Remove or comment out the @Disabled line to add this opmode to the Driver Station OpMode list
  */
 
-@Autonomous(name="Autonomous V2 Right", group="Concept")
+@Autonomous(name="Swing arm - Right", group="Concept")
 //@Disabled
 public class AutonomousV2Right extends AutonomousRight {
 
-
-    /** code for autonomous
-     * 1. take a picture, recognize the color on sleeve signal
-     * 2. Move robot the high junction
-     * 3. Unload cone on high junction
-     * 4. Move robot to cone loading area
-     * 5. Load cone
-     * 6. Move robot to parking area
-     */
     @Override
     public void autonomousCore() {
 
@@ -107,10 +86,10 @@ public class AutonomousV2Right extends AutonomousRight {
 
         // turn arm to side to get ready for dropping cone
         if (autonomousStartLocation > 0) {
-            armClaw.armTurnLeft();
+            armClaw.armSwingTurnLeft();
         }
         else {
-            armClaw.armTurnRight();
+            armClaw.armSwingTurnRight();
         }
 
         // driving back to high junction
@@ -144,10 +123,10 @@ public class AutonomousV2Right extends AutonomousRight {
 
             // turn arm to side to get ready for dropping cone
             if (autonomousStartLocation > 0) {
-                armClaw.armTurnLeft();
+                armClaw.armSwingTurnLeft();
             }
             else {
-                armClaw.armTurnRight();
+                armClaw.armSwingTurnRight();
             }
             sleep(100); // wait arm action complete
 
@@ -208,7 +187,7 @@ public class AutonomousV2Right extends AutonomousRight {
         // doing angle correction during sleeping, make sure it is 0 degree for next driving
         chassis.rotateIMUTargetAngle(0.0);
         sleep(100); // make sure cone has been unloaded
-        armClaw.armTurnForward();
+        armClaw.armSwingTurnForward();
         slider.setInchPosition(FieldParams.WALL_POSITION);
         Logging.log("Auto unload - Cone has been unloaded.");
     }

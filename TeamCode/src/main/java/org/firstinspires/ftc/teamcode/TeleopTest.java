@@ -126,7 +126,6 @@ public class TeleopTest extends LinearOpMode {
 
             chassis.drivingWithPID(drive, turn, strafe, true);
 
-
             // Set position only when button is hit.
             if (gpButtons.clawClose) {
                 armClaw.clawClose();
@@ -135,17 +134,17 @@ public class TeleopTest extends LinearOpMode {
 
             // Set position only when button is hit.
             if (gpButtons.armLeft) {
-                armClaw.setArmPosition(armClaw.ARM_LEFT);
+                armClaw.setArmPosition(armClaw.ARM_SWING_LEFT);
             }
 
             // Set position only when button is hit.
             if (gpButtons.armRight) {
-                armClaw.setArmPosition(armClaw.ARM_RIGHT);
+                armClaw.setArmPosition(armClaw.ARM_SWING_RIGHT);
             }
 
             // Set position only when button is hit.
             if (gpButtons.armForward) {
-                armClaw.setArmPosition(armClaw.ARM_FORWARD);
+                armClaw.setArmPosition(armClaw.ARM_SWING_FORWARD);
             }
 
             if (debugFlag) {

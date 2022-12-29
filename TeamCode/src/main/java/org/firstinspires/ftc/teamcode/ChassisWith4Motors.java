@@ -200,7 +200,6 @@ public class ChassisWith4Motors {
      * run forward until distance sensor reach cone.
      */
     public void runWithMultiSensors() {
-
         runUsingEncoders();
         float blue = (float)colorSensor.blue();
         float red = (float)colorSensor.red();

@@ -205,17 +205,33 @@ public class TeleopDualDrivers extends LinearOpMode {
 
             // turn arm left
             if (gpButtons.armLeft) {
-                armClaw.armTurnLeft();
+                armClaw.armSwingTurnLeft();
             }
 
             // turn arm right
             if (gpButtons.armRight) {
-                armClaw.armTurnRight();
+                armClaw.armSwingTurnRight();
             }
 
             // turn arm forward
             if (gpButtons.armForward) {
-                armClaw.armTurnForward();
+                armClaw.armSwingTurnForward();
+            }
+
+            if (gpButtons.armFrontLoad) {
+                armClaw.armFlipFrontLoad();
+            }
+
+            if (gpButtons.armFrontUnload) {
+                armClaw.armFlipFrontUnload();
+            }
+
+            if (gpButtons.armBackLoad) {
+                armClaw.armFlipBackLoad();
+            }
+
+            if (gpButtons.armBackUnload) {
+                armClaw.armFlipBackUnload();
             }
 
             //  auto driving, grip cone, and lift slider

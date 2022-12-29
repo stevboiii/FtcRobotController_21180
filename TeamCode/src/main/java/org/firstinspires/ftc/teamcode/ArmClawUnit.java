@@ -49,6 +49,15 @@ public class ArmClawUnit
     //private
     HardwareMap hardwareMap =  null;
 
+    // for arm mode
+    public enum ArmMode {
+        FLIP,
+        SWING,
+        NONE
+    }
+
+    public static ArmMode armMode = ArmMode.FLIP;
+
     // claw servo motor variables
     private Servo clawServo = null;
     final double CLAW_OPEN_POS = 0.31;
@@ -58,9 +67,14 @@ public class ArmClawUnit
 
     // arm servo variables, not used in current prototype version.
     private Servo armServo = null;
-    final double ARM_FORWARD = 0.395;
-    final double ARM_LEFT = 0.73;
-    final double ARM_RIGHT = 0.06;
+    final double ARM_SWING_FORWARD = 0.395;
+    final double ARM_SWING_LEFT = 0.73;
+    final double ARM_SWING_RIGHT = 0.06;
+
+    final double ARM_FLIP_FRONT_LOAD_POS = 0.6;
+    final double ARM_FLIP_FRONT_UNLOAD_POS = 0.4;
+    final double ARM_FLIP_BACK_UNLOAD_POS = 0.2;
+    final double ARM_FLIP_BACK_LOAD_POS = 0.0;
 
     /**
      * Init slider motors hardware, and set their behaviors.
@@ -78,8 +92,16 @@ public class ArmClawUnit
 
         setClawPosition(CLAW_OPEN_POS);
 
-        setArmPosition(ARM_FORWARD);
-
+        switch (armMode) {
+            case FLIP:
+                setArmPosition(ARM_FLIP_FRONT_LOAD_POS);
+                break;
+            case SWING:
+                setArmPosition(ARM_SWING_FORWARD);
+                break;
+            default:
+                break;
+        }
     }
 
     /**
@@ -132,22 +154,38 @@ public class ArmClawUnit
     /**
      * turn the ARM servo motor position to left
      */
-    public void armTurnLeft() {
-        setArmPosition(ARM_LEFT);
+    public void armSwingTurnLeft() {
+        setArmPosition(ARM_SWING_LEFT);
     }
 
     /**
      * turn the ARM servo motor position to right
      */
-    public void armTurnRight() {
-        setArmPosition(ARM_RIGHT);
+    public void armSwingTurnRight() {
+        setArmPosition(ARM_SWING_RIGHT);
     }
 
     /**
      * turn the ARM servo motor position to forward
      */
-    public void armTurnForward() {
-        setArmPosition(ARM_FORWARD);
+    public void armSwingTurnForward() {
+        setArmPosition(ARM_SWING_FORWARD);
+    }
+
+    public void armFlipFrontLoad() {
+        setArmPosition(ARM_FLIP_FRONT_LOAD_POS);
+    }
+
+    public void armFlipFrontUnload() {
+        setArmPosition(ARM_FLIP_FRONT_LOAD_POS);
+    }
+
+    public void armFlipBackLoad() {
+        setArmPosition(ARM_FLIP_FRONT_LOAD_POS);
+    }
+
+    public void armFlipBackUnload() {
+        setArmPosition(ARM_FLIP_FRONT_LOAD_POS);
     }
 }
 
