@@ -60,8 +60,8 @@ public class ArmClawUnit
 
     // claw servo motor variables
     private Servo clawServo = null;
-    final double CLAW_OPEN_POS = 0.31;
-    final double CLAW_CLOSE_POS = 0.08;
+    final double CLAW_OPEN_POS = 0.7;
+    final double CLAW_CLOSE_POS = 0.55;
     final double CLAW_MAX_POS = 1; // Maximum rotational position
     final double CLAW_MIN_POS = 0;  // Minimum rotational position
 
@@ -71,10 +71,10 @@ public class ArmClawUnit
     final double ARM_SWING_LEFT = 0.73;
     final double ARM_SWING_RIGHT = 0.06;
 
-    final double ARM_FLIP_FRONT_LOAD_POS = 0.6;
-    final double ARM_FLIP_FRONT_UNLOAD_POS = 0.4;
-    final double ARM_FLIP_BACK_UNLOAD_POS = 0.2;
-    final double ARM_FLIP_BACK_LOAD_POS = 0.0;
+    final double ARM_FLIP_FRONT_LOAD_POS = 0.16;
+    final double ARM_FLIP_FRONT_UNLOAD_POS = 0.3;
+    final double ARM_FLIP_BACK_UNLOAD_POS = 0.7;
+    final double ARM_FLIP_BACK_LOAD_POS = 0.84;
 
     /**
      * Init slider motors hardware, and set their behaviors.
@@ -177,15 +177,15 @@ public class ArmClawUnit
     }
 
     public void armFlipFrontUnload() {
-        setArmPosition(ARM_FLIP_FRONT_LOAD_POS);
+        setArmPosition(ARM_FLIP_FRONT_UNLOAD_POS);
     }
 
     public void armFlipBackLoad() {
-        setArmPosition(ARM_FLIP_FRONT_LOAD_POS);
+        setArmPosition(ARM_FLIP_BACK_LOAD_POS);
     }
 
     public void armFlipBackUnload() {
-        setArmPosition(ARM_FLIP_FRONT_LOAD_POS);
+        setArmPosition(ARM_FLIP_BACK_UNLOAD_POS);
     }
 }
 

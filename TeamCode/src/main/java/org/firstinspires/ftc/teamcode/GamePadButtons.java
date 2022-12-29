@@ -52,8 +52,8 @@ public class GamePadButtons {
         sliderGroundJunction    = gamepad2.right_bumper;
 
         // gamepad1 or gamepad2
-        clawClose               = (gamepad2.left_stick_y < 0);
-        clawOpen                = (gamepad2.left_stick_y > 0) || gamepad1.a;
+        clawClose               = (gamepad2.left_stick_y > 0);
+        clawOpen                = (gamepad2.left_stick_y < 0) || gamepad1.a;
         if (ArmClawUnit.ArmMode.SWING == ArmClawUnit.armMode) {
             armLeft = gamepad2.dpad_left;
             armRight = gamepad2.dpad_right;

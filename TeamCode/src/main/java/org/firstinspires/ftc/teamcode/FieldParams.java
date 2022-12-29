@@ -38,9 +38,9 @@ package org.firstinspires.ftc.teamcode;
 public class FieldParams
 {
     // slider position variables
-    static final double coneStack5th = 5.0; // the 5th cone position in the cone stack. The lowest cone is the 1th one.
     static final double GROUND_CONE_POSITION = 0.0;
-    static final double coneLoadStackGap = 1.25;
+    static final double coneLoadStackGap = 1.3;
+    static final double coneStack5th = coneLoadStackGap * 4;
     static final double GROUND_JUNCTION_POS = GROUND_CONE_POSITION + 1.0;
     static final double LOW_JUNCTION_POS = 14.7;
     static final double MEDIUM_JUNCTION_POS = 24.5;

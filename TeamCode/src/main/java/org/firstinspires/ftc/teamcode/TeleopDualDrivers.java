@@ -268,6 +268,7 @@ public class TeleopDualDrivers extends LinearOpMode {
                 minCtrlVolt = Math.min(ctrlHubVolt, minCtrlVolt);
                 minExVolt = Math.min(exHubVolt, minExVolt);
 
+                telemetry.addData("ARM", "position = %.2f", armClaw.getArmPosition());
                 telemetry.addData("Front Center distance sensor", "%.2f", chassis.getFcDsValue());
 
                 telemetry.addData("Max Ctrl hub current = ", "%.2f", maxCtrlCurrent);
