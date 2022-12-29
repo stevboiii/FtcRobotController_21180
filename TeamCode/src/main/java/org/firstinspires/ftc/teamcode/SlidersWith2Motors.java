@@ -85,13 +85,16 @@ public class SlidersWith2Motors
 
         // Reset slider motor encoder counts kept by the motor
         resetEncoders();
+
+        //set slider motor powers always on
+        setPowers(SLIDER_MOTOR_POWER);
     }
 
     /**
      * Set slider motors position.
      * @param sliderMotorPosition the target position for slider left motor and right motor.
      */
-    public void setCountPosition(int sliderMotorPosition) {
+    private void setCountPosition(int sliderMotorPosition) {
         sliderMotorPosition = Range.clip(sliderMotorPosition, SLIDER_MIN_POS, FOUR_STAGE_SLIDER_MAX_POS);
         RightSliderMotor.setTargetPosition(sliderMotorPosition);
         LeftSliderMotor.setTargetPosition(sliderMotorPosition);
@@ -101,7 +104,7 @@ public class SlidersWith2Motors
      * Set slider motors position.
      * @param inchPosition the target high position of sliders in inch.
      */
-    public void setPosition(double inchPosition) {
+    public void setInchPosition(double inchPosition) {
         int sliderMotorPosition = (int)inchPosition * COUNTS_PER_INCH;
         setCountPosition(sliderMotorPosition);
     }
@@ -133,14 +136,14 @@ public class SlidersWith2Motors
      * Set slider motors power to zero.
      */
     public void stop() {
-        setPower(0.0);
+        setPowers(0.0);
     }
 
     /**
      * Set slider motors power.
      * @param p set motors power to p.
      */
-    public void setPower(double p) {
+    private void setPowers(double p) {
         p = Range.clip(p, -1, 1);
         RightSliderMotor.setPower(p);
         LeftSliderMotor.setPower(p);
@@ -149,14 +152,38 @@ public class SlidersWith2Motors
     /**
      * Reset slider motor encoder counts kept by the motor
      */
-    public void resetEncoders() {
+    private void resetEncoders() {
         stop();
         RightSliderMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         LeftSliderMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        setPosition(0);
+        setCountPosition(0);
+        runToPosition();
+    }
+
+    /**
+     * Set slider motor mode with using encoders
+     */
+    public void runUsingEncoders() {
+        RightSliderMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        LeftSliderMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+    }
+
+    /**
+     * Set slider motor mode with using encoders
+     */
+    private void runToPosition() {
         RightSliderMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         LeftSliderMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
     }
 
+    /**
+     * Set slider positions according to game pad input
+     * @param gamepadInput gamepad input value for manual controlling sliders up and down
+     */
+    public void manualControlPos(float gamepadInput) {
+        int sliderPosition = getPosition();
+        sliderPosition -= (gamepadInput * manualUpdatePos);
+        setInchPosition(sliderPosition);
+    }
 }
 

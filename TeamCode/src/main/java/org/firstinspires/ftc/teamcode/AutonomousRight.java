@@ -212,8 +212,8 @@ public class AutonomousRight extends LinearOpMode {
      */
     public void autonomousCore() {
 
-        slider.setPower(slider.SLIDER_MOTOR_POWER);
-        slider.setPosition(FieldParams.LOW_JUNCTION_POS);
+
+        slider.setInchPosition(FieldParams.LOW_JUNCTION_POS);
 
         //move center of robot to the edge of 3rd mat
         chassis.runToPosition(65.5, true);
@@ -225,7 +225,7 @@ public class AutonomousRight extends LinearOpMode {
         chassis.runToPosition(-14, true);
 
         // lift slider during rotating robot 45 degrees left
-        slider.setPosition(FieldParams.HIGH_JUNCTION_POS);
+        slider.setInchPosition(FieldParams.HIGH_JUNCTION_POS);
         chassis.rotateIMUTargetAngle(45.0 * autonomousStartLocation);
         Logging.log("fcDistance sensor value before moving V to junction: %.2f ", chassis.getFcDsValue());
         slider.waitRunningComplete();
@@ -259,17 +259,17 @@ public class AutonomousRight extends LinearOpMode {
             autoLoadCone(FieldParams.coneStack5th - FieldParams.coneLoadStackGap * autoLoop);
 
             // lift cone and make sure robot is in the same orientation before back to junction
-            slider.setPosition(FieldParams.WALL_POSITION);
+            slider.setInchPosition(FieldParams.WALL_POSITION);
             chassis.rotateIMUTargetAngle(-90.0 * autonomousStartLocation);
             slider.waitRunningComplete(); // make sure slider has been lifted.
 
             // lift slider during driving back to mat center.
-            slider.setPosition(FieldParams.MEDIUM_JUNCTION_POS);
+            slider.setInchPosition(FieldParams.MEDIUM_JUNCTION_POS);
             chassis.runToPosition(-moveToMatCenterAfterPick, true);
             Logging.log("Autonomous - Robot arrived the mat center near high junction.");
 
             // lift slider during left turning 135 degree facing to high junction.
-            slider.setPosition(FieldParams.HIGH_JUNCTION_POS);
+            slider.setInchPosition(FieldParams.HIGH_JUNCTION_POS);
             chassis.rotateIMUTargetAngle(45.0 * autonomousStartLocation);
             sleep(100); // wait for chassis stop from previous rotation inertia.
 
@@ -298,7 +298,7 @@ public class AutonomousRight extends LinearOpMode {
         chassis.rotateIMUTargetAngle(-90.0 * autonomousStartLocation);
 
         // lower slider in prep for tele-op
-        slider.setPosition(FieldParams.GROUND_CONE_POSITION);
+        slider.setInchPosition(FieldParams.GROUND_CONE_POSITION);
 
         // drive to final parking lot
         chassis.runToPosition(parkingLotDis * autonomousStartLocation, true);
@@ -321,7 +321,7 @@ public class AutonomousRight extends LinearOpMode {
      */
     private void autoLoadCone(double coneLocation) {
         armClaw.clawOpen();
-        slider.setPosition(coneLocation);
+        slider.setInchPosition(coneLocation);
         chassis.runToPosition(-robotAutoLoadMovingDistance, true); // back a little bit to avoid stuck.
         slider.waitRunningComplete();
         armClaw.clawClose();
@@ -345,16 +345,16 @@ public class AutonomousRight extends LinearOpMode {
         // move down slider a little bit to unload cone
         double sliderInchPos = slider.getPosition() / (double)slider.COUNTS_PER_INCH;
         sleep(800); // wait for avoiding junction shaking
-        slider.setPosition(sliderInchPos - FieldParams.SLIDER_MOVE_DOWN_POSITION);
+        slider.setInchPosition(sliderInchPos - FieldParams.SLIDER_MOVE_DOWN_POSITION);
         slider.waitRunningComplete();
 
         armClaw.clawOpen();// unload cone
         sleep(100); // make sure cone has been unloaded
-        slider.setPosition(sliderInchPos);
+        slider.setInchPosition(sliderInchPos);
         //chassis.runToPosition(-moveDistanceAfterDrop, true); // move out from junction
         chassis.runWithEncoderAndDistanceSensor(14, -moveDistanceAfterDrop, 2, 0.2);
         Logging.log("fcDistance sensor value after unloading: %.2f ", chassis.getFcDsValue());
-        slider.setPosition(FieldParams.WALL_POSITION);
+        slider.setInchPosition(FieldParams.WALL_POSITION);
         Logging.log("Auto unload - Cone has been unloaded.");
     }
 

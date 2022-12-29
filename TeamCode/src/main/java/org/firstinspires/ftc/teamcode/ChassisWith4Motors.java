@@ -218,13 +218,13 @@ public class ChassisWith4Motors {
         setPowers(0);
         rotateIMUTargetAngle(90);
         runUsingEncoders();
-        double dist = getFcDsValue();
-        while ((dist > 4.5) && (getEncoderDistance() < 20))
+        double fcDsValue = getFcDsValue();
+        while ((fcDsValue > 4.5) && (getEncoderDistance() < 20))
         {
             drivingWithPID(-SHORT_DISTANCE_POWER, 0 ,0, true);
             //Logging.log("Red = %d, Green = %d, Blue = %d", colorSensor.red(), colorSensor.green(), colorSensor.blue());
-            dist = getFcDsValue();
-            Logging.log("Distance = %.2f", dist);
+            fcDsValue = getFcDsValue();
+            Logging.log("Distance = %.2f", fcDsValue);
         }
         setPowers(0);
     }
@@ -639,26 +639,26 @@ public class ChassisWith4Motors {
     public void runToConeStack(double checkCsDistance, double reachConeDistance) {
         float blue0 = (float)colorSensor.blue();
         float red0 = (float)colorSensor.red();
-        double FcDs = getFcDsValue();
-        double FlDs = getFlDsValue();
-        double FrDs = getFrDsValue();
+        double fcDs = getFcDsValue(); //
+        double flDs = getFlDsValue();
+        double frDs = getFrDsValue();
 
         runUsingEncoders();
         Logging.log("getEncoderDistance = %.2f", getEncoderDistance());
-        while ((FcDs > checkCsDistance) && (FlDs > checkCsDistance) && (FrDs > checkCsDistance)) {
+        while ((fcDs > checkCsDistance) && (flDs > checkCsDistance) && (frDs > checkCsDistance)) {
             drivingWithPID(-SHORT_DISTANCE_POWER, 0.0, 0.0, true);
-            Logging.log("robot has not approached cone, FcDs = %2f, FlDs = %2f, FrDs = %2f", FcDs, FlDs, FrDs);
-            FcDs = getFcDsValue();
-            FlDs = getFlDsValue();
-            FrDs = getFrDsValue();
+            Logging.log("robot has not approached cone, fcDs = %2f, flDs = %2f, frDs = %2f", fcDs, flDs, frDs);
+            fcDs = getFcDsValue();
+            flDs = getFlDsValue();
+            frDs = getFrDsValue();
         }
         Logging.log("getFrDsValue = %.2f, getFlDsValue = %.2f, getFcDsValue = %.2f",
-                FrDs, FlDs, FcDs);
+                frDs, flDs, fcDs);
 
-        if ((FcDs > FrDs) || (FcDs > FlDs)) {
+        if ((fcDs > frDs) || (fcDs > flDs)) {
             // stop robot and strafe the robot
             setPowers(0.0);
-            double sign = Math.copySign(1, (FrDs - FlDs));
+            double sign = Math.copySign(1, (frDs - flDs));
             Logging.log("cone is to the %s of robot.", (sign > 0) ? "left" : "right");
             while ((colorSensor.blue() / blue0 < 1.4) || (colorSensor.red() / red0 < 1.4)) {
                 drivingWithPID(0.0, 0.0, RAMP_END_POWER * sign, true);
@@ -669,10 +669,10 @@ public class ChassisWith4Motors {
         }
 
         // driving forward to reaching cone
-        while (FcDs > reachConeDistance) {
+        while (fcDs > reachConeDistance) {
             drivingWithPID(-RAMP_END_POWER, 0.0, 0.0, true);
-            Logging.log("FcDs = %.2f", FcDs);
-            FcDs = getFcDsValue();
+            Logging.log("fcDs = %.2f", fcDs);
+            fcDs = getFcDsValue();
         }
         setPowers(0.0);
         Logging.log("robot is ready for cone pick up.");
