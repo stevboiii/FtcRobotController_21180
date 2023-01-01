@@ -71,8 +71,8 @@ public class GamePadButtons {
         }
 
         if (ArmClawUnit.ArmMode.FLIP == ArmClawUnit.armMode) {
-            armFrontLoad = gamepad2.left_stick_y > 0.1;
-            armBackUnload= gamepad2.left_stick_y < 0.1;
+            armFrontLoad = gamepad2.left_stick_y < -0.1;
+            armBackUnload= gamepad2.left_stick_y > 0.1;
         }
     }
 
