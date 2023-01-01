@@ -53,9 +53,12 @@ public class FieldParams
     static final double HALF_MAT = 12.0;
     static final double BASE_TO_JUNCTION = 2 * HALF_MAT;
     static final double CHASSIS_WIDTH = 14;
+    static final double CHASSIS_LENGTH = 16;
     static final double ARM_LENGTH = 12;
     static final double ARM_LOCATION_BIAS = 2.0; // Arm joint location to the center of chassis.
+    static final double V_DISTANCE_TO_CENTER = 5.0; // distance from V to the center of the robot
     static final double INIT_POSITION_TO_MAT_CENTER = 5 * HALF_MAT - CHASSIS_WIDTH / 2.0;
+    static final double INIT_POSITION_TO_MAT_EDGE = 4 * HALF_MAT - CHASSIS_WIDTH / 2.0;
     static final double HIGH_JUNCTION_TO_CONE_STACK = 4 * HALF_MAT - ARM_LENGTH;
 }
 

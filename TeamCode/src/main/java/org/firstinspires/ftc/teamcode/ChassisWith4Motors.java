@@ -207,7 +207,7 @@ public class ChassisWith4Motors {
         float b1 = blue;
         while ((red/r1 < 1.4) && (blue/b1 < 1.4) && (getEncoderDistance() < 20))
         {
-            drivingWithPID(-SHORT_DISTANCE_POWER, 0 ,0, false); // turn off PID to speed up while loop.
+            drivingWithPID(-SHORT_DISTANCE_POWER, 21.8 ,0, false); // turn off PID to speed up while loop.
             r1 = red;
             b1 = blue;
             blue = (float)colorSensor.blue();
@@ -215,7 +215,7 @@ public class ChassisWith4Motors {
             Logging.log("Red = %.1f, Blue = %.1f", red, blue);
         }
         setPowers(0);
-        rotateIMUTargetAngle(90);
+        rotateIMUTargetAngle(0);
         runUsingEncoders();
         double fcDsValue = getFcDsValue();
         while ((fcDsValue > 4.5) && (getEncoderDistance() < 20))
