@@ -60,7 +60,7 @@ public class SlidersWith2Motors
     public DcMotor LeftSliderMotor = null;
     final double SLIDER_MOTOR_POWER = 0.95; // save some powers
     final int COUNTS_PER_INCH = 120; // verified by testing.
-    final double manualUpdatePos = 0.5; // 0.5 inch
+    final double manualUpdatePos = COUNTS_PER_INCH / 2.0; // 0.5 inch
 
     // slider position variables
     final int FOUR_STAGE_SLIDER_MAX_POS = 4200;  // with 312 RPM motor.
@@ -183,7 +183,7 @@ public class SlidersWith2Motors
     public void manualControlPos(float gamepadInput) {
         int sliderPosition = getPosition();
         sliderPosition -= (gamepadInput * manualUpdatePos);
-        setInchPosition(sliderPosition);
+        setCountPosition(sliderPosition);
     }
 }
 
