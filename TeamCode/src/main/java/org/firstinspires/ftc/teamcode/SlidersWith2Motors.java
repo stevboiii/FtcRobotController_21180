@@ -53,7 +53,7 @@ public class SlidersWith2Motors
     //private
     HardwareMap hardwareMap =  null;
     private final ElapsedTime period  = new ElapsedTime();
-    final double MAX_WAIT_TIME = 8.0; // in seconds
+    final double SLIDER_MAX_WAIT_TIME = 8.0; // in seconds
 
     // slider motor variables
     public DcMotor RightSliderMotor = null;
@@ -127,7 +127,7 @@ public class SlidersWith2Motors
 
         while ((Math.abs(RightSliderMotor.getCurrentPosition() - RightSliderMotor.getTargetPosition()) > COUNTS_PER_INCH * 0.2) &&
                 (Math.abs(LeftSliderMotor.getCurrentPosition() - LeftSliderMotor.getTargetPosition()) > COUNTS_PER_INCH * 0.2) &&
-                ((period.seconds() - curTime) < MAX_WAIT_TIME)) {
+                ((period.seconds() - curTime) < SLIDER_MAX_WAIT_TIME)) {
             Thread.yield(); // idle
         }
     }

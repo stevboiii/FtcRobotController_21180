@@ -31,6 +31,7 @@ package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 
 
@@ -46,6 +47,9 @@ import com.qualcomm.robotcore.util.Range;
  */
 public class ArmClawUnit
 {
+    private final ElapsedTime period  = new ElapsedTime();
+    final double ARM_MAX_WAIT_TIME = 1.0; // in seconds
+
     //private
     HardwareMap hardwareMap =  null;
 
@@ -70,10 +74,11 @@ public class ArmClawUnit
     final double ARM_SWING_LEFT = 0.73;
     final double ARM_SWING_RIGHT = 0.06;
 
-    final double ARM_FLIP_FRONT_LOAD_POS = 0.16;
+    final double ARM_FLIP_FRONT_LOAD_POS = 0.18;
     final double ARM_FLIP_FRONT_UNLOAD_POS = 0.3;
     final double ARM_FLIP_BACK_UNLOAD_POS = 0.7;
-    final double ARM_FLIP_BACK_LOAD_POS = 0.84;
+    final double ARM_FLIP_BACK_LOAD_POS = 0.75;
+    final double ARM_FLIP_CENTER = 0.5;
 
     /**
      * Init slider motors hardware, and set their behaviors.
@@ -151,40 +156,81 @@ public class ArmClawUnit
     }
 
     /**
-     * turn the ARM servo motor position to left
+     * turn the Swing ARM servo motor position to left
      */
     public void armSwingTurnLeft() {
         setArmPosition(ARM_SWING_LEFT);
     }
 
     /**
-     * turn the ARM servo motor position to right
+     * turn the Swing ARM servo motor position to right
      */
     public void armSwingTurnRight() {
         setArmPosition(ARM_SWING_RIGHT);
     }
 
     /**
-     * turn the ARM servo motor position to forward
+     * turn the Swing ARM position to forward
      */
     public void armSwingTurnForward() {
         setArmPosition(ARM_SWING_FORWARD);
     }
 
+    /**
+     * turn the Flip arm to front loading position
+     */
     public void armFlipFrontLoad() {
         setArmPosition(ARM_FLIP_FRONT_LOAD_POS);
     }
 
+    /**
+     * turn the Flip arm to front unloading position
+     */
     public void armFlipFrontUnload() {
         setArmPosition(ARM_FLIP_FRONT_UNLOAD_POS);
     }
 
+    /**
+     * turn the Flip arm to back loading position
+     */
     public void armFlipBackLoad() {
         setArmPosition(ARM_FLIP_BACK_LOAD_POS);
     }
 
+    /**
+     * turn the Flip arm to center position
+     */
+    public void armFlipCenter() {
+        setArmPosition(ARM_FLIP_CENTER);
+    }
+
+    /**
+     * turn the Flip arm to back unloading position
+     */
     public void armFlipBackUnload() {
         setArmPosition(ARM_FLIP_BACK_UNLOAD_POS);
+    }
+
+    public void waitArmComplete(double armDestPos) {
+        double curTime = period.seconds();
+        double armCurrPos = armServo.getPosition();
+
+        while ((Math.abs(armCurrPos - armDestPos) > 0.01) ||
+                ((period.seconds() - curTime) < ARM_MAX_WAIT_TIME)) {
+            armCurrPos = armServo.getPosition();
+            Logging.log("Arm curr position = %.2f", armCurrPos);
+        }
+    }
+
+    public void waitClawComplete(double clawDestPos) {
+        double curTime = period.seconds();
+        double clawCurrPos = clawServo.getPosition();
+
+        while ((Math.abs(clawCurrPos - clawDestPos) > 0.01) ||
+                ((period.seconds() - curTime) < ARM_MAX_WAIT_TIME)) {
+            clawCurrPos = clawServo.getPosition();
+            Logging.log("Claw curr position = %.2f", clawCurrPos);
+        }
     }
 }
 

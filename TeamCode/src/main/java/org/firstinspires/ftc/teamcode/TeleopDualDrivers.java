@@ -261,8 +261,8 @@ public class TeleopDualDrivers extends LinearOpMode {
             }
 
             //  auto driving, grip cone, and lift slider
-            if(gpButtons.autoLoad5thConeStack) {
-                loadCone(FieldParams.GROUND_CONE_POSITION + FieldParams.coneLoadStackGap * 4); // Always on ground during teleop mode
+            if(gpButtons.autoLoad45thConeStack) {
+                loadCone(FieldParams.GROUND_CONE_POSITION + FieldParams.coneLoadStackGap * 3); // Always on ground during teleop mode
             }
 
             //  auto driving, grip cone, and lift slider
@@ -276,7 +276,7 @@ public class TeleopDualDrivers extends LinearOpMode {
             }
 
             // loading cone then moving to high junction
-            if(gpButtons.autoLoadThenJunction) {
+            if(gpButtons.autoUnloadThenBase) {
                 unloadCone(FieldParams.BASE_TO_JUNCTION);
             }
 
@@ -344,9 +344,9 @@ public class TeleopDualDrivers extends LinearOpMode {
      * 6. Slider moving down to get ready to grip another cone
      */
     private void unloadCone(double drivingDistance) {
-        armClaw.armFlipBackUnload();
+        armClaw.armFlipBackLoad();
         armClaw.clawOpen();
-        sleep(100); // to make sure claw Servo is at open position
+        armClaw.waitClawComplete(armClaw.CLAW_OPEN_POS); // to make sure claw Servo is at open position, 250 ms
         chassis.runToPosition(drivingDistance, true); // move out from junction
         armClaw.armFlipFrontLoad();
         slider.setInchPosition(FieldParams.WALL_POSITION);
@@ -362,8 +362,9 @@ public class TeleopDualDrivers extends LinearOpMode {
         slider.setInchPosition(coneLocation);
         chassis.runToPosition(-autoLoadMovingDistance, true); // moving to loading position
         slider.waitRunningComplete();
+        armClaw.waitArmComplete(armClaw.ARM_FLIP_FRONT_LOAD_POS); // waiting arm ready pick up position, 300 ms
         armClaw.clawClose();
-        sleep(100); // wait to make sure clawServo is at grep position
+        armClaw.waitClawComplete(armClaw.CLAW_CLOSE_POS); // wait to make sure clawServo is at grep position, 200 ms
         slider.setInchPosition(FieldParams.LOW_JUNCTION_POS);
         armClaw.armFlipBackUnload();
     }
@@ -377,9 +378,11 @@ public class TeleopDualDrivers extends LinearOpMode {
         slider.setInchPosition(FieldParams.GROUND_CONE_POSITION);
         chassis.runToPosition(-autoLoadMovingDistance, true); // moving to loading position
         slider.waitRunningComplete();
+        armClaw.waitArmComplete(armClaw.ARM_FLIP_FRONT_LOAD_POS);
         armClaw.clawClose();
-        sleep(100);
+        armClaw.waitClawComplete(armClaw.CLAW_CLOSE_POS); // 200 ms
         slider.setInchPosition(FieldParams.HIGH_JUNCTION_POS);
+        armClaw.armFlipCenter();
         chassis.runToPosition(-FieldParams.BASE_TO_JUNCTION, true);
         armClaw.armFlipBackUnload();
     }

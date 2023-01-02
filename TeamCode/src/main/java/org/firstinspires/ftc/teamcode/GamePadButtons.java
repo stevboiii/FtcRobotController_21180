@@ -33,7 +33,7 @@ public class GamePadButtons {
     public boolean armBackUnload;
     public boolean autoLoadGroundCone;
     public boolean autoLoad34thConeStack;
-    public boolean autoLoad5thConeStack;
+    public boolean autoLoad45thConeStack;
     public boolean autoLoadThenJunction; // driving robot to high junction after loading cone
     public boolean autoUnloadCone;
     public boolean autoUnloadThenBase; // driving robot to cone loading base after unloading cone
@@ -42,15 +42,15 @@ public class GamePadButtons {
         //gamepad1 buttons
         robotDrive              = -gamepad1.left_stick_y;
         robotStrafe             = -gamepad1.left_stick_x;
-        robotTurn               = -gamepad1.right_stick_x;
-        speedDown            = gamepad1.dpad_left || gamepad1.x;
-        speedUp            = gamepad1.dpad_right || gamepad1.b;
+        robotTurn               = gamepad1.right_stick_x;
+        speedDown               = gamepad1.dpad_left || gamepad1.x;
+        speedUp                 = gamepad1.dpad_right || gamepad1.b;
         autoLoadGroundCone      = gamepad1.left_bumper;
         autoLoad34thConeStack   = gamepad1.dpad_up;
-        autoLoad5thConeStack    = gamepad1.dpad_down;
+        autoLoad45thConeStack    = gamepad1.dpad_down;
         autoUnloadCone          = gamepad1.right_bumper;
-        autoLoadThenJunction      = gamepad1.left_trigger > 0.1;
-        autoUnloadThenBase    = gamepad1.right_trigger > 0.1;
+        autoLoadThenJunction    = gamepad1.left_trigger > 0.1;
+        autoUnloadThenBase      = gamepad1.right_trigger > 0.1;
 
         // gamepad1(single driver) or gamepad2(dual driver) buttons
         sliderUpDown            = gamepad2.right_stick_y;

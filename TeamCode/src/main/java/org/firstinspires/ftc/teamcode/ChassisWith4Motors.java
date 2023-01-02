@@ -105,7 +105,7 @@ public class ChassisWith4Motors {
     final int INERTIA_WAIT_TIME = 500; // in ms
 
     //sensors
-    final double DISTANCE_SENSOR_ALIGN = 5.5;
+    final double DISTANCE_SENSOR_ALIGN = 5.2;
     private DistanceSensor frontCenterDS = null;
     private DistanceSensor rightCenterDS = null;
     private DistanceSensor frontRightDS = null;
@@ -207,7 +207,7 @@ public class ChassisWith4Motors {
         float b1 = blue;
         while ((red/r1 < 1.4) && (blue/b1 < 1.4) && (getEncoderDistance() < 20))
         {
-            drivingWithPID(-SHORT_DISTANCE_POWER, 21.8 ,0, false); // turn off PID to speed up while loop.
+            drivingWithPID(-SHORT_DISTANCE_POWER, 0 ,SHORT_DISTANCE_POWER, false); // turn off PID to speed up while loop.
             r1 = red;
             b1 = blue;
             blue = (float)colorSensor.blue();
@@ -638,7 +638,7 @@ public class ChassisWith4Motors {
     public void runToConeStack(double checkCsDistance, double reachConeDistance) {
         float blue0 = (float)colorSensor.blue();
         float red0 = (float)colorSensor.red();
-        double fcDs = getFcDsValue(); //
+        double fcDs = getFcDsValue();
         double flDs = getFlDsValue();
         double frDs = getFrDsValue();
 
@@ -659,7 +659,7 @@ public class ChassisWith4Motors {
             setPowers(0.0);
             double sign = Math.copySign(1, (frDs - flDs));
             Logging.log("cone is to the %s of robot.", (sign > 0) ? "left" : "right");
-            while ((colorSensor.blue() / blue0 < 1.4) || (colorSensor.red() / red0 < 1.4)) {
+            while ((colorSensor.blue() / blue0 < 1.4) && (colorSensor.red() / red0 < 1.4)) {
                 drivingWithPID(0.0, 0.0, RAMP_END_POWER * sign, true);
                 logColorSensor();
             }
@@ -698,20 +698,22 @@ public class ChassisWith4Motors {
         double driveDirection = Math.copySign(1, encoderRange);
 
         encoderRange = Math.abs(encoderRange);
+        sensorRange = Math.abs(sensorRange);
         double currEnDist = 0.0;
 
         // controlled by encoders
         while(encoderRange - currEnDist > 0) {
-            drivingWithPID(-LONG_DISTANCE_POWER * driveDirection, 0.0, 0.0, true);
+            drivingWithPID(0, 0.0, -0.6 * driveDirection, true);
             currEnDist = getEncoderDistance();
         }
 
         // controlled by distance sensor
-        while ((getRcDsValue() > threshold) && (getEncoderDistance() < encoderRange + sensorRange)) {
-            drivingWithPID(-RAMP_END_POWER * driveDirection, 0.0, 0.0, true);
-            Logging.log("getRcDsValue = %.2f", getRcDsValue());
+        while ((getFcDsValue() > threshold) && (getEncoderDistance() < encoderRange + sensorRange)) {
+            drivingWithPID(0, 0.0, -0.3 * driveDirection, true);
+            Logging.log("getFcDsValue = %.2f", getFcDsValue());
         }
-        Logging.log("getRcDsValue = %.2f", getRcDsValue());
+        Logging.log("getFcDsValue = %.2f", getFcDsValue());
+        runToPosition(-3 * driveDirection, false); // moving additional 3 inches
         setPowers(0.0);
         runWithoutEncoders();
     }

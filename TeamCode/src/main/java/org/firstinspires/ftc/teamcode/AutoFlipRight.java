@@ -88,26 +88,38 @@ public class AutoFlipRight extends AutonomousRight {
        // slider setting
        slider.setInchPosition(FieldParams.MEDIUM_JUNCTION_POS);
 
-       //move center of robot to the center of 3rd mat near high junction
-       chassis.runToPosition(FieldParams.INIT_POSITION_TO_MAT_EDGE * autonomousStartLocation, false);
+        armClaw.armFlipBackUnload();
 
-       // turn robot to make sure it is at 0 degree before backing to high junction
+        //move center of robot to the center of 2nd mat edge
+       chassis.runToJunction(-FieldParams.INIT_POSITION_TO_MAT_EDGE + 6, -6, 12);
+
+       // turn robot to make sure it is at 0 degree before backing to medium junction
        chassis.rotateIMUTargetAngle(0.0);
 
-        armClaw.armFlipBackUnload();
        // driving to medium junction
        chassis.runToPosition(-FieldParams.HALF_MAT + FieldParams.V_DISTANCE_TO_CENTER, true);
 
+       sleep(100); // wait junction shaking
        slider.waitRunningComplete();
 
        // drop cone and back to the center of mat
-       unloadCone();
+       unloadCone(FieldParams.HALF_MAT - FieldParams.V_DISTANCE_TO_CENTER);
 
-       for(int autoLoop = 0; autoLoop < 4; autoLoop++) {
+       chassis.runToPosition(-FieldParams.HALF_MAT + 1.5, false);
+
+       chassis.runToConeStack(15, 6);
+
+
+        loadCone(FieldParams.coneStack5th);
+
+        chassis.runToJunction(3*FieldParams.HALF_MAT, 0, 0);
+
+
+        /*
+        for(int autoLoop = 0; autoLoop < 4; autoLoop++) {
            Logging.log("Autonomous - loop index: %d ", autoLoop);
 
            // drive robot to loading area.
-           chassis.runWithMultiSensors();
            chassis.runToConeStack(3, 2);
            Logging.log("Autonomous - Robot has arrived at loading area.");
 
@@ -147,9 +159,13 @@ public class AutoFlipRight extends AutonomousRight {
        // drive to final parking lot
        chassis.runToPosition(-(parkingLotDis * autonomousStartLocation + FieldParams.HALF_MAT - FieldParams.ARM_LOCATION_BIAS), true);
        Logging.log("Autonomous - Arrived at parking lot Mat: %.2f", parkingLotDis);
+        */
+       slider.setInchPosition(0);
 
        slider.waitRunningComplete();
        Logging.log("Autonomous - Autonomous complete.");
+
+
 
     }
 
@@ -162,9 +178,12 @@ public class AutoFlipRight extends AutonomousRight {
      * 5. Robot moving back to leave junction
      * 6. Slider moving down to get ready to grip another cone
      */
-    private void unloadCone() {
+    private void unloadCone(double backDistance) {
         armClaw.clawOpen(); // unload  cone
         sleep(100); // to make sure clawServo is at open position
+        armClaw.armFlipFrontLoad();
+        chassis.runToPosition(backDistance, true);
+        slider.setInchPosition(FieldParams.WALL_POSITION);
     }
 
     /**
@@ -179,15 +198,13 @@ public class AutoFlipRight extends AutonomousRight {
      * @param coneLocation: the target cone high location in inch.
      */
     private void loadCone(double coneLocation) {
-        armClaw.clawOpen();
-        armClaw.armFlipFrontLoad();
         slider.setInchPosition(coneLocation);
-        chassis.runToPosition(-robotAutoLoadMovingDistance + 2, true); // moving to loading position
+        chassis.runToPosition(-robotAutoLoadMovingDistance, true); // moving to loading position
         slider.waitRunningComplete();
         armClaw.clawClose();
-        Logging.log("Auto load - Cone has been loaded.");
         sleep(200); // wait to make sure clawServo is at grep position
-        slider.setInchPosition(FieldParams.LOW_JUNCTION_POS);
+        slider.setInchPosition(FieldParams.MEDIUM_JUNCTION_POS);
+        Logging.log("Auto load - Cone has been loaded.");
     }
 
 /**
