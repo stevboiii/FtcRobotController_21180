@@ -342,6 +342,7 @@ public class TeleopDualDrivers extends LinearOpMode {
      * 4. Lift slider from junction pole
      * 5. Robot moving back to leave junction
      * 6. Slider moving down to get ready to grip another cone
+     * @param drivingDistance the driving back distance after unloading the cone.
      */
     private void unloadCone(double drivingDistance) {
         armClaw.armFlipBackLoad();
@@ -354,7 +355,7 @@ public class TeleopDualDrivers extends LinearOpMode {
 
     /**
      * During autonomous, cone may be located with different height position
-     * @param coneLocation: the target cone high location in inch.
+     * @param coneLocation the target cone high location in inch.
      */
     private void loadCone(double coneLocation) {
         armClaw.armFlipFrontLoad();

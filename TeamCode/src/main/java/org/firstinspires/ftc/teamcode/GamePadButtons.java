@@ -47,7 +47,7 @@ public class GamePadButtons {
         speedUp                 = gamepad1.dpad_right || gamepad1.b;
         autoLoadGroundCone      = gamepad1.left_bumper;
         autoLoad34thConeStack   = gamepad1.dpad_up;
-        autoLoad45thConeStack    = gamepad1.dpad_down;
+        autoLoad45thConeStack   = gamepad1.dpad_down;
         autoUnloadCone          = gamepad1.right_bumper;
         autoLoadThenJunction    = gamepad1.left_trigger > 0.1;
         autoUnloadThenBase      = gamepad1.right_trigger > 0.1;
@@ -65,7 +65,7 @@ public class GamePadButtons {
         clawClose               = gamepad2.dpad_up;
         clawOpen                = gamepad2.dpad_down || gamepad1.a;
         if (ArmClawUnit.ArmMode.SWING == ArmClawUnit.armMode) {
-            armLeft = gamepad2.left_stick_x < 0.2;
+            armLeft = gamepad2.left_stick_x < -0.2;
             armRight = gamepad2.left_stick_x > 0.2;
             armForward = gamepad2.left_stick_y > 0.2;
         }

@@ -211,6 +211,10 @@ public class ArmClawUnit
         setArmPosition(ARM_FLIP_BACK_UNLOAD_POS);
     }
 
+    /**
+     * Wait for arm complete turning
+     * @param armDestPos the destination position of arm servo motor
+     */
     public void waitArmComplete(double armDestPos) {
         double curTime = period.seconds();
         double armCurrPos = armServo.getPosition();
@@ -222,6 +226,10 @@ public class ArmClawUnit
         }
     }
 
+    /**
+     * Wait claw to complete action
+     * @param clawDestPos the destination position of claw
+     */
     public void waitClawComplete(double clawDestPos) {
         double curTime = period.seconds();
         double clawCurrPos = clawServo.getPosition();
