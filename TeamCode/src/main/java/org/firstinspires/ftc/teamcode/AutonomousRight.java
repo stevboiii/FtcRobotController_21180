@@ -157,6 +157,8 @@ public class AutonomousRight extends LinearOpMode {
 
         armClaw.init(hardwareMap, "ArmServo", "ClawServo");
         armClaw.clawClose();
+        armClaw.waitClawComplete(armClaw.CLAW_CLOSE_POS);
+        armClaw.armFlipCenter();
 
         runtime.reset();
         while ((ObjectDetection.ParkingLot.UNKNOWN == myParkingLot) &&

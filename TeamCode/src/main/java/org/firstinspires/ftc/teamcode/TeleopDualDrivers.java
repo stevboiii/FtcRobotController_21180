@@ -118,6 +118,7 @@ public class TeleopDualDrivers extends LinearOpMode {
         // to 'get' must correspond to the names assigned during the robot configuration
         // step (using the FTC Robot Controller app on the phone).
         slider.init(hardwareMap, "RightSlider", "LeftSlider");
+        slider.setInchPosition(Params.WALL_POSITION);
 
         chassis.init(hardwareMap, "FrontLeft", "FrontRight",
                 "BackLeft", "BackRight");
@@ -150,21 +151,21 @@ public class TeleopDualDrivers extends LinearOpMode {
             gpButtons.checkGamepadButtons(gamepad1, gamepad2);
 
             // update chassis power
-            double maxDrivePower = HIGH_SPEED_POWER;
+            double maxDrivePower;
             double chassisCurrentPower = chassis.getAveragePower();
             double deltaTime = runtime.milliseconds() - timeStamp;
             double powerRampRate = 0.3 / 100; // 0.3 per 100 ms for speed ramp up
             double maxP = chassisCurrentPower + powerRampRate * deltaTime;
             timeStamp = runtime.milliseconds();
 
-            if (gpButtons.speedUp)
-            {
-                maxDrivePower = HIGH_SPEED_POWER * 1.4;
+            if (gpButtons.speedUp) {
+                maxDrivePower = HIGH_SPEED_POWER * 1.5;
             }
-
-            if (gpButtons.speedDown)
-            {
+            else if (gpButtons.speedDown) {
                 maxDrivePower = HIGH_SPEED_POWER / 2;
+            }
+            else {
+                maxDrivePower = HIGH_SPEED_POWER;
             }
 
             maxDrivePower = Math.min(maxP, maxDrivePower);
