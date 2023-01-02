@@ -160,18 +160,16 @@ public class TeleopDualDrivers extends LinearOpMode {
 
             if (gpButtons.speedUp) {
                 maxDrivePower = HIGH_SPEED_POWER * 1.5;
-            }
-            else if (gpButtons.speedDown) {
+            } else if (gpButtons.speedDown) {
                 maxDrivePower = HIGH_SPEED_POWER / 2;
-            }
-            else {
+            } else {
                 maxDrivePower = HIGH_SPEED_POWER;
             }
 
             maxDrivePower = Math.min(maxP, maxDrivePower);
 
             double drive = maxDrivePower * gpButtons.robotDrive;
-            double turn  =  maxDrivePower * (-gpButtons.robotTurn);
+            double turn = maxDrivePower * (-gpButtons.robotTurn);
             double strafe = maxDrivePower * (-gpButtons.robotStrafe);
 
             chassis.drivingWithPID(drive, turn, strafe, true);
@@ -206,7 +204,7 @@ public class TeleopDualDrivers extends LinearOpMode {
 
             // use right stick_Y to lift or down slider continuously
             if (Math.abs(gpButtons.sliderUpDown) > 0) {
-                telemetry.addData("gamepad", "%.2f",  gpButtons.sliderUpDown);
+                telemetry.addData("gamepad", "%.2f", gpButtons.sliderUpDown);
                 slider.manualControlPos(gpButtons.sliderUpDown);
             }
 
@@ -252,32 +250,32 @@ public class TeleopDualDrivers extends LinearOpMode {
             }
 
             //  auto driving, grip cone, and lift slider
-            if(gpButtons.autoLoadGroundCone) {
+            if (gpButtons.autoLoadGroundCone) {
                 loadCone(Params.GROUND_CONE_POSITION); // Always on ground during teleop mode
             }
 
             //  auto driving, grip cone, and lift slider
-            if(gpButtons.autoLoad34thConeStack) {
+            if (gpButtons.autoLoad34thConeStack) {
                 loadCone(Params.GROUND_CONE_POSITION + Params.coneLoadStackGap * 2); // Always on ground during teleop mode
             }
 
             //  auto driving, grip cone, and lift slider
-            if(gpButtons.autoLoad45thConeStack) {
+            if (gpButtons.autoLoad45thConeStack) {
                 loadCone(Params.GROUND_CONE_POSITION + Params.coneLoadStackGap * 3); // Always on ground during teleop mode
             }
 
             //  auto driving, grip cone, and lift slider
-            if(gpButtons.autoLoadThenJunction) {
+            if (gpButtons.autoLoadThenJunction) {
                 loadConeThenDriving(); // Always on ground during teleop mode for special pickup
             }
 
             //  auto driving, unload cone
-            if(gpButtons.autoUnloadCone) {
+            if (gpButtons.autoUnloadCone) {
                 unloadCone(autoUnloadMovingDistance);
             }
 
             // loading cone then moving to high junction
-            if(gpButtons.autoUnloadThenBase) {
+            if (gpButtons.autoUnloadThenBase) {
                 unloadCone(Params.BASE_TO_JUNCTION);
             }
 
@@ -343,6 +341,7 @@ public class TeleopDualDrivers extends LinearOpMode {
      * 4. Lift slider from junction pole
      * 5. Robot moving back to leave junction
      * 6. Slider moving down to get ready to grip another cone
+     *
      * @param drivingDistance the driving back distance after unloading the cone.
      */
     private void unloadCone(double drivingDistance) {
@@ -356,6 +355,7 @@ public class TeleopDualDrivers extends LinearOpMode {
 
     /**
      * During autonomous, cone may be located with different height position
+     *
      * @param coneLocation the target cone high location in inch.
      */
     private void loadCone(double coneLocation) {
@@ -386,6 +386,7 @@ public class TeleopDualDrivers extends LinearOpMode {
         slider.setInchPosition(Params.HIGH_JUNCTION_POS);
         armClaw.armFlipCenter();
         chassis.runToPosition(-Params.BASE_TO_JUNCTION, true);
+        slider.waitRunningComplete();
         armClaw.armFlipBackUnload();
     }
 }

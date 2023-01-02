@@ -69,7 +69,7 @@ public class AutonomousTest extends AutonomousRight {
     public void autonomousCore() {
 
         chassis.logColorSensor();
-        chassis.runToConeStack(8, 3);
+        chassis.runToConeStack(12, 8, 3);
 
     }
 }

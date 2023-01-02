@@ -75,36 +75,35 @@ public class AutoFlipRight extends AutonomousRight {
 
     @Override
     public void autonomousCore() {
-       // slider setting
-       slider.setInchPosition(Params.MEDIUM_JUNCTION_POS);
+        // slider setting
+        slider.setInchPosition(Params.MEDIUM_JUNCTION_POS);
 
         armClaw.armFlipBackUnload();
 
-        //move center of robot to the center of 2nd mat edge
-       chassis.runToJunction(-Params.INIT_POSITION_TO_MAT_EDGE + 6, -6, 12);
+        //move center of robot to the center of 2nd mat edge, stop by checking front center distance sensor
+        chassis.strafeToJunction(-Params.INIT_POSITION_TO_2ND_MAT_EDGE * autonomousStartLocation, 6, 12);
 
-       // turn robot to make sure it is at 0 degree before backing to medium junction
-       chassis.rotateIMUTargetAngle(0.0);
+        // driving to medium junction
+        chassis.runToPosition(-Params.HALF_MAT + Params.V_DISTANCE_TO_CENTER, true);
 
-       // driving to medium junction
-       chassis.runToPosition(-Params.HALF_MAT + Params.V_DISTANCE_TO_CENTER, true);
+        slider.waitRunningComplete();
 
-       sleep(100); // wait junction shaking
-       slider.waitRunningComplete();
+        // drop cone and back to the center of mat
+        unloadCone(Params.HALF_MAT - Params.V_DISTANCE_TO_CENTER);
 
-       // drop cone and back to the center of mat
-       unloadCone(Params.HALF_MAT - Params.V_DISTANCE_TO_CENTER);
+        chassis.runToPosition(-Params.HALF_MAT * autonomousStartLocation, false);
 
-       chassis.runToPosition(-Params.HALF_MAT + 1.5, false);
+        chassis.runToConeStack(2 * Params.HALF_MAT, 12, 6);
 
-       chassis.runToConeStack(15, 6);
+        for(int autoLoop = 0; autoLoop < 1; autoLoop++) {
+            loadCone(Params.coneStack5th - Params.coneLoadStackGap * autoLoop);
 
+            chassis.moveToJunction(2 * Params.HALF_MAT - Params.CHASSIS_LENGTH, autonomousStartLocation);
 
-        loadCone(Params.coneStack5th);
+            // drop cone and back to the center of mat
+            unloadCone(Params.HALF_MAT - Params.V_DISTANCE_TO_CENTER);
 
-        chassis.runToJunction(3* Params.HALF_MAT, 0, 0);
-
-
+        }
         /*
         for(int autoLoop = 0; autoLoop < 4; autoLoop++) {
            Logging.log("Autonomous - loop index: %d ", autoLoop);
@@ -178,13 +177,6 @@ public class AutoFlipRight extends AutonomousRight {
 
     /**
      * During autonomous, cone may be located with different height position
-     * 1. Lift slider and open claw to get read to load a cone
-     * 2. Robot moving back to aim at cone for loading
-     * 2. Slider moving down to load the cone
-     * 3. Close claw to grip the cone
-     * 4. Lift slider to low junction position for unloading
-     * 5. Robot moving back to leave junction
-     * 6. Slider moving down to get ready to grip another cone
      * @param coneLocation: the target cone high location in inch.
      */
     private void loadCone(double coneLocation) {
@@ -192,8 +184,11 @@ public class AutoFlipRight extends AutonomousRight {
         chassis.runToPosition(-robotAutoLoadMovingDistance, true); // moving to loading position
         slider.waitRunningComplete();
         armClaw.clawClose();
-        sleep(200); // wait to make sure clawServo is at grep position
+        armClaw.waitClawComplete(armClaw.CLAW_CLOSE_POS); // 200 ms
         slider.setInchPosition(Params.MEDIUM_JUNCTION_POS);
+        armClaw.armFlipBackUnload();
+        chassis.rotateIMUTargetAngle(0);
+        sleep(100); // make sure cone has been lifted from stack
         Logging.log("Auto load - Cone has been loaded.");
     }
 
