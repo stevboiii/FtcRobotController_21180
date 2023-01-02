@@ -177,26 +177,26 @@ public class TeleopDualDrivers extends LinearOpMode {
 
             // use Y button to lift up the slider reaching high junction
             if (gpButtons.sliderHighJunction) {
-                slider.setInchPosition(FieldParams.HIGH_JUNCTION_POS);
+                slider.setInchPosition(Params.HIGH_JUNCTION_POS);
             }
 
             // use B button to lift up the slider reaching medium junction
             if (gpButtons.sliderMediumJunction) {
-                slider.setInchPosition(FieldParams.MEDIUM_JUNCTION_POS);
+                slider.setInchPosition(Params.MEDIUM_JUNCTION_POS);
             }
 
             // use A button to lift up the slider reaching low junction
             if (gpButtons.sliderLowJunction) {
-                slider.setInchPosition(FieldParams.LOW_JUNCTION_POS);
+                slider.setInchPosition(Params.LOW_JUNCTION_POS);
             }
 
             // use X button to move the slider for wall position
             if (gpButtons.sliderWallPosition) {
-                slider.setInchPosition(FieldParams.WALL_POSITION);
+                slider.setInchPosition(Params.WALL_POSITION);
             }
             // use dpad left to get to the ground junction position
             if (gpButtons.sliderGroundJunction) {
-                slider.setInchPosition(FieldParams.GROUND_JUNCTION_POS);
+                slider.setInchPosition(Params.GROUND_JUNCTION_POS);
             }
 
             if (gpButtons.sliderGround) {
@@ -252,17 +252,17 @@ public class TeleopDualDrivers extends LinearOpMode {
 
             //  auto driving, grip cone, and lift slider
             if(gpButtons.autoLoadGroundCone) {
-                loadCone(FieldParams.GROUND_CONE_POSITION); // Always on ground during teleop mode
+                loadCone(Params.GROUND_CONE_POSITION); // Always on ground during teleop mode
             }
 
             //  auto driving, grip cone, and lift slider
             if(gpButtons.autoLoad34thConeStack) {
-                loadCone(FieldParams.GROUND_CONE_POSITION + FieldParams.coneLoadStackGap * 2); // Always on ground during teleop mode
+                loadCone(Params.GROUND_CONE_POSITION + Params.coneLoadStackGap * 2); // Always on ground during teleop mode
             }
 
             //  auto driving, grip cone, and lift slider
             if(gpButtons.autoLoad45thConeStack) {
-                loadCone(FieldParams.GROUND_CONE_POSITION + FieldParams.coneLoadStackGap * 3); // Always on ground during teleop mode
+                loadCone(Params.GROUND_CONE_POSITION + Params.coneLoadStackGap * 3); // Always on ground during teleop mode
             }
 
             //  auto driving, grip cone, and lift slider
@@ -277,7 +277,7 @@ public class TeleopDualDrivers extends LinearOpMode {
 
             // loading cone then moving to high junction
             if(gpButtons.autoUnloadThenBase) {
-                unloadCone(FieldParams.BASE_TO_JUNCTION);
+                unloadCone(Params.BASE_TO_JUNCTION);
             }
 
             if (debugFlag) {
@@ -349,7 +349,7 @@ public class TeleopDualDrivers extends LinearOpMode {
         armClaw.waitClawComplete(armClaw.CLAW_OPEN_POS); // to make sure claw Servo is at open position, 250 ms
         chassis.runToPosition(drivingDistance, true); // move out from junction
         armClaw.armFlipFrontLoad();
-        slider.setInchPosition(FieldParams.WALL_POSITION);
+        slider.setInchPosition(Params.WALL_POSITION);
     }
 
     /**
@@ -365,7 +365,7 @@ public class TeleopDualDrivers extends LinearOpMode {
         armClaw.waitArmComplete(armClaw.ARM_FLIP_FRONT_LOAD_POS); // waiting arm ready pick up position, 300 ms
         armClaw.clawClose();
         armClaw.waitClawComplete(armClaw.CLAW_CLOSE_POS); // wait to make sure clawServo is at grep position, 200 ms
-        slider.setInchPosition(FieldParams.LOW_JUNCTION_POS);
+        slider.setInchPosition(Params.LOW_JUNCTION_POS);
         armClaw.armFlipBackUnload();
     }
 
@@ -375,15 +375,15 @@ public class TeleopDualDrivers extends LinearOpMode {
     private void loadConeThenDriving() {
         armClaw.armFlipFrontLoad();
         armClaw.clawOpen();
-        slider.setInchPosition(FieldParams.GROUND_CONE_POSITION);
+        slider.setInchPosition(Params.GROUND_CONE_POSITION);
         chassis.runToPosition(-autoLoadMovingDistance, true); // moving to loading position
         slider.waitRunningComplete();
         armClaw.waitArmComplete(armClaw.ARM_FLIP_FRONT_LOAD_POS);
         armClaw.clawClose();
         armClaw.waitClawComplete(armClaw.CLAW_CLOSE_POS); // 200 ms
-        slider.setInchPosition(FieldParams.HIGH_JUNCTION_POS);
+        slider.setInchPosition(Params.HIGH_JUNCTION_POS);
         armClaw.armFlipCenter();
-        chassis.runToPosition(-FieldParams.BASE_TO_JUNCTION, true);
+        chassis.runToPosition(-Params.BASE_TO_JUNCTION, true);
         armClaw.armFlipBackUnload();
     }
 }

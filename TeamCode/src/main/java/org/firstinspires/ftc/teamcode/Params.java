@@ -35,7 +35,7 @@ package org.firstinspires.ftc.teamcode;
  *
  * This class defines the parameters related with game field elements.
  */
-public class FieldParams
+public class Params
 {
     // slider position variables
     static final double ARM_UNLOADING_LIFTING = 4; // Arm lifting from loading position to unloading position

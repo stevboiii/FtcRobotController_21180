@@ -54,17 +54,7 @@
 
 package org.firstinspires.ftc.teamcode;
 
-import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
-import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.util.ElapsedTime;
-
-import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
-import org.openftc.easyopencv.OpenCvCamera;
-import org.openftc.easyopencv.OpenCvCameraFactory;
-import org.openftc.easyopencv.OpenCvCameraRotation;
-
-import java.util.List;
 
 /**
  * This file contains an minimal example of a Linear "OpMode". An OpMode is a 'program' that runs in either
@@ -86,33 +76,33 @@ public class AutoFlipRight extends AutonomousRight {
     @Override
     public void autonomousCore() {
        // slider setting
-       slider.setInchPosition(FieldParams.MEDIUM_JUNCTION_POS);
+       slider.setInchPosition(Params.MEDIUM_JUNCTION_POS);
 
         armClaw.armFlipBackUnload();
 
         //move center of robot to the center of 2nd mat edge
-       chassis.runToJunction(-FieldParams.INIT_POSITION_TO_MAT_EDGE + 6, -6, 12);
+       chassis.runToJunction(-Params.INIT_POSITION_TO_MAT_EDGE + 6, -6, 12);
 
        // turn robot to make sure it is at 0 degree before backing to medium junction
        chassis.rotateIMUTargetAngle(0.0);
 
        // driving to medium junction
-       chassis.runToPosition(-FieldParams.HALF_MAT + FieldParams.V_DISTANCE_TO_CENTER, true);
+       chassis.runToPosition(-Params.HALF_MAT + Params.V_DISTANCE_TO_CENTER, true);
 
        sleep(100); // wait junction shaking
        slider.waitRunningComplete();
 
        // drop cone and back to the center of mat
-       unloadCone(FieldParams.HALF_MAT - FieldParams.V_DISTANCE_TO_CENTER);
+       unloadCone(Params.HALF_MAT - Params.V_DISTANCE_TO_CENTER);
 
-       chassis.runToPosition(-FieldParams.HALF_MAT + 1.5, false);
+       chassis.runToPosition(-Params.HALF_MAT + 1.5, false);
 
        chassis.runToConeStack(15, 6);
 
 
-        loadCone(FieldParams.coneStack5th);
+        loadCone(Params.coneStack5th);
 
-        chassis.runToJunction(3*FieldParams.HALF_MAT, 0, 0);
+        chassis.runToJunction(3* Params.HALF_MAT, 0, 0);
 
 
         /*
@@ -183,7 +173,7 @@ public class AutoFlipRight extends AutonomousRight {
         sleep(100); // to make sure clawServo is at open position
         armClaw.armFlipFrontLoad();
         chassis.runToPosition(backDistance, true);
-        slider.setInchPosition(FieldParams.WALL_POSITION);
+        slider.setInchPosition(Params.WALL_POSITION);
     }
 
     /**
@@ -203,7 +193,7 @@ public class AutoFlipRight extends AutonomousRight {
         slider.waitRunningComplete();
         armClaw.clawClose();
         sleep(200); // wait to make sure clawServo is at grep position
-        slider.setInchPosition(FieldParams.MEDIUM_JUNCTION_POS);
+        slider.setInchPosition(Params.MEDIUM_JUNCTION_POS);
         Logging.log("Auto load - Cone has been loaded.");
     }
 
