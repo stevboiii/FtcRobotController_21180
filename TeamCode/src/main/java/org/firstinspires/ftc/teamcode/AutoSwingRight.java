@@ -52,6 +52,7 @@
 package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 
 
 /**
@@ -68,7 +69,7 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
  */
 
 @Autonomous(name="Swing arm - Right", group="Concept")
-//@Disabled
+@Disabled
 public class AutoSwingRight extends AutonomousRight {
 
     @Override
@@ -160,7 +161,7 @@ public class AutoSwingRight extends AutonomousRight {
     private void autoLoadCone(double coneLocation) {
         armClaw.clawOpen();
         slider.setInchPosition(coneLocation);
-        chassis.runToPosition(robotAutoLoadMovingDistance, true); // back a little bit to avoid stuck.
+        chassis.runToPosition(autoLoadMovingDistance, true); // back a little bit to avoid stuck.
         slider.waitRunningComplete();
         armClaw.clawClose();
         Logging.log("Auto load - Cone has been loaded.");

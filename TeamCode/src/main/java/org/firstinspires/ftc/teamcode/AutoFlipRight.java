@@ -55,6 +55,7 @@
 package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 
 /**
  * This file contains an minimal example of a Linear "OpMode". An OpMode is a 'program' that runs in either
@@ -70,7 +71,7 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
  */
 
 @Autonomous(name="Auto Flip Right", group="Concept")
-//@Disabled
+@Disabled
 public class AutoFlipRight extends AutonomousRight {
 
     @Override
@@ -186,7 +187,7 @@ public class AutoFlipRight extends AutonomousRight {
      */
     private void loadCone(double coneLocation) {
         slider.setInchPosition(coneLocation);
-        chassis.runToPosition(-robotAutoLoadMovingDistance, true); // moving to loading position
+        chassis.runToPosition(-autoLoadMovingDistance, true); // moving to loading position
         slider.waitRunningComplete();
         armClaw.clawClose();
         sleep(200); // 200 ms
