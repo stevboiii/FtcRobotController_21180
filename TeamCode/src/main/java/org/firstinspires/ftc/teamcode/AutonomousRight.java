@@ -157,7 +157,7 @@ public class AutonomousRight extends LinearOpMode {
 
         armClaw.init(hardwareMap, "ArmServo", "ClawServo");
         armClaw.clawClose();
-        armClaw.waitClawComplete(armClaw.CLAW_CLOSE_POS);
+        sleep(200);
         armClaw.armFlipCenter();
 
         runtime.reset();

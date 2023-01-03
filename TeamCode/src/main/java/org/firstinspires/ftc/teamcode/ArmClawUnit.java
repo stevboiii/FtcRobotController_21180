@@ -78,7 +78,7 @@ public class ArmClawUnit
     final double ARM_FLIP_FRONT_UNLOAD_POS = 0.3;
     final double ARM_FLIP_BACK_UNLOAD_POS = 0.7;
     final double ARM_FLIP_BACK_LOAD_POS = 0.75;
-    final double ARM_FLIP_CENTER = 0.5;
+    final double ARM_FLIP_CENTER = 0.55;
 
     /**
      * Init slider motors hardware, and set their behaviors.
@@ -211,34 +211,5 @@ public class ArmClawUnit
         setArmPosition(ARM_FLIP_BACK_UNLOAD_POS);
     }
 
-    /**
-     * Wait for arm complete turning
-     * @param armDestPos the destination position of arm servo motor
-     */
-    public void waitArmComplete(double armDestPos) {
-        double curTime = period.seconds();
-        double armCurrPos = armServo.getPosition();
-
-        while ((Math.abs(armCurrPos - armDestPos) > 0.01) ||
-                ((period.seconds() - curTime) < ARM_MAX_WAIT_TIME)) {
-            armCurrPos = armServo.getPosition();
-            Logging.log("Arm curr position = %.2f", armCurrPos);
-        }
-    }
-
-    /**
-     * Wait claw to complete action
-     * @param clawDestPos the destination position of claw
-     */
-    public void waitClawComplete(double clawDestPos) {
-        double curTime = period.seconds();
-        double clawCurrPos = clawServo.getPosition();
-
-        while ((Math.abs(clawCurrPos - clawDestPos) > 0.01) ||
-                ((period.seconds() - curTime) < ARM_MAX_WAIT_TIME)) {
-            clawCurrPos = clawServo.getPosition();
-            Logging.log("Claw curr position = %.2f", clawCurrPos);
-        }
-    }
 }
 

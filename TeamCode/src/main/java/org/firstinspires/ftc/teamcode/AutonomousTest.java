@@ -68,8 +68,11 @@ public class AutonomousTest extends AutonomousRight {
     @Override
     public void autonomousCore() {
 
-        chassis.logColorSensor();
-        chassis.runToConeStack(12, 8, 3);
+        slider.setInchPosition(Params.WALL_POSITION);
+        armClaw.armFlipFrontLoad();
+        sleep(10000);
+
+        chassis.strafeToJunction(-24, 0, 12);
 
     }
 }

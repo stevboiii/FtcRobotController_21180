@@ -114,7 +114,7 @@ public class AutoSwingRight extends AutonomousRight {
             // lift slider during driving back to mat center.
             slider.setInchPosition(Params.HIGH_JUNCTION_POS);
 
-            chassis.runToJunction(Params.HIGH_JUNCTION_TO_CONE_STACK - 6.0, 6.0, 20);
+            chassis.strafeToJunction(Params.HIGH_JUNCTION_TO_CONE_STACK - 6.0, 6.0, 20);
 
             Logging.log("Autonomous - Robot arrived the high junction.");
 

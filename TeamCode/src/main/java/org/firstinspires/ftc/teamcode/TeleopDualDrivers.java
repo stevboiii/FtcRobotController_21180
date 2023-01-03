@@ -98,7 +98,7 @@ public class TeleopDualDrivers extends LinearOpMode {
 
     // variables for auto load and unload cone
     double autoLoadMovingDistance = 1.0; // in INCH
-    double autoUnloadMovingDistance = 5.0; // in INCH
+    double moveOutJunctionDistance = 5.0; // in INCH
 
     // debug flags, turn it off for formal version to save time of logging
     boolean debugFlag = true;
@@ -271,12 +271,12 @@ public class TeleopDualDrivers extends LinearOpMode {
 
             //  auto driving, unload cone
             if (gpButtons.autoUnloadCone) {
-                unloadCone(autoUnloadMovingDistance);
+                unloadCone(moveOutJunctionDistance);
             }
 
             // loading cone then moving to high junction
             if (gpButtons.autoUnloadThenBase) {
-                unloadCone(Params.BASE_TO_JUNCTION);
+                unloadConeThenDriving();
             }
 
             if (debugFlag) {
@@ -335,27 +335,7 @@ public class TeleopDualDrivers extends LinearOpMode {
     }
 
     /**
-     * 1. Robot moving back to aim at junction for unloading cone
-     * 2. Slider moving down a little bit to put cone in junction pole
-     * 3. Open claw to fall down cone
-     * 4. Lift slider from junction pole
-     * 5. Robot moving back to leave junction
-     * 6. Slider moving down to get ready to grip another cone
-     *
-     * @param drivingDistance the driving back distance after unloading the cone.
-     */
-    private void unloadCone(double drivingDistance) {
-        armClaw.armFlipBackLoad();
-        armClaw.clawOpen();
-        armClaw.waitClawComplete(armClaw.CLAW_OPEN_POS); // to make sure claw Servo is at open position, 250 ms
-        chassis.runToPosition(drivingDistance, true); // move out from junction
-        armClaw.armFlipFrontLoad();
-        slider.setInchPosition(Params.WALL_POSITION);
-    }
-
-    /**
      * During autonomous, cone may be located with different height position
-     *
      * @param coneLocation the target cone high location in inch.
      */
     private void loadCone(double coneLocation) {
@@ -364,9 +344,9 @@ public class TeleopDualDrivers extends LinearOpMode {
         slider.setInchPosition(coneLocation);
         chassis.runToPosition(-autoLoadMovingDistance, true); // moving to loading position
         slider.waitRunningComplete();
-        armClaw.waitArmComplete(armClaw.ARM_FLIP_FRONT_LOAD_POS); // waiting arm ready pick up position, 300 ms
+        sleep(200); // waiting arm ready pick up position, 200 ms
         armClaw.clawClose();
-        armClaw.waitClawComplete(armClaw.CLAW_CLOSE_POS); // wait to make sure clawServo is at grep position, 200 ms
+        sleep(200); // wait to make sure clawServo is at grep position, 200 ms
         slider.setInchPosition(Params.LOW_JUNCTION_POS);
         armClaw.armFlipBackUnload();
     }
@@ -380,13 +360,41 @@ public class TeleopDualDrivers extends LinearOpMode {
         slider.setInchPosition(Params.GROUND_CONE_POSITION);
         chassis.runToPosition(-autoLoadMovingDistance, true); // moving to loading position
         slider.waitRunningComplete();
-        armClaw.waitArmComplete(armClaw.ARM_FLIP_FRONT_LOAD_POS);
         armClaw.clawClose();
-        armClaw.waitClawComplete(armClaw.CLAW_CLOSE_POS); // 200 ms
+        sleep(200); // 200 ms
         slider.setInchPosition(Params.HIGH_JUNCTION_POS);
         armClaw.armFlipCenter();
         chassis.runToPosition(-Params.BASE_TO_JUNCTION, true);
         slider.waitRunningComplete();
         armClaw.armFlipBackUnload();
+    }
+
+    /**
+     *
+     * @param drivingDistance the driving back distance after unloading the cone.
+     */
+    private void unloadCone(double drivingDistance) {
+        armClaw.armFlipBackLoad();
+        armClaw.clawOpen();
+        sleep(250); // to make sure claw Servo is at open position, 250 ms
+        chassis.runToPosition(drivingDistance, true); // move out from junction
+        armClaw.armFlipFrontLoad();
+        slider.setInchPosition(Params.WALL_POSITION);
+    }
+
+    /**
+     * Special using case for unloading cone on high junction, then driving to cone base
+     */
+    private void unloadConeThenDriving() {
+        armClaw.armFlipBackLoad();
+        armClaw.clawOpen();
+        sleep(250); // to make sure claw Servo is at open position, 250 ms
+        chassis.runUsingEncoders();
+        chassis.runByEncoderControl(moveOutJunctionDistance); // move out from junction
+        armClaw.armFlipFrontLoad();
+        slider.setInchPosition(Params.WALL_POSITION - Params.coneLoadStackGap * 3);
+        chassis.runByEncoderControl(Params.BASE_TO_JUNCTION - moveOutJunctionDistance);
+        chassis.setPowers(0); // stop chassis driving
+        chassis.runWithoutEncoders();
     }
 }

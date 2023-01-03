@@ -46,7 +46,7 @@ public class Params
     static final double LOW_JUNCTION_POS = 13.5  - ARM_UNLOADING_LIFTING;
     static final double MEDIUM_JUNCTION_POS = 23.5  - ARM_UNLOADING_LIFTING;
     static final double HIGH_JUNCTION_POS = 33.5 - ARM_UNLOADING_LIFTING;
-    static final double WALL_POSITION = 7.5 ;
+    static final double WALL_POSITION = 8.5;
     static final double SLIDER_MOVE_DOWN_POSITION = 4.0;
 
     // autonomous driving distance

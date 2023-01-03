@@ -86,7 +86,7 @@ public class ChassisWith4Motors {
     final double WHEEL_DIAMETER_INCHES = 4.0;     // For figuring circumference
     final double COUNTS_PER_INCH_DRIVE = (COUNTS_PER_MOTOR_REV * DRIVE_GEAR_REDUCTION) /
             (WHEEL_DIAMETER_INCHES * 3.1415); // Back-forth driving for 1 INCH. It is 42.8
-    final double COUNTS_PER_INCH_STRAFE = 55; // robot strafe 1 INCH. the value is based on test
+    final double COUNTS_PER_INCH_STRAFE = 45; // robot strafe 1 INCH. the value is based on test (55 is wrong?)
 
     // power control variables
     final double RAMP_UP_DISTANCE = 10.0; // ramp up in the first 10 inch
@@ -229,6 +229,23 @@ public class ChassisWith4Motors {
     }
 
     /**
+     * run by encoders control without stop. Need to set motor mode to run using encoder before this
+     * function. and set powers to 0 after this function correctly.
+     * @param tDist the target distance in inch.
+     */
+    public void runByEncoderControl(double tDist) {
+        double sign = Math.copySign(1,tDist);
+        double startEn = getEncoderDistance();
+        double currEn = startEn;
+        while ((currEn - startEn) < tDist)
+        {
+            drivingWithPID(-SHORT_DISTANCE_POWER * sign, 0 ,0, true);
+            currEn = getEncoderDistance();
+            Logging.log("current encorder Distance = %.2f", currEn);
+        }
+    }
+
+    /**
      * Set to run to position mode for chassis motors
      *
      */
@@ -243,7 +260,7 @@ public class ChassisWith4Motors {
     /**
      * Set chassis motors with run using encoders mode
      */
-    private void runWithoutEncoders() {
+    public void runWithoutEncoders() {
         resetEncoders();
         FrontLeftDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         FrontRightDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
@@ -254,7 +271,7 @@ public class ChassisWith4Motors {
     /**
      * Set chassis motors with run using encoders mode
      */
-    private void runUsingEncoders() {
+    public void runUsingEncoders() {
         resetEncoders();
         FrontLeftDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         FrontRightDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
@@ -656,24 +673,28 @@ public class ChassisWith4Motors {
             // stop robot and strafe the robot
             setPowers(0.0);
             resetEncoders();
+            runUsingEncoders();
             double sign = Math.copySign(1, (frDs - flDs));
             Logging.log("cone is to the %s of robot.", (sign > 0) ? "left" : "right");
             while ((colorSensor.blue() / blue0 < 1.4) && (colorSensor.red() / red0 < 1.4) &&
                     (getEncoderDistance(false) < Params.CHASSIS_WIDTH / 2.0)) {
-                drivingWithPID(0.0, 0.0, RAMP_END_POWER * sign, true);
+                drivingWithPID(0.0, 0.0, SHORT_DISTANCE_POWER * sign, true);
+                Logging.log("encoder distance %.2f", getEncoderDistance(false));
                 logColorSensor();
             }
             setPowers(0.0);
             resetEncoders();
+            runUsingEncoders();
             Logging.log("robot is on coloured tape after strafe.");
         }
 
         // driving forward to reaching cone
         double startEn = getEncoderDistance();
         while ((fcDs > reachConeDistance) && ((getEncoderDistance() - startEn) < Params.HALF_MAT / 2.0)){
-            drivingWithPID(-RAMP_END_POWER, 0.0, 0.0, true);
+            drivingWithPID(-SHORT_DISTANCE_POWER, 0.0, 0.0, true);
             fcDs = getFcDsValue();
             Logging.log("fcDs = %.2f", fcDs);
+            Logging.log("encoder distance during driving  %.2f", getEncoderDistance(false));
         }
         setPowers(0.0);
         Logging.log("robot is ready for cone pick up.");
@@ -686,14 +707,15 @@ public class ChassisWith4Motors {
      */
     public void moveToJunction(double targetDistance, int robotInitLoc) {
         runUsingEncoders();
+        double direction = Math.copySign(1, targetDistance);
         double bcDs = getFcDsValue();
         while (getEncoderDistance() < targetDistance) {
-            drivingWithPID(AUTO_MAX_POWER, 0.0, 0.0, true);
+            drivingWithPID(AUTO_MAX_POWER * direction, 0.0, 0.0, true);
         }
 
         double startEn = getEncoderDistance();
         while ((getEncoderDistance() - startEn) < Params.HALF_MAT) {
-            drivingWithPID(RAMP_END_POWER, robotInitLoc * RAMP_END_POWER, robotInitLoc * RAMP_END_POWER, true);
+            drivingWithPID(RAMP_END_POWER * direction, robotInitLoc * RAMP_END_POWER, 0, true);
         }
         setPowers(0.0);
         runWithoutEncoders();
@@ -726,6 +748,7 @@ public class ChassisWith4Motors {
         while(encoderRange - currEnDist > 0) {
             drivingWithPID(0, 0.0, -AUTO_MAX_POWER * driveDirection, true);
             currEnDist = getEncoderDistance(false);
+            Logging.log("current encoder distance = %.2f", currEnDist);
         }
 
         // controlled by distance sensor
@@ -733,10 +756,9 @@ public class ChassisWith4Motors {
         while ((fcDs > threshold) && (getEncoderDistance(false) < Math.abs(targetDistance))) {
             drivingWithPID(0, 0.0, -RAMP_START_POWER * driveDirection, true);
             fcDs = getFcDsValue();
-            Logging.log("getFcDsValue = %.2f", fcDs);
+            Logging.log("getFcDsValue = %.2f, encoder dist = %.2f", fcDs, getEncoderDistance(false));
         }
         Logging.log("getFcDsValue after quit loop = %.2f", getFcDsValue());
-        runToPosition(-3 * driveDirection, false); // moving additional 3 inches
         setPowers(0.0);
         Logging.log("getFcDsValue after stop= %.2f", getFcDsValue());
         runWithoutEncoders();
