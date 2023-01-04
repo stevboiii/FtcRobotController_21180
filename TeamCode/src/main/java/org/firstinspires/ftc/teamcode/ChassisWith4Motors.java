@@ -75,7 +75,7 @@ public class ChassisWith4Motors {
     final double MAX_POWER = 1.0 - MAX_CORRECTION_POWER;
     final double RAMP_START_POWER = 0.35;
     final double RAMP_END_POWER = 0.2;
-    final double SHORT_DISTANCE_POWER = 0.4;
+    final double SHORT_DISTANCE_POWER = 0.45;
     final double AUTO_MAX_POWER = 0.7;
     final double MIN_ROTATE_POWER = 0.21;
     final double AUTO_ROTATE_POWER = 0.9;
@@ -653,9 +653,9 @@ public class ChassisWith4Motors {
             flDs = getFlDsValue();
             frDs = getFrDsValue();
             currEncoder = getEncoderDistance();
-            if ((fcDs < checkCsDistance + RAMP_DOWN_DISTANCE / 2.0) ||
-                    (flDs < checkCsDistance  + RAMP_DOWN_DISTANCE / 2.0) ||
-                    (frDs < checkCsDistance + RAMP_DOWN_DISTANCE / 2.0)) {
+            if ((fcDs < checkCsDistance + RAMP_DOWN_DISTANCE / 3.0) ||
+                    (flDs < checkCsDistance  + RAMP_DOWN_DISTANCE / 3.0) ||
+                    (frDs < checkCsDistance + RAMP_DOWN_DISTANCE / 3.0)) {
                 maxPower = SHORT_DISTANCE_POWER;
             }
             Logging.log("robot has not approached cone, fcDs = %2f, flDs = %2f, frDs = %2f", fcDs, flDs, frDs);

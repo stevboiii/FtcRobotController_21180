@@ -296,6 +296,7 @@ public class TeleopDualDrivers extends LinearOpMode {
                 telemetry.addData("Front Center distance sensor", "%.2f", chassis.getFcDsValue());
                 telemetry.addData("Front left distance sensor", "%.2f", chassis.getFlDsValue());
                 telemetry.addData("Front right distance sensor", "%.2f", chassis.getFrDsValue());
+                telemetry.addData("Right center distance sensor", "%.2f", chassis.getRcDsValue());
 
                 Logging.log("Get drive power = %.2f, set drive power = %.2f", chassisCurrentPower, maxP);
                 Logging.log("Ctrl hub current = %.2f, max = %.2f", ctrlHubCurrent, maxCtrlCurrent);
