@@ -229,23 +229,6 @@ public class ChassisWith4Motors {
     }
 
     /**
-     * run by encoders control without stop. Need to set motor mode to run using encoder before this
-     * function. and set powers to 0 after this function correctly.
-     * @param tDist the target distance in inch.
-     */
-    public void runByEncoderControl(double tDist) {
-        double sign = Math.copySign(1,tDist);
-        double startEn = getEncoderDistance();
-        double currEn = startEn;
-        while ((currEn - startEn) < tDist)
-        {
-            drivingWithPID(-SHORT_DISTANCE_POWER * sign, 0 ,0, true);
-            currEn = getEncoderDistance();
-            Logging.log("current encorder Distance = %.2f", currEn);
-        }
-    }
-
-    /**
      * Set to run to position mode for chassis motors
      *
      */
@@ -283,6 +266,7 @@ public class ChassisWith4Motors {
      * resets encoder for motors
      */
     private void resetEncoders() {
+        setPowers(0);
         BackRightDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         BackLeftDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         FrontRightDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -658,16 +642,26 @@ public class ChassisWith4Motors {
         double fcDs = getFcDsValue();
         double flDs = getFlDsValue();
         double frDs = getFrDsValue();
+        double maxPower = AUTO_MAX_POWER;
 
         runUsingEncoders();
+        double currEncoder = getEncoderDistance();
         while ((fcDs > checkCsDistance) && (flDs > checkCsDistance) && (frDs > checkCsDistance) &&
-                (getEncoderDistance() < targetDistance)) {
-            drivingWithPID(-SHORT_DISTANCE_POWER, 0.0, 0.0, true);
+                (currEncoder < targetDistance)) {
+            drivingWithPID(-maxPower, 0.0, 0.0, true);
             fcDs = getFcDsValue();
             flDs = getFlDsValue();
             frDs = getFrDsValue();
+            currEncoder = getEncoderDistance();
+            if ((fcDs < checkCsDistance + RAMP_DOWN_DISTANCE / 2.0) ||
+                    (flDs < checkCsDistance  + RAMP_DOWN_DISTANCE / 2.0) ||
+                    (frDs < checkCsDistance + RAMP_DOWN_DISTANCE / 2.0)) {
+                maxPower = SHORT_DISTANCE_POWER;
+            }
             Logging.log("robot has not approached cone, fcDs = %2f, flDs = %2f, frDs = %2f", fcDs, flDs, frDs);
         }
+
+        double startEn = currEncoder;
 
         if ((fcDs > frDs) || (fcDs > flDs)) {
             // stop robot and strafe the robot
@@ -676,26 +670,36 @@ public class ChassisWith4Motors {
             runUsingEncoders();
             double sign = Math.copySign(1, (frDs - flDs));
             Logging.log("cone is to the %s of robot.", (sign > 0) ? "left" : "right");
-            while ((colorSensor.blue() / blue0 < 1.4) && (colorSensor.red() / red0 < 1.4) &&
+            Logging.log("Gray color sensor values, blue0 = %d, red0 = %d.", blue0, red0);
+
+            int blue = colorSensor.blue();
+            int red = colorSensor.red();
+            Logging.log("Gray color sensor values, blue = %d, red = %d.", blue, red);
+            while ((blue / blue0 < 1.4) && (red / red0 < 1.4) &&
                     (getEncoderDistance(false) < Params.CHASSIS_WIDTH / 2.0)) {
                 drivingWithPID(0.0, 0.0, SHORT_DISTANCE_POWER * sign, true);
+                blue = colorSensor.blue();
+                red = colorSensor.red();
                 Logging.log("encoder distance %.2f", getEncoderDistance(false));
-                logColorSensor();
+                Logging.log("Gray color sensor values, blue = %d, red = %d.", blue, red);
             }
             setPowers(0.0);
             resetEncoders();
             runUsingEncoders();
+            startEn = 0;
             Logging.log("robot is on coloured tape after strafe.");
+
+
         }
 
         // driving forward to reaching cone
-        double startEn = getEncoderDistance();
-        while ((fcDs > reachConeDistance) && ((getEncoderDistance() - startEn) < Params.HALF_MAT / 2.0)){
-            drivingWithPID(-SHORT_DISTANCE_POWER, 0.0, 0.0, true);
+        while ((fcDs > reachConeDistance) && ((getEncoderDistance() - startEn) < targetDistance - currEncoder)){
+            drivingWithPID(-RAMP_END_POWER, 0.0, 0.0, true);
             fcDs = getFcDsValue();
             Logging.log("fcDs = %.2f", fcDs);
             Logging.log("encoder distance during driving  %.2f", getEncoderDistance(false));
         }
+
         setPowers(0.0);
         Logging.log("robot is ready for cone pick up.");
         runWithoutEncoders();
@@ -906,7 +910,7 @@ public class ChassisWith4Motors {
      * check the current encoder positions of wheel motors
      * @return the average motors encoder position
      */
-    private double getEncoderDistance() {
+    public double getEncoderDistance() {
         return (Math.abs(FrontLeftDrive.getCurrentPosition()) +
                 Math.abs(FrontRightDrive.getCurrentPosition()) +
                 Math.abs(BackRightDrive.getCurrentPosition()) +
@@ -917,7 +921,7 @@ public class ChassisWith4Motors {
      * check the current encoder positions of wheel motors
      * @return the average motors encoder position
      */
-    private double getEncoderDistance( boolean isBF) {
+    public double getEncoderDistance( boolean isBF) {
         double dis;
         double aveEncoder = (Math.abs(FrontLeftDrive.getCurrentPosition()) +
                 Math.abs(FrontRightDrive.getCurrentPosition()) +

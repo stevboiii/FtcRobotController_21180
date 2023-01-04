@@ -68,11 +68,76 @@ public class AutonomousTest extends AutonomousRight {
     @Override
     public void autonomousCore() {
 
-        slider.setInchPosition(Params.WALL_POSITION);
+        chassis.runUsingEncoders();
+        double encoderRange = 24;
+
+        double currEnDist = 0.0;
+
+        // controlled by encoders
+        /*
+        while(encoderRange > currEnDist) {
+            chassis.drivingWithPID(0, 0.0, -0.2, true);
+            currEnDist = chassis.getEncoderDistance(false);
+            Logging.log("current encoder distance = %.2f", currEnDist);
+        }
+
+         */
+        for (int i= 0; i<3; i++) {
+
+
+            loadConeThenDriving();
+
+            sleep(2000);
+
+            unloadConeThenDriving();
+
+            sleep(2000);
+        }
+
+    }
+
+
+    /**
+     * Special using case for loading cone from base, then driving to nearest high junction
+     */
+    private void loadConeThenDriving() {
         armClaw.armFlipFrontLoad();
-        sleep(10000);
+        armClaw.clawOpen();
+        slider.setInchPosition(Params.GROUND_CONE_POSITION);
+        chassis.runToPosition(-autoLoadMovingDistance, true); // moving to loading position
+        slider.waitRunningComplete();
+        armClaw.clawClose();
+        sleep(250); // 200 ms
+        slider.setInchPosition(Params.HIGH_JUNCTION_POS);
+        armClaw.armFlipCenter();
+        chassis.runToPosition(-Params.BASE_TO_JUNCTION + autoLoadMovingDistance, true);
+        slider.waitRunningComplete();
+        armClaw.armFlipBackUnload();
+    }
 
-        chassis.strafeToJunction(-24, 0, 12);
 
+    /**
+     * Special using case for unloading cone on high junction, then driving to cone base
+     */
+    private void unloadConeThenDriving() {
+        armClaw.armFlipBackLoad();
+        armClaw.clawOpen();
+        sleep(250); // to make sure claw Servo is at open position, 250 ms
+        chassis.runUsingEncoders();
+        armClaw.armFlipFrontLoad();
+        double startEn = chassis.getEncoderDistance();
+        double currEn = startEn;
+        while ((currEn - startEn) < Params.BASE_TO_JUNCTION )
+        {
+            chassis.drivingWithPID(-0.5, 0 ,0, true);
+            currEn = chassis.getEncoderDistance();
+            Logging.log("current encorder Distance is = %.2f", currEn);
+            if (Math.abs(currEn - startEn - 4)  < 1.0) {
+                slider.setInchPosition(Params.WALL_POSITION - Params.coneLoadStackGap * 3);
+            }
+        }
+        chassis.setPowers(0); // stop chassis driving
+        chassis.runWithoutEncoders();
+        slider.waitRunningComplete();
     }
 }

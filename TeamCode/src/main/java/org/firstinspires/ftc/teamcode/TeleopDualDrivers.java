@@ -361,10 +361,10 @@ public class TeleopDualDrivers extends LinearOpMode {
         chassis.runToPosition(-autoLoadMovingDistance, true); // moving to loading position
         slider.waitRunningComplete();
         armClaw.clawClose();
-        sleep(200); // 200 ms
+        sleep(250); // 200 ms
         slider.setInchPosition(Params.HIGH_JUNCTION_POS);
         armClaw.armFlipCenter();
-        chassis.runToPosition(-Params.BASE_TO_JUNCTION, true);
+        chassis.runToPosition(-Params.BASE_TO_JUNCTION + autoLoadMovingDistance, true);
         slider.waitRunningComplete();
         armClaw.armFlipBackUnload();
     }
@@ -390,10 +390,18 @@ public class TeleopDualDrivers extends LinearOpMode {
         armClaw.clawOpen();
         sleep(250); // to make sure claw Servo is at open position, 250 ms
         chassis.runUsingEncoders();
-        chassis.runByEncoderControl(moveOutJunctionDistance); // move out from junction
         armClaw.armFlipFrontLoad();
-        slider.setInchPosition(Params.WALL_POSITION - Params.coneLoadStackGap * 3);
-        chassis.runByEncoderControl(Params.BASE_TO_JUNCTION - moveOutJunctionDistance);
+        double startEn = chassis.getEncoderDistance();
+        double currEn = startEn;
+        while ((currEn - startEn) < Params.BASE_TO_JUNCTION )
+        {
+            chassis.drivingWithPID(-chassis.SHORT_DISTANCE_POWER, 0 ,0, true);
+            currEn = chassis.getEncoderDistance();
+            Logging.log("current encoder Distance is = %.2f", currEn);
+            if (Math.abs(currEn - startEn - 4)  < 1.0) {
+                slider.setInchPosition(Params.WALL_POSITION - Params.coneLoadStackGap * 3);
+            }
+        }
         chassis.setPowers(0); // stop chassis driving
         chassis.runWithoutEncoders();
     }
