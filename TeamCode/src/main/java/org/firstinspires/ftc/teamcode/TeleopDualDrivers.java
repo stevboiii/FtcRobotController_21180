@@ -282,6 +282,7 @@ public class TeleopDualDrivers extends LinearOpMode {
             // auto drop off cone, moving to cone base, auto pick up cone, then moving to junction.
             if (gpButtons.teapot) {
                 unloadConeThenDriving();
+                slider.waitRunningComplete();
                 loadConeThenDriving();
             }
 
