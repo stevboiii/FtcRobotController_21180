@@ -231,6 +231,7 @@ public class AutonomousRight extends LinearOpMode {
 
         //drive forward and let V to touch junction
         chassis.runToPosition(-movingDistBeforeDrop, true);
+        //chassis.backWithEncoderAndSensor(movingDistBeforeDrop, 0);
         Logging.log("Autonomous - Robot V reached junction.");
 
         // drop cone and back to the center of mat
@@ -269,6 +270,7 @@ public class AutonomousRight extends LinearOpMode {
 
             // moving forward V to junction
             chassis.runToPosition(-movingDistBeforeDrop, true);
+            //chassis.backWithEncoderAndSensor(movingDistBeforeDrop, 0);
 
             // unload cone & adjust, 0.2 inch for cone thickness adjust
             autoUnloadCone(movingDistAfterDrop);

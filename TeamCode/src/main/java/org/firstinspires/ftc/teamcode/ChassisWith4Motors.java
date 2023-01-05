@@ -706,13 +706,12 @@ public class ChassisWith4Motors {
     }
 
     /**
-     * Move romot from cone stack to junction.
+     * Move robot from cone stack to junction.
      * @param targetDistance
      */
     public void moveToJunction(double targetDistance, int robotInitLoc) {
         runUsingEncoders();
         double direction = Math.copySign(1, targetDistance);
-        double bcDs = getFcDsValue();
         while (getEncoderDistance() < targetDistance) {
             drivingWithPID(AUTO_MAX_POWER * direction, 0.0, 0.0, true);
         }
@@ -720,6 +719,20 @@ public class ChassisWith4Motors {
         double startEn = getEncoderDistance();
         while ((getEncoderDistance() - startEn) < Params.HALF_MAT) {
             drivingWithPID(RAMP_END_POWER * direction, robotInitLoc * RAMP_END_POWER, 0, true);
+        }
+        setPowers(0.0);
+        runWithoutEncoders();
+    }
+
+    /**
+     * Move robot V to junction controlled by encoders and back center distance sensor.
+     * @param targetDistance
+     */
+    public void backWithEncoderAndSensor(double targetDistance, double sensorThreshold) {
+        runUsingEncoders();
+        while ((getEncoderDistance() < targetDistance) && (getRcDsValue() > sensorThreshold)) {
+            drivingWithPID(SHORT_DISTANCE_POWER, 0.0, 0.0, true);
+            Logging.log("Distance sensor %.2f", getRcDsValue());
         }
         setPowers(0.0);
         runWithoutEncoders();

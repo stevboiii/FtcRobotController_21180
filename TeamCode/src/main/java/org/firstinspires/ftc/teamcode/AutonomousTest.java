@@ -68,76 +68,42 @@ public class AutonomousTest extends AutonomousRight {
     @Override
     public void autonomousCore() {
 
+        autoLoadCone(Params.coneStack5th);
+        sleep(300);
         chassis.runUsingEncoders();
-        double encoderRange = 24;
 
-        double currEnDist = 0.0;
-
-        // controlled by encoders
-        /*
-        while(encoderRange > currEnDist) {
-            chassis.drivingWithPID(0, 0.0, -0.2, true);
-            currEnDist = chassis.getEncoderDistance(false);
-            Logging.log("current encoder distance = %.2f", currEnDist);
+        double targetDistance = moveToMatCenterAfterPick; // back to mat center straightly.
+        while (chassis.getEncoderDistance() < targetDistance) {
+            chassis.drivingWithPID(chassis.AUTO_MAX_POWER, 0.0, 0.0, true);
         }
 
-         */
-        for (int i= 0; i<3; i++) {
-
-
-            loadConeThenDriving();
-
-            sleep(2000);
-
-            unloadConeThenDriving();
-
-            sleep(2000);
+        double startAngle = chassis.getAngle();
+        while (chassis.getAngle() < startAngle + 45) {
+            chassis.drivingWithPID(0, 0.0, chassis.SHORT_DISTANCE_POWER, true);
         }
 
+        targetDistance = movingDistBeforeDrop;
+        while (chassis.getEncoderDistance() < targetDistance) {
+            chassis.drivingWithPID(chassis.AUTO_MAX_POWER, 0.0, 0.0, true);
+        }
+
+        sleep(2000);
     }
 
 
     /**
-     * Special using case for loading cone from base, then driving to nearest high junction
+     * During autonomous, cone may be located with different height position
+     * @param coneLocation: the target cone high location.
      */
-    private void loadConeThenDriving() {
-        armClaw.armFlipFrontLoad();
-        armClaw.clawOpen();
-        slider.setInchPosition(Params.GROUND_CONE_POSITION);
+    private void autoLoadCone(double coneLocation) {
+        slider.setInchPosition(coneLocation);
         chassis.runToPosition(-autoLoadMovingDistance, true); // moving to loading position
         slider.waitRunningComplete();
         armClaw.clawClose();
-        sleep(250); // 200 ms
-        slider.setInchPosition(Params.HIGH_JUNCTION_POS);
-        armClaw.armFlipCenter();
-        chassis.runToPosition(-Params.BASE_TO_JUNCTION + autoLoadMovingDistance, true);
-        slider.waitRunningComplete();
+        sleep(100); // wait to make sure clawServo is at grep position, 200 ms
+        chassis.rotateIMUTargetAngle(-90 * autonomousStartLocation);
+        slider.setInchPosition(Params.WALL_POSITION);
         armClaw.armFlipBackUnload();
-    }
-
-
-    /**
-     * Special using case for unloading cone on high junction, then driving to cone base
-     */
-    private void unloadConeThenDriving() {
-        armClaw.armFlipBackLoad();
-        armClaw.clawOpen();
-        sleep(250); // to make sure claw Servo is at open position, 250 ms
-        chassis.runUsingEncoders();
-        armClaw.armFlipFrontLoad();
-        double startEn = chassis.getEncoderDistance();
-        double currEn = startEn;
-        while ((currEn - startEn) < Params.BASE_TO_JUNCTION )
-        {
-            chassis.drivingWithPID(-0.5, 0 ,0, true);
-            currEn = chassis.getEncoderDistance();
-            Logging.log("current encorder Distance is = %.2f", currEn);
-            if (Math.abs(currEn - startEn - 4)  < 1.0) {
-                slider.setInchPosition(Params.WALL_POSITION - Params.coneLoadStackGap * 3);
-            }
-        }
-        chassis.setPowers(0); // stop chassis driving
-        chassis.runWithoutEncoders();
-        slider.waitRunningComplete();
+        slider.waitRunningComplete(); // make sure slider has been lifted.
     }
 }
