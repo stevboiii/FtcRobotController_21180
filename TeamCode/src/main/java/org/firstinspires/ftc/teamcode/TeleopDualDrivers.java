@@ -279,6 +279,12 @@ public class TeleopDualDrivers extends LinearOpMode {
                 unloadConeThenDriving();
             }
 
+            // auto drop off cone, moving to cone base, auto pick up cone, then moving to junction.
+            if (gpButtons.teapot) {
+                unloadConeThenDriving();
+                loadConeThenDriving();
+            }
+
             if (debugFlag) {
                 ctrlHubCurrent = ctrlHub.getCurrent(CurrentUnit.AMPS);
                 ctrlHubVolt = ctrlHub.getInputVoltage(VoltageUnit.VOLTS);
@@ -296,7 +302,7 @@ public class TeleopDualDrivers extends LinearOpMode {
                 telemetry.addData("Front Center distance sensor", "%.2f", chassis.getFcDsValue());
                 telemetry.addData("Front left distance sensor", "%.2f", chassis.getFlDsValue());
                 telemetry.addData("Front right distance sensor", "%.2f", chassis.getFrDsValue());
-                telemetry.addData("Right center distance sensor", "%.2f", chassis.getRcDsValue());
+                telemetry.addData("Right center distance sensor", "%.2f", chassis.getBcDsValue());
 
                 Logging.log("Get drive power = %.2f, set drive power = %.2f", chassisCurrentPower, maxP);
                 Logging.log("Ctrl hub current = %.2f, max = %.2f", ctrlHubCurrent, maxCtrlCurrent);
@@ -365,8 +371,8 @@ public class TeleopDualDrivers extends LinearOpMode {
         sleep(250); // 200 ms
         slider.setInchPosition(Params.HIGH_JUNCTION_POS);
         armClaw.armFlipCenter();
-        chassis.runToPosition(-Params.BASE_TO_JUNCTION + autoLoadMovingDistance, true);
-        slider.waitRunningComplete();
+        chassis.drivingWithSensor(chassis.backCenterDS, -Params.BASE_TO_JUNCTION, 6, true, true);
+        //slider.waitRunningComplete();
         armClaw.armFlipBackUnload();
     }
 
@@ -376,10 +382,11 @@ public class TeleopDualDrivers extends LinearOpMode {
      */
     private void unloadCone(double drivingDistance) {
         armClaw.armFlipBackLoad();
+        slider.movingSliderInch(-2);
         armClaw.clawOpen();
         sleep(250); // to make sure claw Servo is at open position, 250 ms
-        chassis.runToPosition(drivingDistance, true); // move out from junction
         armClaw.armFlipFrontLoad();
+        chassis.runToPosition(drivingDistance, true); // move out from junction
         slider.setInchPosition(Params.WALL_POSITION);
     }
 
@@ -388,22 +395,15 @@ public class TeleopDualDrivers extends LinearOpMode {
      */
     private void unloadConeThenDriving() {
         armClaw.armFlipBackLoad();
+        slider.movingSliderInch(-2);
         armClaw.clawOpen();
         sleep(250); // to make sure claw Servo is at open position, 250 ms
-        chassis.runUsingEncoders();
+
         armClaw.armFlipFrontLoad();
-        double startEn = chassis.getEncoderDistance();
-        double currEn = startEn;
-        while ((currEn - startEn) < Params.BASE_TO_JUNCTION )
-        {
-            chassis.drivingWithPID(-chassis.SHORT_DISTANCE_POWER, 0 ,0, true);
-            currEn = chassis.getEncoderDistance();
-            Logging.log("current encoder Distance is = %.2f", currEn);
-            if (Math.abs(currEn - startEn - 4)  < 1.0) {
-                slider.setInchPosition(Params.WALL_POSITION - Params.coneLoadStackGap * 3);
-            }
-        }
-        chassis.setPowers(0); // stop chassis driving
-        chassis.runWithoutEncoders();
+
+        // driving back to cone base
+        chassis.drivingWithSensor(chassis.frontCenterDS, 3, 0, false, false);
+        slider.setInchPosition(Params.WALL_POSITION - Params.coneLoadStackGap * 3);
+        chassis.drivingWithSensor(chassis.frontCenterDS, Params.BASE_TO_JUNCTION, 6, false, true);
     }
 }

@@ -70,23 +70,13 @@ public class AutonomousTest extends AutonomousRight {
 
         autoLoadCone(Params.coneStack5th);
         sleep(300);
-        chassis.runUsingEncoders();
+        chassis.drivingWithSensor(chassis.backCenterDS, Params.HALF_MAT, 0, true, false);
 
-        double targetDistance = moveToMatCenterAfterPick; // back to mat center straightly.
-        while (chassis.getEncoderDistance() < targetDistance) {
-            chassis.drivingWithPID(chassis.AUTO_MAX_POWER, 0.0, 0.0, true);
+        while (chassis.getEncoderDistance() < Params.HALF_MAT * 2) {
+            chassis.drivingWithPID(chassis.AUTO_MAX_POWER, 0.0, -chassis.AUTO_MAX_POWER, true);
         }
 
-        double startAngle = chassis.getAngle();
-        while (chassis.getAngle() < startAngle + 45) {
-            chassis.drivingWithPID(0, 0.0, chassis.SHORT_DISTANCE_POWER, true);
-        }
-
-        targetDistance = movingDistBeforeDrop;
-        while (chassis.getEncoderDistance() < targetDistance) {
-            chassis.drivingWithPID(chassis.AUTO_MAX_POWER, 0.0, 0.0, true);
-        }
-
+        chassis.drivingWithSensor(chassis.backCenterDS, Params.HALF_MAT, 6, false, true);
         sleep(2000);
     }
 
@@ -101,7 +91,7 @@ public class AutonomousTest extends AutonomousRight {
         slider.waitRunningComplete();
         armClaw.clawClose();
         sleep(100); // wait to make sure clawServo is at grep position, 200 ms
-        chassis.rotateIMUTargetAngle(-90 * autonomousStartLocation);
+        chassis.rotateIMUTargetAngle(0);
         slider.setInchPosition(Params.WALL_POSITION);
         armClaw.armFlipBackUnload();
         slider.waitRunningComplete(); // make sure slider has been lifted.

@@ -72,13 +72,13 @@ public class ChassisWith4Motors {
 
     // Driving motor variables
     final double MAX_CORRECTION_POWER = 0.12;
+    final double AUTO_ROTATE_POWER = 0.9;
     final double MAX_POWER = 1.0 - MAX_CORRECTION_POWER;
+    final double AUTO_MAX_POWER = 0.7;
+    final double SHORT_DISTANCE_POWER = 0.45;
     final double RAMP_START_POWER = 0.35;
     final double RAMP_END_POWER = 0.2;
-    final double SHORT_DISTANCE_POWER = 0.45;
-    final double AUTO_MAX_POWER = 0.7;
     final double MIN_ROTATE_POWER = 0.21;
-    final double AUTO_ROTATE_POWER = 0.9;
 
     // Position variables for autonomous
     final double COUNTS_PER_MOTOR_REV = 537.7;   // eg: GoBILDA 312 RPM Yellow Jacket
@@ -106,8 +106,8 @@ public class ChassisWith4Motors {
 
     //sensors
     final double DISTANCE_SENSOR_ALIGN = 5.2;
-    private DistanceSensor frontCenterDS = null;
-    private DistanceSensor rightCenterDS = null;
+    DistanceSensor frontCenterDS = null;
+    DistanceSensor backCenterDS = null;
     private DistanceSensor frontRightDS = null;
     private DistanceSensor frontLeftDS = null;
 
@@ -186,7 +186,7 @@ public class ChassisWith4Motors {
 
         // Distance sensors
         frontCenterDS = hardwareMap.get(DistanceSensor.class, "fcds");
-        rightCenterDS = hardwareMap.get(DistanceSensor.class, "rcds");
+        backCenterDS = hardwareMap.get(DistanceSensor.class, "rcds");
 
         frontLeftDS = hardwareMap.get(DistanceSensor.class, "flds");
         frontRightDS = hardwareMap.get(DistanceSensor.class, "frds");
@@ -250,7 +250,16 @@ public class ChassisWith4Motors {
         BackLeftDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         BackRightDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
     }
-
+    /**
+     * Set chassis motors with run using encoders mode without reset encoders
+     */
+    private void runUsingEncoders2() {
+        FrontLeftDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        FrontRightDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        BackLeftDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        BackRightDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+    }
+    
     /**
      * Set chassis motors with run using encoders mode
      */
@@ -730,12 +739,73 @@ public class ChassisWith4Motors {
      */
     public void backWithEncoderAndSensor(double targetDistance, double sensorThreshold) {
         runUsingEncoders();
-        while ((getEncoderDistance() < targetDistance) && (getRcDsValue() > sensorThreshold)) {
+        while ((getEncoderDistance() < targetDistance) && (getBcDsValue() > sensorThreshold)) {
             drivingWithPID(SHORT_DISTANCE_POWER, 0.0, 0.0, true);
-            Logging.log("Distance sensor %.2f", getRcDsValue());
+            Logging.log("Distance sensor %.2f", getBcDsValue());
         }
         setPowers(0.0);
         runWithoutEncoders();
+    }
+
+    /**
+     * driving distance controlled by distance sensor and motor encoders.
+     * @param ds the distance sensor
+     * @param targetDis the total target distance, "+" forward, "-" back
+     * @param threshold driving stop when the distance sensor value less than threshold
+     * @param rampUpOn driving power ramp up on / off
+     * @param rampDownOn driving power ramp down on / off
+     */
+    public void drivingWithSensor(DistanceSensor ds, double targetDis, double threshold, boolean rampUpOn, boolean rampDownOn) {
+
+        double maxPower;
+        double currPower = RAMP_START_POWER;
+        double direct = -Math.copySign(1, targetDis);
+        double startEn = getEncoderDistance();
+        double currEn = startEn;
+        double currDs;
+        
+        targetDis = Math.abs(targetDis);
+        runUsingEncoders2();
+        
+        // ramp up power
+        if (rampUpOn && (targetDis > RAMP_UP_DISTANCE / 2 + threshold)) {
+            while ((currEn - startEn) < RAMP_UP_DISTANCE / 2) {
+                drivingWithPID(currPower * direct, 0.0, 0.0, true);
+                currEn = getEncoderDistance();
+                if (currEn > RAMP_UP_DISTANCE / 4) {
+                    currPower = SHORT_DISTANCE_POWER;
+                }
+                Logging.log("Current encoder distance %.2f, curr power %.2f", currEn, currPower);
+            }
+        }
+
+        if (targetDis > RAMP_UP_DISTANCE / 2 + threshold) {
+            maxPower = AUTO_MAX_POWER;
+        }
+        else {
+            maxPower = SHORT_DISTANCE_POWER;
+        }
+        
+        // driving with max power
+        currDs = ds.getDistance(DistanceUnit.INCH);
+        currPower = maxPower;
+        while (((currEn - startEn) < targetDis) && (currDs > threshold)) {
+            drivingWithPID(currPower * direct, 0.0, 0.0, true);
+            currEn = getEncoderDistance();
+            currDs = ds.getDistance(DistanceUnit.INCH);
+            
+            // ramp dowm
+            if (rampDownOn && (currDs < RAMP_DOWN_DISTANCE / 2 + threshold)) {
+                currPower = RAMP_END_POWER;
+            }
+            Logging.log("Current encoder distance %.2f, distance sensor %.2f", currEn, currDs);
+        }
+        
+        // stop if ramp down is on
+        if (rampDownOn) {
+            setPowers(0);
+            runWithoutEncoders();
+        }
     }
 
     /**
@@ -784,7 +854,7 @@ public class ChassisWith4Motors {
     /**
      * drive power calculation and setting.
      *
-     * @param drive power from drive button
+     * @param drive power from drive button, "-" is forward, and "+" is back
      * @param turn power from turn button
      * @param strafe power from strafe button
      * @param PIDEnabled flag to enable/disable PID correction.
@@ -866,11 +936,11 @@ public class ChassisWith4Motors {
     }
 
     /**
-     * Get the right center distance sensor value.
-     * @return the value of right center distance sensor value, in inch
+     * Get the back center distance sensor value.
+     * @return the value of back center distance sensor value, in inch
      */
-    public double getRcDsValue() {
-        return rightCenterDS.getDistance(DistanceUnit.INCH);
+    public double getBcDsValue() {
+        return backCenterDS.getDistance(DistanceUnit.INCH);
     }
 
     /**

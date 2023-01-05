@@ -110,6 +110,16 @@ public class SlidersWith2Motors
     }
 
     /**
+     * Moving slider down ("-") or up ("+") in inch
+     * @param distance the disntance want to moving the sliders
+     */
+    public void movingSliderInch(double distance) {
+        int currPos = getPosition();
+        setCountPosition(currPos + (int)(distance * COUNTS_PER_INCH));
+        waitRunningComplete();
+    }
+
+    /**
      * Read current slider motors position. Return the mean value of left and right motor positions.
      * return slider motor position.
      */

@@ -302,7 +302,7 @@ public class AutonomousRight extends LinearOpMode {
         slider.waitRunningComplete();
         armClaw.clawClose();
         sleep(100); // wait to make sure clawServo is at grep position, 200 ms
-        chassis.rotateIMUTargetAngle(-90 * autonomousStartLocation);
+        chassis.rotateIMUTargetAngle(-90.0 * autonomousStartLocation);
         slider.setInchPosition(Params.WALL_POSITION);
         armClaw.armFlipBackUnload();
         slider.waitRunningComplete(); // make sure slider has been lifted.
@@ -317,8 +317,8 @@ public class AutonomousRight extends LinearOpMode {
         // Make sure it is 45 degree before V leaving junction
         chassis.rotateIMUTargetAngle(-45.0 * autonomousStartLocation);
         sleep(100); // to make sure claw Servo is at open position, 250 ms
-        chassis.runToPosition(moveDistanceAfterDrop, true); // move out from junction
         armClaw.armFlipFrontLoad();
+        chassis.runToPosition(moveDistanceAfterDrop, true); // move out from junction
         slider.setInchPosition(Params.WALL_POSITION);
         Logging.log("Auto unload - Cone has been unloaded.");
     }
