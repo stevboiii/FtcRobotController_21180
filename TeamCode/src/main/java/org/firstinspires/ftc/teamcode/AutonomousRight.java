@@ -96,7 +96,7 @@ public class AutonomousRight extends LinearOpMode {
     double autoLoadMovingDistance = 1.0; // in INCH
     double matCenterToJunctionDistance = 14.5;
     double movingDistBeforeDrop = Params.HALF_MAT - Params.V_DISTANCE_TO_CENTER; // in INCH
-    double movingDistAfterDrop = Params.HALF_MAT - Params.V_DISTANCE_TO_CENTER;
+    double movingDistAfterDrop = Params.HALF_MAT - Params.V_DISTANCE_TO_CENTER + 1; // 1 inch for adjust
     double matCenterToConeStack = 28; // inch
     double moveToMatCenterAfterPick = matCenterToConeStack - autoLoadMovingDistance - 2.5; // 3 inch for inertia adjust
 
@@ -233,24 +233,20 @@ public class AutonomousRight extends LinearOpMode {
         chassis.runToPosition(-movingDistBeforeDrop, true);
         Logging.log("Autonomous - Robot V reached junction.");
 
-        //sleep(200); // waiting for junction stop shaking
         // drop cone and back to the center of mat
         autoUnloadCone(movingDistAfterDrop);
 
         for(int autoLoop = 0; autoLoop < 3; autoLoop++) {
             Logging.log("Autonomous - loop index: %d ", autoLoop);
 
-            // right turn 135 degree (45 + 90).
-            chassis.rotateIMUTargetAngle(-90.0 * autonomousStartLocation);
-            sleep(100); // wait for chassis stop from previous rotation inertia.
-
-            // Rotation for accurate 135 degrees
+            // right turn 45 degree.
             chassis.rotateIMUTargetAngle(-90.0 * autonomousStartLocation);
 
-            // drive robot to loading area.
-            //chassis.runToPosition(matCenterToConeStack, true); // to do
+            // Rotation for accurate 45 degrees
+            chassis.rotateIMUTargetAngle(-90.0 * autonomousStartLocation);
+
+            // drive robot to cone loading area.
             chassis.runToConeStack(3 * Params.HALF_MAT - Params.V_DISTANCE_TO_CENTER, 12, 6);
-            Logging.log("Autonomous - Robot has arrived loading area.");
 
             Logging.log("fcDistance sensor value before loading: %.2f ", chassis.getFcDsValue());
             // load cone
@@ -263,7 +259,6 @@ public class AutonomousRight extends LinearOpMode {
             // lift slider during left turning 135 degree facing to high junction.
             slider.setInchPosition(Params.MEDIUM_JUNCTION_POS);
             chassis.rotateIMUTargetAngle(-45.0 * autonomousStartLocation);
-            //sleep(100); // wait for chassis stop from previous rotation inertia.
 
             //Rotation for accurate 45 degrees
             chassis.rotateIMUTargetAngle(-45.0 * autonomousStartLocation);
@@ -275,10 +270,6 @@ public class AutonomousRight extends LinearOpMode {
             // moving forward V to junction
             chassis.runToPosition(-movingDistBeforeDrop, true);
 
-            // Make sure it is 45 degree before V leaving junction
-            chassis.rotateIMUTargetAngle(-45.0 * autonomousStartLocation);
-
-            //sleep(200); // waiting for junction stop shaking
             // unload cone & adjust, 0.2 inch for cone thickness adjust
             autoUnloadCone(movingDistAfterDrop);
             Logging.log("Autonomous - cone %d has been unloaded.", autoLoop + 2);
@@ -319,9 +310,11 @@ public class AutonomousRight extends LinearOpMode {
      * @param moveDistanceAfterDrop moving back distance after dropping the cone to move out claw from junction.
      */
     private void autoUnloadCone(double moveDistanceAfterDrop) {
-        armClaw.armFlipBackLoad();
+        armClaw.armFlipBackUnload();
         armClaw.clawOpen();
-        sleep(200); // to make sure claw Servo is at open position, 250 ms
+        // Make sure it is 45 degree before V leaving junction
+        chassis.rotateIMUTargetAngle(-45.0 * autonomousStartLocation);
+        sleep(100); // to make sure claw Servo is at open position, 250 ms
         chassis.runToPosition(moveDistanceAfterDrop, true); // move out from junction
         armClaw.armFlipFrontLoad();
         slider.setInchPosition(Params.WALL_POSITION);
