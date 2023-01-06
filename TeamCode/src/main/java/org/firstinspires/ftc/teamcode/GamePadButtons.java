@@ -41,8 +41,8 @@ public class GamePadButtons {
 
     public void checkGamepadButtons(@NonNull Gamepad gamepad1, @NonNull Gamepad gamepad2) {
         //gamepad1 buttons
-        robotDrive              = -gamepad1.left_stick_y; // add "-" to switch robot heading and tail
-        robotStrafe             = -gamepad1.left_stick_x; // add "-" to switch robot heading and tail
+        robotDrive              = gamepad1.left_stick_y;
+        robotStrafe             = gamepad1.left_stick_x;
         robotTurn               = gamepad1.right_stick_x;
         speedDown               = gamepad1.dpad_left || gamepad1.x;
         speedUp                 = gamepad1.dpad_right || gamepad1.b;

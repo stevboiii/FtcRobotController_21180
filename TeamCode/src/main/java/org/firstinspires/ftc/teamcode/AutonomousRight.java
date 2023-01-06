@@ -247,7 +247,7 @@ public class AutonomousRight extends LinearOpMode {
             chassis.rotateIMUTargetAngle(-90.0 * autonomousStartLocation);
 
             // drive robot to cone loading area.
-            chassis.runToConeStack(3 * Params.HALF_MAT - Params.V_DISTANCE_TO_CENTER, 12, 6);
+            chassis.runToConeStack(3 * Params.HALF_MAT - Params.V_DISTANCE_TO_CENTER, Params.HALF_MAT, 6);
 
             Logging.log("fcDistance sensor value before loading: %.2f ", chassis.getFcDsValue());
             // load cone

@@ -122,7 +122,7 @@ public class TeleopTest extends LinearOpMode {
 
             double drive = maxDrivePower * gpButtons.robotDrive;
             double turn  =  maxDrivePower * (-gpButtons.robotTurn);
-            double strafe = maxDrivePower * (-gpButtons.robotStrafe);
+            double strafe = maxDrivePower * gpButtons.robotStrafe;
 
             chassis.drivingWithPID(drive, turn, strafe, true);
 
