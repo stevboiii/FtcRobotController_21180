@@ -296,7 +296,7 @@ public class AutonomousRight extends LinearOpMode {
      * During autonomous, cone may be located with different height position
      * @param coneLocation: the target cone high location.
      */
-    private void autoLoadCone(double coneLocation) {
+    public void autoLoadCone(double coneLocation) {
         slider.setInchPosition(coneLocation);
         chassis.runToPosition(-autoLoadMovingDistance, true); // moving to loading position
         slider.waitRunningComplete();
@@ -311,7 +311,7 @@ public class AutonomousRight extends LinearOpMode {
     /**
      * @param moveDistanceAfterDrop moving back distance after dropping the cone to move out claw from junction.
      */
-    private void autoUnloadCone(double moveDistanceAfterDrop) {
+    public void autoUnloadCone(double moveDistanceAfterDrop) {
         armClaw.armFlipBackUnload();
         armClaw.clawOpen();
         // Make sure it is 45 degree before V leaving junction

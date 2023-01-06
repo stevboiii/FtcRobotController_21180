@@ -68,7 +68,7 @@ public class AutonomousTest extends AutonomousRight {
     @Override
     public void autonomousCore() {
 
-        autoLoadCone(Params.coneStack5th);
+        loadCone(Params.coneStack5th);
         sleep(300);
         chassis.drivingWithSensor(chassis.backCenterDS, -Params.HALF_MAT, 0, true, false);
 
@@ -85,7 +85,7 @@ public class AutonomousTest extends AutonomousRight {
      * During autonomous, cone may be located with different height position
      * @param coneLocation: the target cone high location.
      */
-    private void autoLoadCone(double coneLocation) {
+    private void loadCone(double coneLocation) {
         slider.setInchPosition(coneLocation);
         chassis.runToPosition(-autoLoadMovingDistance, true); // moving to loading position
         slider.waitRunningComplete();
