@@ -71,96 +71,91 @@ import com.qualcomm.robotcore.eventloop.opmode.Disabled;
  */
 
 @Autonomous(name="Auto Flip Right", group="Concept")
-@Disabled
+//@Disabled
 public class AutoFlipRight extends AutonomousRight {
 
     @Override
     public void autonomousCore() {
-        // slider setting
+        slider.setInchPosition(Params.LOW_JUNCTION_POS);
+
+        //move center of robot to the edge of 3rd mat
+        chassis.runToPosition(4 * Params.HALF_MAT - Params.CHASSIS_LENGTH, true);
+
+        // turn robot to make sure it is at 0 degree before backing to mat center
+        chassis.rotateIMUTargetAngle(0.0);
+
+        // lift slider
         slider.setInchPosition(Params.MEDIUM_JUNCTION_POS);
-
+        chassis.rotateIMUTargetAngle(-45.0 * autonomousStartLocation);
+        Logging.log("fcDistance sensor value before moving V to junction: %.2f ", chassis.getFcDsValue());
         armClaw.armFlipBackUnload();
-
-        //move center of robot to the center of 2nd mat edge, stop by checking front center distance sensor
-        chassis.strafeToJunction(-Params.INIT_POSITION_TO_2ND_MAT_EDGE * autonomousStartLocation, 6, 12);
-
-        // driving to medium junction
-        chassis.runToPosition(-Params.HALF_MAT + Params.V_DISTANCE_TO_CENTER, true);
-
         slider.waitRunningComplete();
 
+        //drive forward and let V touch junction
+        chassis.runToPosition(-7, true);
+        //chassis.backWithEncoderAndSensor(movingDistBeforeDrop, 0);
+        Logging.log("Autonomous - Robot V reached junction.");
+
         // drop cone and back to the center of mat
-        unloadCone(Params.HALF_MAT - Params.V_DISTANCE_TO_CENTER);
+        autoUnloadCone(movingDistAfterDrop);
 
-        Logging.log("Complete unloading cone");
-        chassis.runToPosition(-Params.HALF_MAT * autonomousStartLocation, false);
+        for(int autoLoop = 0; autoLoop < 3; autoLoop++) {
+            Logging.log("Autonomous - loop index: %d ", autoLoop);
 
-        chassis.runToConeStack(2 * Params.HALF_MAT, 12, 6);
+            // drive robot to cone loading area.
+            chassis.runUsingEncoders();
+            while ((chassis.getEncoderDistance() < 11.97))
+            {
+                chassis.drivingWithPID(chassis.AUTO_MAX_POWER, 0.0, -chassis.AUTO_MAX_POWER, true);
+                //Logging.log("Red = %d, Green = %d, Blue = %d", colorSensor.red(), colorSensor.green(), colorSensor.blue());
+            }
+            chassis.setPowers(0);
+            chassis.runToConeStack(3 * Params.HALF_MAT - Params.V_DISTANCE_TO_CENTER, 12, 6);
 
-        Logging.log("Complete run to cone stack");
+            Logging.log("fcDistance sensor value before loading: %.2f ", chassis.getFcDsValue());
+            // load cone
+            autoLoadCone(Params.coneStack5th - Params.coneLoadStackGap * autoLoop);
 
-        for(int autoLoop = 0; autoLoop < 1; autoLoop++) {
-            loadCone(Params.coneStack5th - Params.coneLoadStackGap * autoLoop);
-            Logging.log("Complete loading cone");
+            // lift slider during driving back to mat center.
+            chassis.runToPosition(-moveToMatCenterAfterPick, true);
+            Logging.log("Autonomous - Robot arrived the mat center near medium junction.");
 
-            chassis.moveToJunction(2 * Params.HALF_MAT - Params.CHASSIS_LENGTH, autonomousStartLocation);
+            // lift slider during drive to medium junction
+            slider.setInchPosition(Params.MEDIUM_JUNCTION_POS);
+            chassis.runUsingEncoders();
+            while ((chassis.getEncoderDistance() < 11.97))
+            {
+                chassis.drivingWithPID(-chassis.AUTO_MAX_POWER, 0.0, chassis.AUTO_MAX_POWER, true);
+                //Logging.log("Red = %d, Green = %d, Blue = %d", colorSensor.red(), colorSensor.green(), colorSensor.blue());
+            }
+            chassis.setPowers(0);
 
-            // drop cone and back to the center of mat
-            unloadCone(Params.HALF_MAT - Params.V_DISTANCE_TO_CENTER);
+            //Rotation for accurate 45 degrees
+            chassis.rotateIMUTargetAngle(-45.0 * autonomousStartLocation);
 
+            // make sure slider has been lifted
+            slider.waitRunningComplete();
+            Logging.log("Autonomous - slider is positioned to medium junction.");
+
+            // moving forward V to junction
+            chassis.runToPosition(-movingDistBeforeDrop, true);
+            //chassis.backWithEncoderAndSensor(movingDistBeforeDrop, 0);
+
+            // unload cone & adjust, 0.2 inch to adjust for cone thickness
+            autoUnloadCone(movingDistAfterDrop);
+            Logging.log("Autonomous - cone %d has been unloaded.", autoLoop + 2);
         }
-        /*
-        for(int autoLoop = 0; autoLoop < 4; autoLoop++) {
-           Logging.log("Autonomous - loop index: %d ", autoLoop);
 
-           // drive robot to loading area.
-           chassis.runToConeStack(3, 2);
-           Logging.log("Autonomous - Robot has arrived at loading area.");
+        // lower slider in prep for tele-op
+        slider.setInchPosition(Params.GROUND_CONE_POSITION);
+        armClaw.armFlipCenter();
 
-           Logging.log("fcDistance sensor value before loading: %.2f ", chassis.getFcDsValue());
-           // load cone
-           loadCone(FieldParams.coneStack5th - FieldParams.coneLoadStackGap * autoLoop);
+        // drive to final parking lot
+        chassis.runToPosition(parkingLotDis * autonomousStartLocation, true);
+        Logging.log("Autonomous - Arrived at parking lot Mat: %.2f", parkingLotDis);
 
-           // lift slider during driving back to mat center.
-           slider.setInchPosition(FieldParams.MEDIUM_JUNCTION_POS);
-
-           chassis.runToPosition(-30, true);
-           chassis.runToPosition(FieldParams.HALF_MAT, false);
-           chassis.runToPosition(-6, true);
-
-           Logging.log("Autonomous - Robot arrived the medium junction.");
-
-           slider.waitRunningComplete();
-           Logging.log("Autonomous - slider is positioned to medium junction.");
-
-           // turn arm to side to get ready for dropping cone
-           if (autonomousStartLocation > 0) {
-               armClaw.armFlipBackUnload();
-           }
-           else {
-               armClaw.armFlipFrontUnload();
-           }
-           sleep(100); // wait arm action complete
-
-           // drop cone and back to the center of mat
-           unloadCone();
-           Logging.log("Autonomous - cone %d has been unloaded.", autoLoop + 2);
-       }
-
-       // lower slider in prep for tele-op
-       slider.setInchPosition(0);
-
-       // drive to final parking lot
-       chassis.runToPosition(-(parkingLotDis * autonomousStartLocation + FieldParams.HALF_MAT - FieldParams.ARM_LOCATION_BIAS), true);
-       Logging.log("Autonomous - Arrived at parking lot Mat: %.2f", parkingLotDis);
-        */
-       slider.setInchPosition(0);
-
-       slider.waitRunningComplete();
-       Logging.log("Autonomous - Autonomous complete.");
-
-
-
+        slider.waitRunningComplete();
+        Logging.log("Autonomous - Autonomous complete.");
     }
 
 
