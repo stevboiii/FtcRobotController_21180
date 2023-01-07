@@ -405,7 +405,7 @@ public class TeleopDualDrivers extends LinearOpMode {
 
         // driving back to cone base
         chassis.drivingWithSensor(3, true,
-                chassis.frontCenterDS, 0, false, false);
+                chassis.frontCenterDS, 0, true, false);
 
         slider.setInchPosition(Params.WALL_POSITION - Params.coneLoadStackGap * 3);
 

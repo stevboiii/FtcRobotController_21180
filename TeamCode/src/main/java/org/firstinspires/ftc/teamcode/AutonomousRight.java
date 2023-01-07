@@ -94,11 +94,10 @@ public class AutonomousRight extends LinearOpMode {
 
     // variables for autonomous
     double autoLoadMovingDistance = 1.0; // in INCH
-    double matCenterToJunctionDistance = 14.5;
-    double movingDistBeforeDrop = Params.HALF_MAT - Params.V_DISTANCE_TO_CENTER; // in INCH
-    double movingDistAfterDrop = Params.HALF_MAT - Params.V_DISTANCE_TO_CENTER + 1; // 1 inch for adjust
-    double matCenterToConeStack = 28; // inch
-    double moveToMatCenterAfterPick = matCenterToConeStack - autoLoadMovingDistance - 2.5; // 3 inch for inertia adjust
+    double movingDistBeforeDrop = Params.HALF_MAT * 1.414 - Params.V_DISTANCE_TO_CENTER; // in INCH
+    double movingDistAfterDrop = movingDistBeforeDrop; //  adjust 1 inch if needed
+    double matCenterToConeStack = Params.HALF_MAT * 3 - Params.FLIP_ARM_LENGTH; // 28; // inch
+    double moveToMatCenterAfterPick = matCenterToConeStack - autoLoadMovingDistance - 1.5; // 1.5 inch for inertia adjust
 
     // camera and sleeve color
     ObjectDetection.ParkingLot myParkingLot = ObjectDetection.ParkingLot.UNKNOWN;
@@ -253,11 +252,10 @@ public class AutonomousRight extends LinearOpMode {
             // load cone
             autoLoadCone(Params.coneStack5th - Params.coneLoadStackGap * autoLoop);
 
-            // lift slider during driving back to mat center.
             chassis.runToPosition(-moveToMatCenterAfterPick, true);
             Logging.log("Autonomous - Robot arrived the mat center near high junction.");
 
-            // lift slider during left turning 135 degree facing to high junction.
+            // lift slider during left turning 45 degree facing to junction.
             slider.setInchPosition(Params.MEDIUM_JUNCTION_POS);
             chassis.rotateIMUTargetAngle(-45.0 * autonomousStartLocation);
 

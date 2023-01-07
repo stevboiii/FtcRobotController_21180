@@ -74,10 +74,10 @@ public class ChassisWith4Motors {
     final double MAX_CORRECTION_POWER = 0.12;
     final double AUTO_ROTATE_POWER = 0.9;
     final double MAX_POWER = 1.0 - MAX_CORRECTION_POWER;
-    final double AUTO_MAX_POWER = 0.7;
-    final double SHORT_DISTANCE_POWER = 0.45;
-    final double RAMP_START_POWER = 0.35;
-    final double RAMP_END_POWER = 0.2;
+    final double AUTO_MAX_POWER = 0.8;
+    final double SHORT_DISTANCE_POWER = 0.5;
+    final double RAMP_START_POWER = 0.4;
+    final double RAMP_END_POWER = 0.25;
     final double MIN_ROTATE_POWER = 0.21;
 
     // Position variables for autonomous
@@ -250,6 +250,7 @@ public class ChassisWith4Motors {
         BackLeftDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         BackRightDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
     }
+
     /**
      * Set chassis motors with run using encoders mode without reset encoders
      */
@@ -261,7 +262,7 @@ public class ChassisWith4Motors {
     }
     
     /**
-     * Set chassis motors with run using encoders mode
+     * Reset encoders and Set chassis motors with run using encoders mode
      */
     public void runUsingEncoders() {
         resetEncoders();
@@ -741,8 +742,10 @@ public class ChassisWith4Motors {
         double currDs;
         
         targetDis = Math.abs(targetDis);
-        runUsingEncoders2(); // without resetting encoders
-        
+        if (rampUpOn) {
+            runUsingEncoders(); // reset encoders
+        }
+
         // ramp up power
         if (rampUpOn && (targetDis > RAMP_UP_DISTANCE / 2 + threshold)) {
             while ((currEn - startEn) < RAMP_UP_DISTANCE / 2) {
@@ -786,7 +789,8 @@ public class ChassisWith4Motors {
             if (rampDownOn && (currDs < RAMP_DOWN_DISTANCE / 2 + threshold)) {
                 currPower = RAMP_END_POWER;
             }
-            Logging.log("Current encoder distance %.2f, distance sensor %.2f", currEn, currDs);
+            Logging.log("Current encoder distance %.2f, distance sensor %.2f, targetD = %.2f, threshold = %.2df",
+                    currEn, currDs, targetDis, threshold);
         }
         
         // stop if ramp down is on
