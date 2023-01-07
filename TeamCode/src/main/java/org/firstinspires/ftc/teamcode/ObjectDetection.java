@@ -138,15 +138,15 @@ public class ObjectDetection extends OpenCvPipeline {
         else if (Math.abs(sumColors.val[0] - maxColor) < Math.ulp(0)) {
             parkingLot = ParkingLot.LEFT;
             brushColor = RED;
-            parkingLotDistance = -23;
+            parkingLotDistance = -24;
         } else if (Math.abs(sumColors.val[1] - maxColor) < Math.ulp(0)) {
             parkingLot = ParkingLot.CENTER;
             brushColor = GREEN;
-            parkingLotDistance = 0.0;
+            parkingLotDistance = 0;
         } else {
             parkingLot = ParkingLot.RIGHT;
             brushColor = BLUE;
-            parkingLotDistance = 23;
+            parkingLotDistance = 24;
         }
         Logging.log("Sleeve position: %s", parkingLot.toString());
 

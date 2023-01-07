@@ -89,8 +89,8 @@ public class ChassisWith4Motors {
     final double COUNTS_PER_INCH_STRAFE = 45; // robot strafe 1 INCH. the value is based on test (55 is wrong?)
 
     // power control variables
-    final double RAMP_UP_DISTANCE = 10.0; // ramp up in the first 10 inch
-    final double RAMP_DOWN_DISTANCE = 10.0; // slow down in the final 9 inch
+    final double RAMP_UP_DISTANCE = 8.0; // ramp up in the first 10 inch
+    final double RAMP_DOWN_DISTANCE = 8.0; // slow down in the final 9 inch
     final double SHORT_DISTANCE = 6.0; // consistent low power for short driving
 
     // imu
@@ -281,6 +281,7 @@ public class ChassisWith4Motors {
         BackLeftDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         FrontRightDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         FrontLeftDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        zeroPowerBrake();
     }
 
     /**
@@ -737,14 +738,22 @@ public class ChassisWith4Motors {
         double maxPower;
         double currPower = RAMP_START_POWER;
         double direct = Math.copySign(1, targetDis);
-        double startEn = getEncoderDistance(drivingOrStrafe);
-        double currEn = startEn;
+        double startEn;
+        double currEn;
         double currDs;
         
         targetDis = Math.abs(targetDis);
         if (rampUpOn) {
             runUsingEncoders(); // reset encoders
         }
+
+        FrontLeftDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        FrontRightDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        BackLeftDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        BackRightDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
+        startEn = getEncoderDistance(drivingOrStrafe);
+        currEn = startEn;
 
         // ramp up power
         if (rampUpOn && (targetDis > RAMP_UP_DISTANCE / 2 + threshold)) {
@@ -789,8 +798,8 @@ public class ChassisWith4Motors {
             if (rampDownOn && (currDs < RAMP_DOWN_DISTANCE / 2 + threshold)) {
                 currPower = RAMP_END_POWER;
             }
-            Logging.log("Current encoder distance %.2f, distance sensor %.2f, targetD = %.2f, threshold = %.2df",
-                    currEn, currDs, targetDis, threshold);
+            Logging.log("Current(-startEn) encoder distance %.2f, distance sensor %.2f, targetD = %.2f, threshold = %.2f",
+                    currEn - startEn, currDs, targetDis, threshold);
         }
         
         // stop if ramp down is on
@@ -948,6 +957,14 @@ public class ChassisWith4Motors {
             dis = aveEncoder / COUNTS_PER_INCH_STRAFE;
         }
         return dis;
+    }
+
+    private void zeroPowerBrake() {
+
+        FrontLeftDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        FrontRightDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        BackLeftDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        BackRightDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
     }
 }
 

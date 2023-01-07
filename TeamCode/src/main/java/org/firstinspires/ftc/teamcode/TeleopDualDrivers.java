@@ -118,7 +118,7 @@ public class TeleopDualDrivers extends LinearOpMode {
         // to 'get' must correspond to the names assigned during the robot configuration
         // step (using the FTC Robot Controller app on the phone).
         slider.init(hardwareMap, "RightSlider", "LeftSlider");
-        slider.setInchPosition(Params.WALL_POSITION);
+        slider.setInchPosition(Params.GROUND_CONE_POSITION);
 
         chassis.init(hardwareMap, "FrontLeft", "FrontRight",
                 "BackLeft", "BackRight");
@@ -409,7 +409,7 @@ public class TeleopDualDrivers extends LinearOpMode {
 
         slider.setInchPosition(Params.WALL_POSITION - Params.coneLoadStackGap * 3);
 
-        chassis.drivingWithSensor(Params.BASE_TO_JUNCTION, true,
+        chassis.drivingWithSensor(Params.BASE_TO_JUNCTION - 3, true,
                 chassis.frontCenterDS, Params.LOAD_DS_VALUE, false, true);
     }
 }

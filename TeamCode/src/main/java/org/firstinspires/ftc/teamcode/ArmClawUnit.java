@@ -78,7 +78,7 @@ public class ArmClawUnit
     final double ARM_FLIP_FRONT_UNLOAD_POS = 0.35;
     final double ARM_FLIP_BACK_UNLOAD_POS = 0.75;
     final double ARM_FLIP_BACK_LOAD_POS = 0.8;
-    final double ARM_FLIP_CENTER = 0.6;
+    final double ARM_FLIP_CENTER = 0.56;
 
     /**
      * Init slider motors hardware, and set their behaviors.

@@ -63,7 +63,7 @@ public class SlidersWith2Motors
     final double manualUpdatePos = COUNTS_PER_INCH / 2.0; // 0.5 inch
 
     // slider position variables
-    final int FOUR_STAGE_SLIDER_MAX_POS = 4200;  // with 312 RPM motor.
+    final int FOUR_STAGE_SLIDER_MAX_POS = 3800;  // with 312 RPM motor.
     final int SLIDER_MIN_POS = 0;
 
     /**
