@@ -35,16 +35,15 @@ package org.firstinspires.ftc.teamcode;
  *
  * This class defines the parameters related with game field elements.
  */
-public class Params
-{
+public class Params {
     // slider position variables
     static final double ARM_UNLOADING_LIFTING = 4; // Arm lifting from loading position to unloading position
     static final double GROUND_CONE_POSITION = 0.0;
     static final double coneLoadStackGap = 1.3;
     static final double coneStack5th = coneLoadStackGap * 4;
     static final double GROUND_JUNCTION_POS = GROUND_CONE_POSITION + 1.0;
-    static final double LOW_JUNCTION_POS = 13.5  - ARM_UNLOADING_LIFTING;
-    static final double MEDIUM_JUNCTION_POS = 23.5  - ARM_UNLOADING_LIFTING;
+    static final double LOW_JUNCTION_POS = 13.5 - ARM_UNLOADING_LIFTING;
+    static final double MEDIUM_JUNCTION_POS = 23.5 - ARM_UNLOADING_LIFTING;
     static final double HIGH_JUNCTION_POS = 33.5 - ARM_UNLOADING_LIFTING;
     static final double WALL_POSITION = 8.5;
     static final double SLIDER_MOVE_DOWN_POSITION = 4.0;
@@ -60,5 +59,7 @@ public class Params
     static final double INIT_POSITION_TO_2ND_MAT_EDGE = 4 * HALF_MAT - CHASSIS_WIDTH / 2.0;
     static final double HIGH_JUNCTION_TO_CONE_STACK = 4 * HALF_MAT - ARM_LENGTH;
     static final double BASE_TO_JUNCTION = 2 * HALF_MAT + V_DISTANCE_TO_CENTER;
+    static final double UNLOAD_DS_VALUE= 6;
+    static final double LOAD_DS_VALUE = 6;
 }
 

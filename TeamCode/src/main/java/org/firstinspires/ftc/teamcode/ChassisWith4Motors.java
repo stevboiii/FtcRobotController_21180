@@ -731,23 +731,29 @@ public class ChassisWith4Motors {
      * @param rampUpOn driving power ramp up on / off
      * @param rampDownOn driving power ramp down on / off
      */
-    public void drivingWithSensor(DistanceSensor ds, double targetDis, double threshold, boolean rampUpOn, boolean rampDownOn) {
+    public void drivingWithSensor( double targetDis, boolean drivingOrStrafe, DistanceSensor ds, double threshold, boolean rampUpOn, boolean rampDownOn) {
 
         double maxPower;
         double currPower = RAMP_START_POWER;
         double direct = Math.copySign(1, targetDis);
-        double startEn = getEncoderDistance();
+        double startEn = getEncoderDistance(drivingOrStrafe);
         double currEn = startEn;
         double currDs;
         
         targetDis = Math.abs(targetDis);
-        runUsingEncoders2();
+        runUsingEncoders2(); // without resetting encoders
         
         // ramp up power
         if (rampUpOn && (targetDis > RAMP_UP_DISTANCE / 2 + threshold)) {
             while ((currEn - startEn) < RAMP_UP_DISTANCE / 2) {
-                drivingWithPID(currPower * direct, 0.0, 0.0, true);
-                currEn = getEncoderDistance();
+                if (drivingOrStrafe) {
+                    drivingWithPID(currPower * direct, 0.0, 0.0, true);
+                }
+                else {
+                    drivingWithPID(0, 0.0, currPower * direct, true);
+
+                }
+                currEn = getEncoderDistance(drivingOrStrafe);
                 if (currEn > RAMP_UP_DISTANCE / 4) {
                     currPower = SHORT_DISTANCE_POWER;
                 }
@@ -766,11 +772,17 @@ public class ChassisWith4Motors {
         currDs = ds.getDistance(DistanceUnit.INCH);
         currPower = maxPower;
         while (((currEn - startEn) < targetDis) && (currDs > threshold)) {
-            drivingWithPID(currPower * direct, 0.0, 0.0, true);
-            currEn = getEncoderDistance();
+            if (drivingOrStrafe) {
+                drivingWithPID(currPower * direct, 0.0, 0.0, true);
+            }
+            else {
+                drivingWithPID(0, 0.0, currPower * direct, true);
+
+            }
+            currEn = getEncoderDistance(drivingOrStrafe);
             currDs = ds.getDistance(DistanceUnit.INCH);
             
-            // ramp dowm
+            // ramp down
             if (rampDownOn && (currDs < RAMP_DOWN_DISTANCE / 2 + threshold)) {
                 currPower = RAMP_END_POWER;
             }

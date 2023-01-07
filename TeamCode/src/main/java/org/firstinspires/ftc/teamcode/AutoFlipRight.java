@@ -76,79 +76,52 @@ public class AutoFlipRight extends AutonomousRight {
 
     @Override
     public void autonomousCore() {
-        slider.setInchPosition(Params.LOW_JUNCTION_POS);
-
+        slider.setInchPosition(Params.MEDIUM_JUNCTION_POS);
+        armClaw.armFlipBackUnload();
         //move center of robot to the edge of 3rd mat
-        chassis.runToPosition(4 * Params.HALF_MAT - Params.CHASSIS_LENGTH, true);
+        chassis.drivingWithSensor(-(Params.HALF_MAT * 4 - Params.CHASSIS_WIDTH / 2), false,
+                chassis.backCenterDS, 12, true, true);
 
         // turn robot to make sure it is at 0 degree before backing to mat center
-        chassis.rotateIMUTargetAngle(0.0);
+        chassis.rotateIMUTargetAngle(0);
 
         // lift slider
         slider.setInchPosition(Params.MEDIUM_JUNCTION_POS);
-        chassis.rotateIMUTargetAngle(-45.0 * autonomousStartLocation);
-        Logging.log("fcDistance sensor value before moving V to junction: %.2f ", chassis.getFcDsValue());
-        armClaw.armFlipBackUnload();
         slider.waitRunningComplete();
 
         //drive forward and let V touch junction
-        chassis.runToPosition(-7, true);
-        //chassis.backWithEncoderAndSensor(movingDistBeforeDrop, 0);
+        chassis.drivingWithSensor(-Params.CHASSIS_WIDTH / 2, true,
+                chassis.frontCenterDS, Params.UNLOAD_DS_VALUE, false, true);
         Logging.log("Autonomous - Robot V reached junction.");
 
         // drop cone and back to the center of mat
-        autoUnloadCone(movingDistAfterDrop);
+        unloadCone();
 
         for(int autoLoop = 0; autoLoop < 3; autoLoop++) {
             Logging.log("Autonomous - loop index: %d ", autoLoop);
 
-            // drive robot to cone loading area.
-            chassis.runUsingEncoders();
-            while ((chassis.getEncoderDistance() < 11.97))
-            {
-                chassis.drivingWithPID(chassis.AUTO_MAX_POWER, 0.0, -chassis.AUTO_MAX_POWER, true);
-                //Logging.log("Red = %d, Green = %d, Blue = %d", colorSensor.red(), colorSensor.green(), colorSensor.blue());
-            }
-            chassis.setPowers(0);
-            chassis.runToConeStack(3 * Params.HALF_MAT - Params.V_DISTANCE_TO_CENTER, 12, 6);
+            // drive robot to cone stack.
+            moveToConeStack();
 
-            Logging.log("fcDistance sensor value before loading: %.2f ", chassis.getFcDsValue());
             // load cone
-            autoLoadCone(Params.coneStack5th - Params.coneLoadStackGap * autoLoop);
+            loadCone(Params.coneStack5th - Params.coneLoadStackGap * autoLoop);
 
-            // lift slider during driving back to mat center.
-            chassis.runToPosition(-moveToMatCenterAfterPick, true);
-            Logging.log("Autonomous - Robot arrived the mat center near medium junction.");
+            // drive robot to junction
+            moveToMediumJunction();
 
-            // lift slider during drive to medium junction
-            slider.setInchPosition(Params.MEDIUM_JUNCTION_POS);
-            chassis.runUsingEncoders();
-            while ((chassis.getEncoderDistance() < 11.97))
-            {
-                chassis.drivingWithPID(-chassis.AUTO_MAX_POWER, 0.0, chassis.AUTO_MAX_POWER, true);
-                //Logging.log("Red = %d, Green = %d, Blue = %d", colorSensor.red(), colorSensor.green(), colorSensor.blue());
-            }
-            chassis.setPowers(0);
-
-            //Rotation for accurate 45 degrees
-            chassis.rotateIMUTargetAngle(-45.0 * autonomousStartLocation);
-
-            // make sure slider has been lifted
-            slider.waitRunningComplete();
             Logging.log("Autonomous - slider is positioned to medium junction.");
 
-            // moving forward V to junction
-            chassis.runToPosition(-movingDistBeforeDrop, true);
-            //chassis.backWithEncoderAndSensor(movingDistBeforeDrop, 0);
-
-            // unload cone & adjust, 0.2 inch to adjust for cone thickness
-            autoUnloadCone(movingDistAfterDrop);
+            // unload cone
+            unloadCone();
             Logging.log("Autonomous - cone %d has been unloaded.", autoLoop + 2);
         }
 
         // lower slider in prep for tele-op
         slider.setInchPosition(Params.GROUND_CONE_POSITION);
         armClaw.armFlipCenter();
+
+        // move to center of 3rd mat
+        chassis.runToPosition(-Params.HALF_MAT * autonomousStartLocation, false);
 
         // drive to final parking lot
         chassis.runToPosition(parkingLotDis * autonomousStartLocation, true);
@@ -160,20 +133,16 @@ public class AutoFlipRight extends AutonomousRight {
 
 
     /**
-     * 1. Robot moving back to aim at junction for unloading cone
-     * 2. Slider moving down a little bit to put cone in junction pole
-     * 3. Open claw to fall down cone
-     * 4. Lift slider from junction pole
-     * 5. Robot moving back to leave junction
-     * 6. Slider moving down to get ready to grip another cone
+     * unload cone
      */
-    private void unloadCone(double backDistance) {
-        armClaw.armFlipBackLoad();
-        armClaw.clawOpen(); // unload  cone
-        sleep(100); // to make sure clawServo is at open position
-        chassis.runToPosition(backDistance, true);
+    private void unloadCone() {
+        armClaw.armFlipBackUnload();
+        armClaw.clawOpen();
+        // Make sure it is 45 degree before V leaving junction
+        chassis.rotateIMUTargetAngle(0);
+        sleep(100); // to make sure claw Servo is at open position, 250 ms
         armClaw.armFlipFrontLoad();
-        slider.setInchPosition(Params.WALL_POSITION);
+        Logging.log("Auto unload - Cone has been unloaded.");
     }
 
     /**
@@ -185,12 +154,48 @@ public class AutoFlipRight extends AutonomousRight {
         chassis.runToPosition(-autoLoadMovingDistance, true); // moving to loading position
         slider.waitRunningComplete();
         armClaw.clawClose();
-        sleep(200); // 200 ms
-        slider.setInchPosition(Params.MEDIUM_JUNCTION_POS);
-        armClaw.armFlipBackUnload();
+        sleep(100); // wait to make sure clawServo is at grep position, 200 ms
         chassis.rotateIMUTargetAngle(0);
-        sleep(100); // make sure cone has been lifted from stack
-        Logging.log("Auto load - Cone has been loaded.");
+        slider.setInchPosition(Params.WALL_POSITION);
+        armClaw.armFlipBackUnload();
+        slider.waitRunningComplete(); // make sure slider has been lifted.
+    }
+
+    /**
+     * move to cone stack and lower sliders
+     */
+    private void moveToConeStack() {
+        chassis.drivingWithSensor(Params.HALF_MAT, true,
+                chassis.backCenterDS, 0, true, false);
+
+        slider.setInchPosition(Params.WALL_POSITION);
+
+        while (chassis.getEncoderDistance() < Params.HALF_MAT * 2) {
+            chassis.drivingWithPID(chassis.AUTO_MAX_POWER, 0.0, -chassis.AUTO_MAX_POWER, true);
+        }
+
+        chassis.drivingWithSensor(Params.HALF_MAT, true,
+                chassis.backCenterDS, Params.LOAD_DS_VALUE, false, true);
+
+        slider.waitRunningComplete();
+    }
+
+    /**
+     * move to junction and lift sliders
+     */
+    private void moveToMediumJunction() {
+        chassis.drivingWithSensor(-Params.HALF_MAT, true,
+                chassis.backCenterDS, 0, true, false);
+
+        slider.setInchPosition(Params.MEDIUM_JUNCTION_POS);
+
+        while (chassis.getEncoderDistance() < Params.HALF_MAT * 2) {
+            chassis.drivingWithPID(-chassis.AUTO_MAX_POWER, 0.0, -chassis.AUTO_MAX_POWER, true);
+        }
+
+        chassis.drivingWithSensor(-Params.HALF_MAT, true,
+                chassis.backCenterDS, Params.UNLOAD_DS_VALUE, false, true);
+        slider.waitRunningComplete();
     }
 
 /**

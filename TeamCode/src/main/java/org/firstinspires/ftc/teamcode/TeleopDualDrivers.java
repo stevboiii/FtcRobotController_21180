@@ -372,7 +372,8 @@ public class TeleopDualDrivers extends LinearOpMode {
         sleep(250); // 200 ms
         slider.setInchPosition(Params.HIGH_JUNCTION_POS);
         armClaw.armFlipCenter();
-        chassis.drivingWithSensor(chassis.backCenterDS, -Params.BASE_TO_JUNCTION, 6, true, true);
+        chassis.drivingWithSensor(-Params.BASE_TO_JUNCTION, true,
+                chassis.backCenterDS, Params.UNLOAD_DS_VALUE, true, true);
         //slider.waitRunningComplete();
         armClaw.armFlipBackUnload();
     }
@@ -385,7 +386,7 @@ public class TeleopDualDrivers extends LinearOpMode {
         armClaw.armFlipBackLoad();
         slider.movingSliderInch(-2);
         armClaw.clawOpen();
-        sleep(250); // to make sure claw Servo is at open position, 250 ms
+        sleep(200); // to make sure claw Servo is at open position
         armClaw.armFlipFrontLoad();
         chassis.runToPosition(drivingDistance, true); // move out from junction
         slider.setInchPosition(Params.WALL_POSITION);
@@ -398,13 +399,17 @@ public class TeleopDualDrivers extends LinearOpMode {
         armClaw.armFlipBackLoad();
         slider.movingSliderInch(-2);
         armClaw.clawOpen();
-        sleep(250); // to make sure claw Servo is at open position, 250 ms
+        sleep(200); // to make sure claw Servo is at open position
 
         armClaw.armFlipFrontLoad();
 
         // driving back to cone base
-        chassis.drivingWithSensor(chassis.frontCenterDS, 3, 0, false, false);
+        chassis.drivingWithSensor(3, true,
+                chassis.frontCenterDS, 0, false, false);
+
         slider.setInchPosition(Params.WALL_POSITION - Params.coneLoadStackGap * 3);
-        chassis.drivingWithSensor(chassis.frontCenterDS, Params.BASE_TO_JUNCTION, 6, false, true);
+
+        chassis.drivingWithSensor(Params.BASE_TO_JUNCTION, true,
+                chassis.frontCenterDS, Params.LOAD_DS_VALUE, false, true);
     }
 }

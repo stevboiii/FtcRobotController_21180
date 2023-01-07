@@ -70,13 +70,15 @@ public class AutonomousTest extends AutonomousRight {
 
         loadCone(Params.coneStack5th);
         sleep(300);
-        chassis.drivingWithSensor(chassis.backCenterDS, -Params.HALF_MAT, 0, true, false);
+        chassis.drivingWithSensor(-Params.HALF_MAT, true,
+                chassis.backCenterDS, 0, true, false);
 
         while (chassis.getEncoderDistance() < Params.HALF_MAT * 2) {
             chassis.drivingWithPID(-chassis.AUTO_MAX_POWER, 0.0, -chassis.AUTO_MAX_POWER, true);
         }
 
-        chassis.drivingWithSensor(chassis.backCenterDS, -Params.HALF_MAT, 6, false, true);
+        chassis.drivingWithSensor(-Params.HALF_MAT, true,
+                chassis.backCenterDS, 6, false, true);
         sleep(2000);
     }
 
