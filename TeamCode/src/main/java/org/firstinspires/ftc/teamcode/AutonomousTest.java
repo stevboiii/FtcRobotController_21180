@@ -55,6 +55,7 @@
 package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 
 /**
  * Extended from AutonomousRight file.
@@ -62,7 +63,7 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
  */
 
 @Autonomous(name="Only For Test", group="Concept")
-//@Disabled
+@Disabled
 public class AutonomousTest extends AutonomousRight {
 
     @Override

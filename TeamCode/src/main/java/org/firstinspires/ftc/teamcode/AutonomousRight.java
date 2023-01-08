@@ -253,7 +253,7 @@ public class AutonomousRight extends LinearOpMode {
             chassis.rotateIMUTargetAngle(-45.0 * autonomousStartLocation);
 
             //Rotation for accurate 45 degrees
-            chassis.rotateIMUTargetAngle(-45.0 * autonomousStartLocation);
+            //chassis.rotateIMUTargetAngle(-45.0 * autonomousStartLocation);
 
             // make sure slider has been lifted
             //slider.waitRunningComplete();
