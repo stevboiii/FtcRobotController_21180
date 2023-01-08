@@ -254,16 +254,6 @@ public class ChassisWith4Motors {
         BackLeftDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         BackRightDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
     }
-
-    /**
-     * Set chassis motors with run using encoders mode without reset encoders
-     */
-    private void runUsingEncoders2() {
-        FrontLeftDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        FrontRightDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        BackLeftDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        BackRightDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-    }
     
     /**
      * Reset encoders and Set chassis motors with run using encoders mode
@@ -456,15 +446,14 @@ public class ChassisWith4Motors {
         leftMotorSetPower(0);
 
         rotation = getAngle();
-        if (debugFlag) {
-            Logging.log("IMU angle before turn stop %.2f.", lastAngles.getYaw(AngleUnit.DEGREES));
-            Logging.log("Rotated angle is %.2f.", rotation);
-        }
 
         // reset angle tracking on new heading.
         resetAngle();
-        Logging.log("Required turning degrees: %.2f.", degrees);
-        Logging.log("IMU angle after turning stop is %.2f.", lastAngles.getYaw(AngleUnit.DEGREES));
+
+        if (debugFlag) {
+            Logging.log("Required turning = %.2f, Rotated = %.2f, IMU angle = %.2f.",
+                    degrees, rotation, lastAngles.getYaw(AngleUnit.DEGREES));
+        }
     }
 
     /**
@@ -575,8 +564,10 @@ public class ChassisWith4Motors {
                 backMotorSetPower(drivePower + correction * targetSign);
             }
         }
-        setPowers(0.0); //stop moving
-        Logging.log("Drive power = %.2f, global angle = %.3f", drivePower, getAngle());
+        stopWithBrakeAndWithoutEnceders();
+        if (debugFlag) {
+            Logging.log("Drive power = %.2f, global angle = %.3f", drivePower, getAngle());
+        }
     }
 
     /**
@@ -621,7 +612,6 @@ public class ChassisWith4Motors {
      * @param isBackForth:    flag for back-forth (true) moving, or left-right moving (false)
      */
     public void runToPosition(double targetDistance, boolean isBackForth) {
-
         if (Math.abs(targetDistance) < 0.4) {
             return;
         }
@@ -633,8 +623,6 @@ public class ChassisWith4Motors {
         runToPositionMode(); // turn on encoder mode, and reset encoders
 
         setPowerWithPIDControl(targetDistance, tSign, isBackForth);
-
-        runWithoutEncoders(); // turn off encoder mode
 
         if (debugFlag) {
             Logging.log("Required moving distance %.2f.", targetDistance);
@@ -674,20 +662,26 @@ public class ChassisWith4Motors {
                     (frDs < checkCsDistance + RAMP_DOWN_DISTANCE / 3.0)) {
                 maxPower = SHORT_DISTANCE_POWER;
             }
-            Logging.log("robot has not approached cone, fcDs = %2f, flDs = %2f, frDs = %2f", fcDs, flDs, frDs);
+            if (debugFlag) {
+                Logging.log("robot has not approached cone, fcDs = %2f, flDs = %2f, frDs = %2f", fcDs, flDs, frDs);
+            }
         }
 
         if ((fcDs > frDs) || (fcDs > flDs)) {
             double sign = Math.copySign(1, (frDs - flDs));
             strafePower = SHORT_DISTANCE_POWER * sign;
-            Logging.log("cone is to the %s of robot.", (sign > 0) ? "left" : "right");
-            Logging.log("robot is on coloured tape after strafe.");
+            if (debugFlag) {
+                Logging.log("cone is to the %s of robot.", (sign > 0) ? "left" : "right");
+                Logging.log("robot is on coloured tape after strafe.");
+            }
         }
 
         // driving forward to reaching cone
         int blue = colorSensor.blue();
         int red = colorSensor.red();
-        Logging.log("Gray color sensor values, blue = %d, red = %d.", blue, red);
+        if (debugFlag) {
+            Logging.log("Gray color sensor values, blue = %d, red = %d.", blue, red);
+        }
 
         double startEn = currEncoder;
         while ((fcDs > reachConeDistance) && ((currEncoder) < targetDistance)){
@@ -699,14 +693,17 @@ public class ChassisWith4Motors {
             if ((blue / blue0 < 1.4) && (red / red0 < 1.4) && (currEncoder - startEn > Params.CHASSIS_HALF_WIDTH)) {
                 strafePower = 0;
             }
-            Logging.log("Gray color sensor values, blue = %d, red = %d.", blue, red);
-            Logging.log("fcDs = %.2f", fcDs);
-            Logging.log("encoder distance during driving  %.2f", getEncoderDistance(false));
+            if (debugFlag) {
+                Logging.log("Gray color sensor values, blue = %d, red = %d.", blue, red);
+                Logging.log("fcDs = %.2f", fcDs);
+                Logging.log("encoder distance during driving  %.2f", getEncoderDistance(false));
+            }
         }
 
-        setPowers(0.0);
-        Logging.log("robot is ready for cone pick up.");
-        runWithoutEncoders();
+        stopWithBrakeAndWithoutEnceders();
+        if (debugFlag) {
+            Logging.log("robot is ready for cone pick up.");
+        }
     }
 
     /**
@@ -725,8 +722,7 @@ public class ChassisWith4Motors {
         while ((getEncoderDistance() - startEn) < Params.HALF_MAT) {
             drivingWithPID(-RAMP_END_POWER * direction, robotInitLoc * RAMP_END_POWER, 0, true);
         }
-        setPowers(0.0);
-        runWithoutEncoders();
+        stopWithBrakeAndWithoutEnceders();
     }
 
     /**
@@ -773,7 +769,9 @@ public class ChassisWith4Motors {
                 if (currEn > RAMP_UP_DISTANCE / 4) {
                     currPower = SHORT_DISTANCE_POWER;
                 }
-                Logging.log("Current encoder distance %.2f, curr power %.2f", currEn, currPower);
+                if (debugFlag) {
+                    Logging.log("Current encoder distance %.2f, curr power %.2f", currEn, currPower);
+                }
             }
         }
 
@@ -802,14 +800,17 @@ public class ChassisWith4Motors {
             if (rampDownOn && (currDs < RAMP_DOWN_DISTANCE / 2 + threshold)) {
                 currPower = RAMP_END_POWER;
             }
-            Logging.log("Current(-startEn) encoder distance %.2f, distance sensor %.2f, targetD = %.2f, threshold = %.2f",
-                    currEn - startEn, currDs, targetDis, threshold);
+            if (debugFlag) {
+                Logging.log("Encoder current distance %.2f, startEn = %.2f, Current - startEn = %.2f",
+                        currEn, startEn, currEn - startEn);
+                Logging.log("En target = %.2f, Distance sensor %.2f, threshold = %.2f",
+                        targetDis, currDs, threshold);
+            }
         }
         
         // stop if ramp down is on
         if (rampDownOn) {
-            setPowers(0);
-            runWithoutEncoders();
+            stopWithBrakeAndWithoutEnceders();
         }
     }
 
@@ -818,10 +819,9 @@ public class ChassisWith4Motors {
      * is larger than EncoderRange.
      *
      * @param targetDistance Input value for the target distance in inch, which is totally driving target distance.
-     * @param sensorRange Input value for distance controlled range by sensor in inch.
      * @param threshold Stop driving when distance sensor value less than it.
      */
-    public void strafeToJunction(double targetDistance, double sensorRange, double threshold) {
+    public void strafeToJunction(double targetDistance, double threshold) {
         runUsingEncoders();
         double driveDirection = Math.copySign(1, targetDistance);
         targetDistance = Math.abs(targetDistance);
@@ -834,10 +834,11 @@ public class ChassisWith4Motors {
             drivingWithPID(0, 0.0, -RAMP_START_POWER * driveDirection, true);
             fcDs = getFcDsValue();
             currEnDist = getEncoderDistance(false);
-            Logging.log("getFcDsValue = %.2f, encoder dist = %.2f", fcDs, currEnDist);
+            if (debugFlag) {
+                Logging.log("getFcDsValue = %.2f, encoder dist = %.2f", fcDs, currEnDist);
+            }
         }
-        setPowers(0.0);
-        runWithoutEncoders();
+        stopWithBrakeAndWithoutEnceders();
     }
 
     /**
@@ -887,8 +888,10 @@ public class ChassisWith4Motors {
         BackLeftDrive.setPower(BackLeftPower);
         BackRightDrive.setPower(BackRightPower);
 
-        Logging.log("Motors power - FL (%.2f), FR (%.2f), BL (%.2f), BR (%.2f)",
-                FrontLeftPower, FrontRightPower, BackLeftPower, BackRightPower);
+        if (debugFlag) {
+            Logging.log("Motors power - FL (%.2f), FR (%.2f), BL (%.2f), BR (%.2f)",
+                    FrontLeftPower, FrontRightPower, BackLeftPower, BackRightPower);
+        }
     }
 
     /**
@@ -963,8 +966,13 @@ public class ChassisWith4Motors {
         return dis;
     }
 
-    private void zeroPowerBrake() {
+    private void stopWithBrakeAndWithoutEnceders() {
+        zeroPowerBrake();
+        setPowers(0.0);
+        runWithoutEncoders();
+    }
 
+    private void zeroPowerBrake() {
         FrontLeftDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         FrontRightDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         BackLeftDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);

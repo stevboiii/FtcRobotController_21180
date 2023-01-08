@@ -68,7 +68,7 @@ public class AutonomousTest extends AutonomousRight {
     @Override
     public void autonomousCore() {
 
-        loadCone(Params.coneStack5th);
+        loadCone();
         sleep(300);
         chassis.drivingWithSensor(-Params.HALF_MAT, true,
                 chassis.backCenterDS, 0, true, false);
@@ -85,11 +85,10 @@ public class AutonomousTest extends AutonomousRight {
 
     /**
      * During autonomous, cone may be located with different height position
-     * @param coneLocation: the target cone high location.
      */
-    private void loadCone(double coneLocation) {
-        slider.setInchPosition(coneLocation);
-        chassis.runToPosition(-autoLoadMovingDistance, true); // moving to loading position
+    private void loadCone() {
+        slider.setInchPosition(Params.coneStack5th);
+        chassis.runToPosition(-Params.DISTANCE_PICK_UP, true); // moving to loading position
         slider.waitRunningComplete();
         armClaw.clawClose();
         sleep(100); // wait to make sure clawServo is at grep position, 200 ms

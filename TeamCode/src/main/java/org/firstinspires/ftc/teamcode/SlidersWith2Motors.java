@@ -140,6 +140,7 @@ public class SlidersWith2Motors
                 ((period.seconds() - curTime) < SLIDER_MAX_WAIT_TIME)) {
             Thread.yield(); // idle
         }
+        Logging.log("Slider waiting time = %.2f sec", (period.seconds() - curTime));
     }
 
     /**

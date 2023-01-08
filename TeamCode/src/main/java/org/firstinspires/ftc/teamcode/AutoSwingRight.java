@@ -115,7 +115,7 @@ public class AutoSwingRight extends AutonomousRight {
             // lift slider during driving back to mat center.
             slider.setInchPosition(Params.HIGH_JUNCTION_POS);
 
-            chassis.strafeToJunction(Params.HIGH_JUNCTION_TO_CONE_STACK - 6.0, 6.0, 20);
+            chassis.strafeToJunction(Params.HIGH_JUNCTION_TO_CONE_STACK - 6.0, 20);
 
             Logging.log("Autonomous - Robot arrived the high junction.");
 
@@ -161,7 +161,7 @@ public class AutoSwingRight extends AutonomousRight {
     private void swingLoadCone(double coneLocation) {
         armClaw.clawOpen();
         slider.setInchPosition(coneLocation);
-        chassis.runToPosition(autoLoadMovingDistance, true); // back a little bit to avoid stuck.
+        chassis.runToPosition(-Params.DISTANCE_PICK_UP, true); // back a little bit to avoid stuck.
         slider.waitRunningComplete();
         armClaw.clawClose();
         Logging.log("Auto load - Cone has been loaded.");
