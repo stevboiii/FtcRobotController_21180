@@ -255,6 +255,11 @@ public class TeleopDualDrivers extends LinearOpMode {
                 armClaw.armFlipBackUnload();
             }
 
+            // 0.2 is to avoid pressing button by mistake.
+            if(Math.abs(gpButtons.armManualControl) > 0.2) {
+                armClaw.armManualMoving(gpButtons.armManualControl);
+            }
+
             //  auto driving, grip cone, and lift slider
             if (gpButtons.autoLoadGroundCone) {
                 loadCone(Params.GROUND_CONE_POSITION); // Always on ground during teleop mode

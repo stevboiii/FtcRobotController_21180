@@ -31,6 +31,7 @@ public class GamePadButtons {
     public boolean armFrontUnload;
     public boolean armBackLoad;
     public boolean armBackUnload;
+    public double armManualControl;
     public boolean autoLoadGroundCone;
     public boolean autoLoad34thConeStack;
     public boolean autoLoad45thConeStack;
@@ -50,8 +51,8 @@ public class GamePadButtons {
         autoLoad34thConeStack   = gamepad1.dpad_up;
         autoLoad45thConeStack   = gamepad1.dpad_down;
         autoUnloadCone          = gamepad1.right_bumper;
-        autoLoadThenJunction    = gamepad1.left_trigger > 0.1;
-        autoUnloadThenBase      = gamepad1.right_trigger > 0.1;
+        autoLoadThenJunction    = gamepad1.left_trigger > 0;
+        autoUnloadThenBase      = gamepad1.right_trigger > 0;
         teapot                  = gamepad1.y;
 
         // gamepad1(single driver) or gamepad2(dual driver) buttons
@@ -73,8 +74,9 @@ public class GamePadButtons {
         }
 
         if (ArmClawUnit.ArmMode.FLIP == ArmClawUnit.armMode) {
-            armFrontLoad = gamepad2.left_stick_y < -0.1;
-            armBackUnload= gamepad2.left_stick_y > 0.1;
+            armFrontLoad = gamepad2.left_stick_y < -0.2;
+            armBackUnload= gamepad2.left_stick_y > 0.2;
+            armManualControl = gamepad2.left_stick_x;
         }
     }
 

@@ -77,7 +77,7 @@ public class ArmClawUnit
     final double ARM_FLIP_FRONT_LOAD_POS = 0.23;
     final double ARM_FLIP_FRONT_UNLOAD_POS = 0.35;
     final double ARM_FLIP_BACK_UNLOAD_POS = 0.75;
-    final double ARM_FLIP_BACK_LOAD_POS = 0.8;
+    final double ARM_FLIP_BACK_LOAD_POS = 0.9;
     final double ARM_FLIP_CENTER = 0.56;
 
     /**
@@ -122,6 +122,7 @@ public class ArmClawUnit
      * @param armPos the target position value for arm servo motor
      */
     public void setArmPosition(double armPos) {
+        armPos = Range.clip(armPos, ARM_FLIP_FRONT_LOAD_POS, ARM_FLIP_BACK_LOAD_POS);
         armServo.setPosition(armPos);
     }
 
@@ -209,6 +210,14 @@ public class ArmClawUnit
      */
     public void armFlipBackUnload() {
         setArmPosition(ARM_FLIP_BACK_UNLOAD_POS);
+    }
+
+    /**
+     * Manual control arm position
+     * @param updatePosition the value needed to add to current arm servo position value.
+     */
+    public void armManualMoving(double updatePosition) {
+        setArmPosition(armServo.getPosition() + updatePosition / 10);
     }
 
 }
