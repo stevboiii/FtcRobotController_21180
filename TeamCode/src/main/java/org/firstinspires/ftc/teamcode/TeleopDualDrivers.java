@@ -363,9 +363,8 @@ public class TeleopDualDrivers extends LinearOpMode {
         slider.setInchPosition(coneLocation);
         chassis.runToPosition(-Params.pickupMovingDis, true); // moving to loading position
         slider.waitRunningComplete();
-        sleep(200); // waiting arm ready pick up position, 200 ms
         armClaw.clawClose();
-        sleep(200); // wait to make sure clawServo is at grep position, 200 ms
+        sleep(Params.CLAW_CLOSE_SLEEP); // wait to make sure clawServo is at grep position, 200 ms
         slider.setInchPosition(Params.LOW_JUNCTION_POS);
         armClaw.armFlipBackUnload();
     }
@@ -380,7 +379,7 @@ public class TeleopDualDrivers extends LinearOpMode {
         chassis.runToPosition(-Params.pickupMovingDis, true); // moving to loading position
         slider.waitRunningComplete();
         armClaw.clawClose();
-        sleep(250); // 200 ms
+        sleep(Params.CLAW_CLOSE_SLEEP); // 200 ms
         slider.setInchPosition(Params.HIGH_JUNCTION_POS);
         armClaw.armFlipCenter();
         chassis.drivingWithSensor(-Params.BASE_TO_JUNCTION, true,
@@ -395,9 +394,9 @@ public class TeleopDualDrivers extends LinearOpMode {
      */
     private void unloadCone(double drivingDistance) {
         armClaw.armFlipBackLoad();
-        slider.movingSliderInch(-2);
+        slider.movingSliderInch(-Params.SLIDER_MOVE_DOWN_POSITION);
         armClaw.clawOpen();
-        sleep(200); // to make sure claw Servo is at open position
+        sleep(Params.CLAW_OPEN_SLEEP); // to make sure claw Servo is at open position
         armClaw.armFlipFrontLoad();
         chassis.runToPosition(drivingDistance, true); // move out from junction
         slider.setInchPosition(Params.WALL_POSITION);
@@ -408,19 +407,19 @@ public class TeleopDualDrivers extends LinearOpMode {
      */
     private void unloadConeThenDriving() {
         armClaw.armFlipBackLoad();
-        slider.movingSliderInch(-2);
+        slider.movingSliderInch(-Params.SLIDER_MOVE_DOWN_POSITION);
         armClaw.clawOpen();
-        sleep(200); // to make sure claw Servo is at open position
+        sleep(Params.CLAW_OPEN_SLEEP); // to make sure claw Servo is at open position
 
         armClaw.armFlipFrontLoad();
 
         // driving back to cone base
-        chassis.drivingWithSensor(3, true,
+        chassis.drivingWithSensor(moveOutJunctionDistance, true,
                 chassis.frontCenterDS, 0, true, false);
 
         slider.setInchPosition(Params.WALL_POSITION - Params.coneLoadStackGap * 3);
 
-        chassis.drivingWithSensor(Params.BASE_TO_JUNCTION - 3, true,
+        chassis.drivingWithSensor(Params.BASE_TO_JUNCTION - moveOutJunctionDistance, true,
                 chassis.frontCenterDS, Params.LOAD_DS_VALUE, false, true);
     }
 }

@@ -298,9 +298,9 @@ public class AutonomousRight extends LinearOpMode {
         chassis.runToPosition(-Params.pickupMovingDis, true); // moving to loading position
         slider.waitRunningComplete();
         armClaw.clawClose();
-        sleep(100); // wait to make sure clawServo is at grep position, 200 ms
+        sleep(Params.CLAW_CLOSE_SLEEP);// 200
         chassis.rotateIMUTargetAngle(-90.0 * autonomousStartLocation);
-        slider.setInchPosition(Params.WALL_POSITION);
+        slider.movingSliderInch(Params.SLIDER_MOVE_OUT_CONE_STACK);
         armClaw.armFlipBackUnload();
         slider.waitRunningComplete(); // make sure slider has been lifted.
     }
@@ -314,8 +314,8 @@ public class AutonomousRight extends LinearOpMode {
         slider.waitRunningComplete();
         armClaw.clawOpen();
         // Make sure it is 45 degree before V leaving junction
+        sleep(Params.CLAW_OPEN_SLEEP); // 200
         chassis.rotateIMUTargetAngle(-45.0 * autonomousStartLocation);
-        sleep(100); // to make sure claw Servo is at open position, 250 ms
         armClaw.armFlipFrontLoad();
         chassis.runToPosition(moveDistanceAfterDrop, true); // move out from junction
         slider.setInchPosition(Params.WALL_POSITION);

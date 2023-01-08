@@ -50,6 +50,11 @@ public class Params {
     static final double HIGH_JUNCTION_POS = 33.5 - ARM_UNLOADING_LIFTING;
     static final double WALL_POSITION = 8;
     static final double SLIDER_MOVE_DOWN_POSITION = 3.0;
+    static final double SLIDER_MOVE_OUT_CONE_STACK = WALL_POSITION - coneStack5th;
+
+    //claw action time
+    static final int CLAW_CLOSE_SLEEP = 100; // ms
+    static final int CLAW_OPEN_SLEEP = 100; // ms
 
     // autonomous driving distance
     static final double HALF_MAT = 12.0;
