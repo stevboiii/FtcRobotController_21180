@@ -93,7 +93,7 @@ public class AutonomousRight extends LinearOpMode {
     public final ArmClawUnit armClaw = new ArmClawUnit();
 
     // variables for autonomous
-    double movingDistBeforeDrop = Params.HALF_MAT * 1.4 - Params.V_DISTANCE_TO_CENTER; // in INCH
+    double movingDistBeforeDrop = Params.HALF_MAT * 1.4 - Params.V_DISTANCE_TO_CENTER - Params.CONE_WALL_THICKNESS; // in INCH
     double movingDistAfterDrop = movingDistBeforeDrop + 0.5; //  adjust -2 ~ 2 inch if needed
     double matCenterToConeStack = Params.HALF_MAT * 3 - Params.FLIP_ARM_LENGTH; // 28; // inch
     double coneStackToMatCenter = matCenterToConeStack - Params.pickupMovingDis - 1; // adjust -2 ~ 2 inch if needed

@@ -56,6 +56,9 @@ public class Params {
     static final int CLAW_CLOSE_SLEEP = 100; // ms
     static final int CLAW_OPEN_SLEEP = 100; // ms
 
+    //cone parameters
+    static final double CONE_WALL_THICKNESS = 0.5; // INCH
+
     // autonomous driving distance
     static final double HALF_MAT = 12.0;
     static final double CHASSIS_WIDTH = 14;
