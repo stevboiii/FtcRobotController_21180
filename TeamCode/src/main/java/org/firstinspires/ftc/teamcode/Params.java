@@ -36,13 +36,31 @@ package org.firstinspires.ftc.teamcode;
  * This class defines the parameters related with game field elements.
  */
 public class Params {
+    //cone parameters
+    static final double CONE_WALL_THICKNESS = 0.5; // inch
+    static final double coneLoadStackGap = 1.3;
+
+    // autonomous driving distance
+    static final double HALF_MAT = 12.0;
+    static final double CHASSIS_HALF_WIDTH = 14 / 2.0;
+    static final double CHASSIS_LENGTH = 16;
+    static final double SWING_ARM_LENGTH = 12;
+    static final double FLIP_ARM_LENGTH = 10.5;
+    static final double ARM_LOCATION_BIAS = 2.0; // Arm joint location to the center of chassis.
+    static final double V_DISTANCE_TO_CENTER = 7; // distance from V to the center of the robot
+    static final double INIT_POSITION_TO_MAT_CENTER = 5 * HALF_MAT - CHASSIS_HALF_WIDTH;
+    static final double INIT_POSITION_TO_2ND_MAT_EDGE = 4 * HALF_MAT - CHASSIS_HALF_WIDTH;
+    static final double HIGH_JUNCTION_TO_CONE_STACK = 4 * HALF_MAT - SWING_ARM_LENGTH;
+    static final double BASE_TO_JUNCTION = 2 * HALF_MAT - 3;
+    static final double UNLOAD_DS_VALUE= 10;
+    static final double LOAD_DS_VALUE = 7;
+
     // moving distance variables
-    static final double pickupMovingDis = 1.0; // in INCH
+    static final double DISTANCE_PICK_UP = 1.0; // in INCH
 
     // slider position variables
     static final double ARM_UNLOADING_LIFTING = 4; // Arm lifting from loading position to unloading position
     static final double GROUND_CONE_POSITION = 0.0;
-    static final double coneLoadStackGap = 1.3;
     static final double coneStack5th = coneLoadStackGap * 4;
     static final double GROUND_JUNCTION_POS = GROUND_CONE_POSITION + 1.0;
     static final double LOW_JUNCTION_POS = 13.5 - ARM_UNLOADING_LIFTING;
@@ -56,22 +74,5 @@ public class Params {
     static final int CLAW_CLOSE_SLEEP = 100; // ms
     static final int CLAW_OPEN_SLEEP = 100; // ms
 
-    //cone parameters
-    static final double CONE_WALL_THICKNESS = 0.5; // INCH
-
-    // autonomous driving distance
-    static final double HALF_MAT = 12.0;
-    static final double CHASSIS_WIDTH = 14;
-    static final double CHASSIS_LENGTH = 16;
-    static final double SWING_ARM_LENGTH = 12;
-    static final double FLIP_ARM_LENGTH = 10.5;
-    static final double ARM_LOCATION_BIAS = 2.0; // Arm joint location to the center of chassis.
-    static final double V_DISTANCE_TO_CENTER = 7; // distance from V to the center of the robot
-    static final double INIT_POSITION_TO_MAT_CENTER = 5 * HALF_MAT - CHASSIS_WIDTH / 2.0;
-    static final double INIT_POSITION_TO_2ND_MAT_EDGE = 4 * HALF_MAT - CHASSIS_WIDTH / 2.0;
-    static final double HIGH_JUNCTION_TO_CONE_STACK = 4 * HALF_MAT - SWING_ARM_LENGTH;
-    static final double BASE_TO_JUNCTION = 2 * HALF_MAT - 3;
-    static final double UNLOAD_DS_VALUE= 10;
-    static final double LOAD_DS_VALUE = 7;
 }
 

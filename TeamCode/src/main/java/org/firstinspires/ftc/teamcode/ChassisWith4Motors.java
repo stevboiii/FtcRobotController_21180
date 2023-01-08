@@ -212,7 +212,9 @@ public class ChassisWith4Motors {
             b1 = blue;
             blue = (float)colorSensor.blue();
             red = (float)colorSensor.red();
-            Logging.log("Red = %.1f, Blue = %.1f", red, blue);
+            if (debugFlag) {
+                Logging.log("Red = %.1f, Blue = %.1f", red, blue);
+            }
         }
         setPowers(0);
         rotateIMUTargetAngle(0);
@@ -223,7 +225,9 @@ public class ChassisWith4Motors {
             drivingWithPID(SHORT_DISTANCE_POWER, 0 ,0, true);
             //Logging.log("Red = %d, Green = %d, Blue = %d", colorSensor.red(), colorSensor.green(), colorSensor.blue());
             fcDsValue = getFcDsValue();
-            Logging.log("Distance = %.2f", fcDsValue);
+            if (debugFlag) {
+                Logging.log("Distance = %.2f", fcDsValue);
+            }
         }
         setPowers(0);
     }
@@ -692,7 +696,7 @@ public class ChassisWith4Motors {
             fcDs = getFcDsValue();
             blue = colorSensor.blue();
             red = colorSensor.red();
-            if ((blue / blue0 < 1.4) && (red / red0 < 1.4) && (currEncoder - startEn > Params.CHASSIS_WIDTH / 2)) {
+            if ((blue / blue0 < 1.4) && (red / red0 < 1.4) && (currEncoder - startEn > Params.CHASSIS_HALF_WIDTH)) {
                 strafePower = 0;
             }
             Logging.log("Gray color sensor values, blue = %d, red = %d.", blue, red);

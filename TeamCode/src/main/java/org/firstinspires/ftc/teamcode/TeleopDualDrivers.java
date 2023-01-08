@@ -361,7 +361,7 @@ public class TeleopDualDrivers extends LinearOpMode {
         armClaw.armFlipFrontLoad();
         armClaw.clawOpen();
         slider.setInchPosition(coneLocation);
-        chassis.runToPosition(-Params.pickupMovingDis, true); // moving to loading position
+        chassis.runToPosition(-Params.DISTANCE_PICK_UP, true); // moving to loading position
         slider.waitRunningComplete();
         armClaw.clawClose();
         sleep(Params.CLAW_CLOSE_SLEEP); // wait to make sure clawServo is at grep position, 200 ms
@@ -376,7 +376,7 @@ public class TeleopDualDrivers extends LinearOpMode {
         armClaw.armFlipFrontLoad();
         armClaw.clawOpen();
         slider.setInchPosition(Params.GROUND_CONE_POSITION);
-        chassis.runToPosition(-Params.pickupMovingDis, true); // moving to loading position
+        chassis.runToPosition(-Params.DISTANCE_PICK_UP, true); // moving to loading position
         slider.waitRunningComplete();
         armClaw.clawClose();
         sleep(Params.CLAW_CLOSE_SLEEP); // 200 ms

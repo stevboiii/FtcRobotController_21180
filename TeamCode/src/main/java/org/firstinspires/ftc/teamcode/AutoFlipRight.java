@@ -79,7 +79,7 @@ public class AutoFlipRight extends AutonomousRight {
         slider.setInchPosition(Params.MEDIUM_JUNCTION_POS);
         armClaw.armFlipBackUnload();
         //move center of robot to the edge of 3rd mat
-        chassis.drivingWithSensor(-(Params.HALF_MAT * 4 - Params.CHASSIS_WIDTH / 2), false,
+        chassis.drivingWithSensor(-Params.INIT_POSITION_TO_2ND_MAT_EDGE, false,
                 chassis.backCenterDS, 12, true, true);
 
         // turn robot to make sure it is at 0 degree before backing to mat center
@@ -90,7 +90,7 @@ public class AutoFlipRight extends AutonomousRight {
         slider.waitRunningComplete();
 
         //drive forward and let V touch junction
-        chassis.drivingWithSensor(-Params.CHASSIS_WIDTH / 2, true,
+        chassis.drivingWithSensor(-Params.CHASSIS_HALF_WIDTH, true,
                 chassis.frontCenterDS, Params.UNLOAD_DS_VALUE, false, true);
         Logging.log("Autonomous - Robot V reached junction.");
 
@@ -151,7 +151,7 @@ public class AutoFlipRight extends AutonomousRight {
      */
     private void loadCone(double coneLocation) {
         slider.setInchPosition(coneLocation);
-        chassis.runToPosition(-autoLoadMovingDistance, true); // moving to loading position
+        chassis.runToPosition(-Params.DISTANCE_PICK_UP, true); // moving to loading position
         slider.waitRunningComplete();
         armClaw.clawClose();
         sleep(100); // wait to make sure clawServo is at grep position, 200 ms
