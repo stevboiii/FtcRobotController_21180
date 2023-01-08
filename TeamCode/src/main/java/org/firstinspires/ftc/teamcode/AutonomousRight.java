@@ -93,11 +93,10 @@ public class AutonomousRight extends LinearOpMode {
     public final ArmClawUnit armClaw = new ArmClawUnit();
 
     // variables for autonomous
-    double autoLoadMovingDistance = 1.0; // in INCH
     double movingDistBeforeDrop = Params.HALF_MAT * 1.4 - Params.V_DISTANCE_TO_CENTER; // in INCH
-    double movingDistAfterDrop = movingDistBeforeDrop + 0.5; //  adjust 1 inch if needed
+    double movingDistAfterDrop = movingDistBeforeDrop + 0.5; //  adjust -2 ~ 2 inch if needed
     double matCenterToConeStack = Params.HALF_MAT * 3 - Params.FLIP_ARM_LENGTH; // 28; // inch
-    double moveToMatCenterAfterPick = matCenterToConeStack - autoLoadMovingDistance - 1.5; // 1.5 inch for inertia adjust
+    double coneStackToMatCenter = matCenterToConeStack - Params.pickupMovingDis - 1; // adjust -2 ~ 2 inch if needed
 
     // camera and sleeve color
     ObjectDetection.ParkingLot myParkingLot = ObjectDetection.ParkingLot.UNKNOWN;
@@ -246,13 +245,13 @@ public class AutonomousRight extends LinearOpMode {
             chassis.rotateIMUTargetAngle(-90.0 * autonomousStartLocation);
 
             // drive robot to cone loading area.
-            chassis.runToConeStack(3 * Params.HALF_MAT - Params.FLIP_ARM_LENGTH, Params.HALF_MAT, Params.LOAD_DS_VALUE);
+            chassis.runToConeStack(matCenterToConeStack, Params.HALF_MAT, Params.LOAD_DS_VALUE);
 
             Logging.log("fcDistance sensor value before loading: %.2f ", chassis.getFcDsValue());
             // load cone
             autoLoadCone(Params.coneStack5th - Params.coneLoadStackGap * autoLoop);
 
-            chassis.runToPosition(-moveToMatCenterAfterPick, true);
+            chassis.runToPosition(-coneStackToMatCenter, true);
             Logging.log("Autonomous - Robot arrived the mat center near high junction.");
 
             // lift slider during left turning 45 degree facing to junction.
@@ -296,7 +295,7 @@ public class AutonomousRight extends LinearOpMode {
      */
     public void autoLoadCone(double coneLocation) {
         slider.setInchPosition(coneLocation);
-        chassis.runToPosition(-autoLoadMovingDistance, true); // moving to loading position
+        chassis.runToPosition(-Params.pickupMovingDis, true); // moving to loading position
         slider.waitRunningComplete();
         armClaw.clawClose();
         sleep(100); // wait to make sure clawServo is at grep position, 200 ms

@@ -88,7 +88,9 @@ public class TeleopDualDrivers extends LinearOpMode {
     private final ChassisWith4Motors chassis = new ChassisWith4Motors();
 
     // Driving motor variables
-    final double HIGH_SPEED_POWER = 0.6;
+    final double POWER_LOW = 0.3;
+    final double POWER_NORMAL = 0.6;
+    final double POWER_HIGH = 0.95;
 
     // slider motor power variables
     private final SlidersWith2Motors slider = new SlidersWith2Motors();
@@ -97,7 +99,6 @@ public class TeleopDualDrivers extends LinearOpMode {
     private final ArmClawUnit armClaw = new ArmClawUnit();
 
     // variables for auto load and unload cone
-    double autoLoadMovingDistance = 1.0; // in INCH
     double moveOutJunctionDistance = 5.0; // in INCH
 
     // debug flags, turn it off for formal version to save time of logging
@@ -144,6 +145,11 @@ public class TeleopDualDrivers extends LinearOpMode {
         runtime.reset();
         double timeStamp = 0.0;
 
+        // move slider to wall position just when starting.
+        if (opModeIsActive()) {
+            slider.setInchPosition(Params.WALL_POSITION);
+        }
+
         // run until the end of the match (driver presses STOP)
         while (opModeIsActive()) {
 
@@ -159,11 +165,11 @@ public class TeleopDualDrivers extends LinearOpMode {
             timeStamp = runtime.milliseconds();
 
             if (gpButtons.speedUp) {
-                maxDrivePower = HIGH_SPEED_POWER * 1.5;
+                maxDrivePower = POWER_HIGH;
             } else if (gpButtons.speedDown) {
-                maxDrivePower = HIGH_SPEED_POWER / 2;
+                maxDrivePower = POWER_LOW;
             } else {
-                maxDrivePower = HIGH_SPEED_POWER;
+                maxDrivePower = POWER_NORMAL;
             }
 
             maxDrivePower = Math.min(maxP, maxDrivePower);
@@ -350,7 +356,7 @@ public class TeleopDualDrivers extends LinearOpMode {
         armClaw.armFlipFrontLoad();
         armClaw.clawOpen();
         slider.setInchPosition(coneLocation);
-        chassis.runToPosition(-autoLoadMovingDistance, true); // moving to loading position
+        chassis.runToPosition(-Params.pickupMovingDis, true); // moving to loading position
         slider.waitRunningComplete();
         sleep(200); // waiting arm ready pick up position, 200 ms
         armClaw.clawClose();
@@ -366,7 +372,7 @@ public class TeleopDualDrivers extends LinearOpMode {
         armClaw.armFlipFrontLoad();
         armClaw.clawOpen();
         slider.setInchPosition(Params.GROUND_CONE_POSITION);
-        chassis.runToPosition(-autoLoadMovingDistance, true); // moving to loading position
+        chassis.runToPosition(-Params.pickupMovingDis, true); // moving to loading position
         slider.waitRunningComplete();
         armClaw.clawClose();
         sleep(250); // 200 ms

@@ -36,6 +36,9 @@ package org.firstinspires.ftc.teamcode;
  * This class defines the parameters related with game field elements.
  */
 public class Params {
+    // moving distance variables
+    static final double pickupMovingDis = 1.0; // in INCH
+
     // slider position variables
     static final double ARM_UNLOADING_LIFTING = 4; // Arm lifting from loading position to unloading position
     static final double GROUND_CONE_POSITION = 0.0;
@@ -53,7 +56,7 @@ public class Params {
     static final double CHASSIS_WIDTH = 14;
     static final double CHASSIS_LENGTH = 16;
     static final double SWING_ARM_LENGTH = 12;
-    static final double FLIP_ARM_LENGTH = 10;
+    static final double FLIP_ARM_LENGTH = 10.5;
     static final double ARM_LOCATION_BIAS = 2.0; // Arm joint location to the center of chassis.
     static final double V_DISTANCE_TO_CENTER = 7; // distance from V to the center of the robot
     static final double INIT_POSITION_TO_MAT_CENTER = 5 * HALF_MAT - CHASSIS_WIDTH / 2.0;
