@@ -341,8 +341,14 @@ public class TeleopDualDrivers extends LinearOpMode {
                 // drive motors log
                 telemetry.addData("Max driving power ", "%.2f", maxDrivePower);
             }
+            telemetry.addData("Front Center distance sensor", "%.2f", chassis.getFcDsValue());
+            telemetry.addData("Front left distance sensor", "%.2f", chassis.getFlDsValue());
+            telemetry.addData("Front right distance sensor", "%.2f", chassis.getFrDsValue());
+            telemetry.addData("Right center distance sensor", "%.2f", chassis.getBcDsValue());
+            telemetry.addData("Color sensor", "Red = %d, Green = %d, Blue = %d",
+                    chassis.colorSensor.red(), chassis.colorSensor.green(), chassis.colorSensor.blue());
+
             // running time
-            telemetry.addData("Status", "Run Time: " + runtime);
             telemetry.addData("Status", "While loop Time in ms = ", "%.1f", deltaTime);
             telemetry.update(); // update message at the end of while loop
             Logging.log("While loop time in ms = %.1f.", deltaTime);

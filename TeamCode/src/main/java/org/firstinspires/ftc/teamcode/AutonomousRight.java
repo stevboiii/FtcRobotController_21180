@@ -193,7 +193,6 @@ public class AutonomousRight extends LinearOpMode {
 
             Logging.log("Autonomous - total Run Time: " + runtime);
         }
-
         // The motor stop on their own but power is still applied. Turn off motor.
         slider.stop();
         chassis.setPowers(0.0);

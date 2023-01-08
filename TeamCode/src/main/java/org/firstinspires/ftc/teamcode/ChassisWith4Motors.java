@@ -89,8 +89,8 @@ public class ChassisWith4Motors {
     final double COUNTS_PER_INCH_STRAFE = 45; // robot strafe 1 INCH. the value is based on test (55 is wrong?)
 
     // power control variables
-    final double RAMP_UP_DISTANCE = 8.0; // ramp up in the first 10 inch
-    final double RAMP_DOWN_DISTANCE = 8.0; // slow down in the final 9 inch
+    final double RAMP_UP_DISTANCE = 10.0; // ramp up in the first 10 inch
+    final double RAMP_DOWN_DISTANCE = 10.0; // slow down in the final 10 inch
     final double SHORT_DISTANCE = 6.0; // consistent low power for short driving
 
     // imu
@@ -111,7 +111,7 @@ public class ChassisWith4Motors {
     private DistanceSensor frontRightDS = null;
     private DistanceSensor frontLeftDS = null;
 
-    private ColorSensor colorSensor = null;
+    public ColorSensor colorSensor = null;
 
 
     /**
@@ -564,7 +564,7 @@ public class ChassisWith4Motors {
                 backMotorSetPower(drivePower + correction * targetSign);
             }
         }
-        stopWithBrakeAndWithoutEnceders();
+        stopWithBrakeAndWithoutEncoders();
         if (debugFlag) {
             Logging.log("Drive power = %.2f, global angle = %.3f", drivePower, getAngle());
         }
@@ -700,7 +700,7 @@ public class ChassisWith4Motors {
             }
         }
 
-        stopWithBrakeAndWithoutEnceders();
+        stopWithBrakeAndWithoutEncoders();
         if (debugFlag) {
             Logging.log("robot is ready for cone pick up.");
         }
@@ -722,7 +722,7 @@ public class ChassisWith4Motors {
         while ((getEncoderDistance() - startEn) < Params.HALF_MAT) {
             drivingWithPID(-RAMP_END_POWER * direction, robotInitLoc * RAMP_END_POWER, 0, true);
         }
-        stopWithBrakeAndWithoutEnceders();
+        stopWithBrakeAndWithoutEncoders();
     }
 
     /**
@@ -733,8 +733,12 @@ public class ChassisWith4Motors {
      * @param rampUpOn driving power ramp up on / off
      * @param rampDownOn driving power ramp down on / off
      */
-    public void drivingWithSensor( double targetDis, boolean drivingOrStrafe, DistanceSensor ds, double threshold, boolean rampUpOn, boolean rampDownOn) {
-
+    public void drivingWithSensor(double targetDis,
+                                  boolean drivingOrStrafe,
+                                  DistanceSensor ds,
+                                  double threshold,
+                                  boolean rampUpOn,
+                                  boolean rampDownOn) {
         double maxPower;
         double currPower = RAMP_START_POWER;
         double direct = Math.copySign(1, targetDis);
@@ -746,11 +750,6 @@ public class ChassisWith4Motors {
         if (rampUpOn) {
             runUsingEncoders(); // reset encoders
         }
-
-        FrontLeftDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        FrontRightDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        BackLeftDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        BackRightDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         startEn = getEncoderDistance(drivingOrStrafe);
         currEn = startEn;
@@ -810,7 +809,7 @@ public class ChassisWith4Motors {
         
         // stop if ramp down is on
         if (rampDownOn) {
-            stopWithBrakeAndWithoutEnceders();
+            stopWithBrakeAndWithoutEncoders();
         }
     }
 
@@ -838,7 +837,7 @@ public class ChassisWith4Motors {
                 Logging.log("getFcDsValue = %.2f, encoder dist = %.2f", fcDs, currEnDist);
             }
         }
-        stopWithBrakeAndWithoutEnceders();
+        stopWithBrakeAndWithoutEncoders();
     }
 
     /**
@@ -966,7 +965,7 @@ public class ChassisWith4Motors {
         return dis;
     }
 
-    private void stopWithBrakeAndWithoutEnceders() {
+    private void stopWithBrakeAndWithoutEncoders() {
         zeroPowerBrake();
         setPowers(0.0);
         runWithoutEncoders();
