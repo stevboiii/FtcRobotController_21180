@@ -241,7 +241,7 @@ public class AutonomousRight extends LinearOpMode {
             chassis.rotateIMUTargetAngle(-90.0 * autonomousStartLocation);
 
             // drive robot to cone loading area.
-            chassis.runToConeStack(matCenterToConeStack, Params.HALF_MAT, Params.LOAD_DS_VALUE);
+            chassis.runToPosition(matCenterToConeStack, true);
 
             // load cone
             autoLoadCone(Params.coneStack5th - Params.coneLoadStackGap * autoLoop);
@@ -289,7 +289,7 @@ public class AutonomousRight extends LinearOpMode {
         chassis.runToPosition(-Params.DISTANCE_PICK_UP, true); // moving to loading position
         slider.waitRunningComplete();
         armClaw.clawClose();
-        sleep(Params.CLAW_CLOSE_SLEEP);// 200
+        sleep(Params.CLAW_CLOSE_SLEEP - 50);// subtract 50ms due to the following rotation function.
         chassis.rotateIMUTargetAngle(-90.0 * autonomousStartLocation);
         slider.movingSliderInch(Params.SLIDER_MOVE_OUT_CONE_STACK);
         armClaw.armFlipBackUnload();

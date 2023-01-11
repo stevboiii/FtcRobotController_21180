@@ -77,10 +77,10 @@ public class AutoFlipRight extends AutonomousRight {
     @Override
     public void autonomousCore() {
         slider.setInchPosition(Params.MEDIUM_JUNCTION_POS);
-        armClaw.armFlipBackUnload();
+        armClaw.armFlipCenter(); // armFlipBackUnload();
         //move center of robot to the edge of 3rd mat
         chassis.drivingWithSensor(-Params.INIT_POSITION_TO_2ND_MAT_EDGE, false,
-                chassis.backCenterDS, 12, true, true);
+                chassis.frontCenterDS, 12, true, true);
 
         // turn robot to make sure it is at 0 degree before backing to mat center
         chassis.rotateIMUTargetAngle(0);
@@ -91,7 +91,7 @@ public class AutoFlipRight extends AutonomousRight {
 
         //drive forward and let V touch junction
         chassis.drivingWithSensor(-Params.CHASSIS_HALF_WIDTH, true,
-                chassis.frontCenterDS, Params.UNLOAD_DS_VALUE, false, true);
+                chassis.backCenterDS, Params.UNLOAD_DS_VALUE, false, true);
         Logging.log("Autonomous - Robot V reached junction.");
 
         // drop cone and back to the center of mat
@@ -136,12 +136,12 @@ public class AutoFlipRight extends AutonomousRight {
      * unload cone
      */
     private void unloadCone() {
-        armClaw.armFlipBackUnload();
+        armClaw.armFlipCenter(); //armFlipBackUnload();
         armClaw.clawOpen();
         // Make sure it is 45 degree before V leaving junction
         chassis.rotateIMUTargetAngle(0);
         sleep(100); // to make sure claw Servo is at open position, 250 ms
-        armClaw.armFlipFrontLoad();
+        armClaw.armFlipCenter(); //armFlipFrontLoad();
         Logging.log("Auto unload - Cone has been unloaded.");
     }
 
@@ -157,7 +157,7 @@ public class AutoFlipRight extends AutonomousRight {
         sleep(100); // wait to make sure clawServo is at grep position, 200 ms
         chassis.rotateIMUTargetAngle(0);
         slider.setInchPosition(Params.WALL_POSITION);
-        armClaw.armFlipBackUnload();
+        armClaw.armFlipCenter(); //armFlipBackUnload();
         slider.waitRunningComplete(); // make sure slider has been lifted.
     }
 
@@ -165,17 +165,14 @@ public class AutoFlipRight extends AutonomousRight {
      * move to cone stack and lower sliders
      */
     private void moveToConeStack() {
-        chassis.drivingWithSensor(Params.HALF_MAT, true,
-                chassis.backCenterDS, 0, true, false);
-
-        slider.setInchPosition(Params.WALL_POSITION);
-
         while (chassis.getEncoderDistance() < Params.HALF_MAT * 2) {
             chassis.drivingWithPID(chassis.AUTO_MAX_POWER, 0.0, -chassis.AUTO_MAX_POWER, true);
         }
 
-        chassis.drivingWithSensor(Params.HALF_MAT, true,
-                chassis.backCenterDS, Params.LOAD_DS_VALUE, false, true);
+        slider.setInchPosition(Params.WALL_POSITION);
+
+        chassis.drivingWithSensor(3 * Params.HALF_MAT - Params.CHASSIS_LENGTH / 2, true,
+                chassis.frontCenterDS, Params.LOAD_DS_VALUE, false, true);
 
         slider.waitRunningComplete();
     }

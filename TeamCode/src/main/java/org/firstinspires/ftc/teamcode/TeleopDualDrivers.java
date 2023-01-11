@@ -399,7 +399,6 @@ public class TeleopDualDrivers extends LinearOpMode {
      * @param drivingDistance the driving back distance after unloading the cone.
      */
     private void unloadCone(double drivingDistance) {
-        armClaw.armFlipBackLoad();
         slider.movingSliderInch(-Params.SLIDER_MOVE_DOWN_POSITION);
         armClaw.clawOpen();
         sleep(Params.CLAW_OPEN_SLEEP); // to make sure claw Servo is at open position
@@ -412,7 +411,6 @@ public class TeleopDualDrivers extends LinearOpMode {
      * Special using case for unloading cone on high junction, then driving to cone base
      */
     private void unloadConeThenDriving() {
-        armClaw.armFlipBackLoad();
         slider.movingSliderInch(-Params.SLIDER_MOVE_DOWN_POSITION);
         armClaw.clawOpen();
         sleep(Params.CLAW_OPEN_SLEEP); // to make sure claw Servo is at open position

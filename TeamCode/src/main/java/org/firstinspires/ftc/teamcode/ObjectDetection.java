@@ -124,7 +124,7 @@ public class ObjectDetection extends OpenCvPipeline {
     private void sleeveColorDetect(Mat sleeveImageInput) {
         Logging.log("Start Opcv process to detect sleeve color.");
         // Get the submat frame, and then sum all the values
-           Mat areaMat = sleeveImageInput.submat(new Rect(sleeve_pointA, sleeve_pointB));
+        Mat areaMat = sleeveImageInput.submat(new Rect(sleeve_pointA, sleeve_pointB));
         Scalar sumColors = Core.sumElems(areaMat);
 
         // Get the minimum RGB value from every single channel
