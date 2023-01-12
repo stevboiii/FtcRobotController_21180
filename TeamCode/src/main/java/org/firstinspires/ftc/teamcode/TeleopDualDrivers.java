@@ -311,11 +311,6 @@ public class TeleopDualDrivers extends LinearOpMode {
                 minCtrlVolt = Math.min(ctrlHubVolt, minCtrlVolt);
                 minExVolt = Math.min(exHubVolt, minExVolt);
 
-                telemetry.addData("Front Center distance sensor", "%.2f", chassis.getFcDsValue());
-                telemetry.addData("Front left distance sensor", "%.2f", chassis.getFlDsValue());
-                telemetry.addData("Front right distance sensor", "%.2f", chassis.getFrDsValue());
-                telemetry.addData("Right center distance sensor", "%.2f", chassis.getBcDsValue());
-
                 Logging.log("Get drive power = %.2f, set drive power = %.2f", chassisCurrentPower, maxP);
                 Logging.log("Ctrl hub current = %.2f, max = %.2f", ctrlHubCurrent, maxCtrlCurrent);
                 Logging.log("Ctrl hub volt = %.2f, min = %.2f", ctrlHubVolt, minCtrlVolt);
@@ -342,11 +337,11 @@ public class TeleopDualDrivers extends LinearOpMode {
                 telemetry.addData("Max driving power ", "%.2f", maxDrivePower);
             }
             telemetry.addData("Front Center distance sensor", "%.2f", chassis.getFcDsValue());
-            telemetry.addData("Front left distance sensor", "%.2f", chassis.getFlDsValue());
-            telemetry.addData("Front right distance sensor", "%.2f", chassis.getFrDsValue());
-            telemetry.addData("Right center distance sensor", "%.2f", chassis.getBcDsValue());
-            telemetry.addData("Color sensor", "Red = %d, Green = %d, Blue = %d",
-                    chassis.colorSensor.red(), chassis.colorSensor.green(), chassis.colorSensor.blue());
+            //telemetry.addData("Front left distance sensor", "%.2f", chassis.getFlDsValue());
+            //telemetry.addData("Front right distance sensor", "%.2f", chassis.getFrDsValue());
+            telemetry.addData("Back center distance sensor", "%.2f", chassis.getBcDsValue());
+            //telemetry.addData("Color sensor", "Red = %d, Green = %d, Blue = %d",
+            //        chassis.colorSensor.red(), chassis.colorSensor.green(), chassis.colorSensor.blue());
 
             // running time
             telemetry.addData("Status", "While loop Time in ms = ", "%.1f", deltaTime);

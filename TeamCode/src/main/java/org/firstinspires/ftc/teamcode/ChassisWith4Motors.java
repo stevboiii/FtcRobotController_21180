@@ -188,9 +188,9 @@ public class ChassisWith4Motors {
         frontCenterDS = hardwareMap.get(DistanceSensor.class, "fcds");
         backCenterDS = hardwareMap.get(DistanceSensor.class, "rcds");
 
-        frontLeftDS = hardwareMap.get(DistanceSensor.class, "flds");
-        frontRightDS = hardwareMap.get(DistanceSensor.class, "frds");
-        colorSensor = hardwareMap.get(ColorSensor.class, "cs");
+        //frontLeftDS = hardwareMap.get(DistanceSensor.class, "flds");
+        //frontRightDS = hardwareMap.get(DistanceSensor.class, "frds");
+        //colorSensor = hardwareMap.get(ColorSensor.class, "cs");
     }
 
     /**
@@ -907,7 +907,12 @@ public class ChassisWith4Motors {
      * @return the value of front center distance, in inch
      */
     public double getFcDsValue() {
-        return frontCenterDS.getDistance(DistanceUnit.INCH);
+        if (frontCenterDS == null) {
+            return 2500;
+        }
+        else {
+            return frontCenterDS.getDistance(DistanceUnit.INCH) + DISTANCE_SENSOR_ALIGN;
+        }
     }
 
     /**
@@ -915,7 +920,12 @@ public class ChassisWith4Motors {
      * @return the value of front left distance, in inch
      */
     public double getFlDsValue() {
-        return frontLeftDS.getDistance(DistanceUnit.INCH) + DISTANCE_SENSOR_ALIGN;
+        if (frontLeftDS == null) {
+            return 2500;
+        }
+        else {
+            return frontLeftDS.getDistance(DistanceUnit.INCH) + DISTANCE_SENSOR_ALIGN;
+        }
     }
 
     /**
@@ -923,7 +933,12 @@ public class ChassisWith4Motors {
      * @return the value of front right distance, in inch
      */
     public double getFrDsValue() {
-        return frontRightDS.getDistance(DistanceUnit.INCH) + DISTANCE_SENSOR_ALIGN;
+        if (frontRightDS == null) {
+            return 2500;
+        }
+        else {
+            return frontRightDS.getDistance(DistanceUnit.INCH) + DISTANCE_SENSOR_ALIGN;
+        }
     }
 
     /**
@@ -931,7 +946,12 @@ public class ChassisWith4Motors {
      * @return the value of back center distance sensor value, in inch
      */
     public double getBcDsValue() {
-        return backCenterDS.getDistance(DistanceUnit.INCH);
+        if (backCenterDS == null) {
+            return 2500;
+        }
+        else {
+            return backCenterDS.getDistance(DistanceUnit.INCH) + DISTANCE_SENSOR_ALIGN;
+        }
     }
 
     /**
