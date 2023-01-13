@@ -31,7 +31,6 @@ package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
-import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 
 
@@ -47,9 +46,6 @@ import com.qualcomm.robotcore.util.Range;
  */
 public class ArmClawUnit
 {
-    private final ElapsedTime period  = new ElapsedTime();
-    final double ARM_MAX_WAIT_TIME = 1.0; // in seconds
-
     //private
     HardwareMap hardwareMap =  null;
 

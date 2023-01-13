@@ -729,7 +729,8 @@ public class ChassisWith4Motors {
      * driving distance controlled by distance sensor and motor encoders.
      * @param ds the distance sensor
      * @param targetDis the total target distance, "+" forward, "-" back
-     * @param threshold driving stop when the distance sensor value less than threshold
+     * @param threshold driving stop when the distance sensor value less than threshold. Disable
+     *                  distance sensor by setting it to zero.
      * @param rampUpOn driving power ramp up on / off
      * @param rampDownOn driving power ramp down on / off
      */
