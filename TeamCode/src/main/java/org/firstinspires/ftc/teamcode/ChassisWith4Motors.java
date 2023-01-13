@@ -756,7 +756,7 @@ public class ChassisWith4Motors {
         currEn = startEn;
 
         // ramp up power
-        if (rampUpOn && (targetDis > RAMP_UP_DISTANCE / 2 + threshold)) {
+        if (rampUpOn && (targetDis > RAMP_UP_DISTANCE / 2)) {
             while ((currEn - startEn) < RAMP_UP_DISTANCE / 2) {
                 if (drivingOrStrafe) {
                     drivingWithPID(currPower * direct, 0.0, 0.0, true);
@@ -912,7 +912,7 @@ public class ChassisWith4Motors {
             return 2500;
         }
         else {
-            return frontCenterDS.getDistance(DistanceUnit.INCH) + DISTANCE_SENSOR_ALIGN;
+            return frontCenterDS.getDistance(DistanceUnit.INCH);
         }
     }
 
@@ -951,7 +951,7 @@ public class ChassisWith4Motors {
             return 2500;
         }
         else {
-            return backCenterDS.getDistance(DistanceUnit.INCH) + DISTANCE_SENSOR_ALIGN;
+            return backCenterDS.getDistance(DistanceUnit.INCH);
         }
     }
 
@@ -999,4 +999,3 @@ public class ChassisWith4Motors {
         BackRightDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
     }
 }
-

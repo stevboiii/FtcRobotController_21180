@@ -93,11 +93,15 @@ public class AutonomousRight extends LinearOpMode {
     public final ArmClawUnit armClaw = new ArmClawUnit();
 
     // variables for autonomous
-    double backDistanceToThrowSleeve = Params.HALF_MAT - Params.CHASSIS_LENGTH / 2.0 + 1.5;
-    double movingDistBeforeDrop = Params.HALF_MAT * 1.414 - Params.V_DISTANCE_TO_CENTER - Params.CONE_WALL_THICKNESS + 1.5; // in INCH
-    double movingDistAfterDrop = movingDistBeforeDrop - 1.5; //  adjust -2 ~ 2 inch if needed
-    double matCenterToConeStack = Params.HALF_MAT * 3 - Params.FLIP_ARM_LENGTH; // 28; // inch
-    double coneStackToMatCenter = matCenterToConeStack - Params.DISTANCE_PICK_UP - 1; // adjust -2 ~ 2 inch if needed
+    double matCenterToJunction = Params.HALF_MAT * 1.414 - Params.BACK_V_TO_CENTER - Params.CONE_WALL_THICKNESS; //12.468
+    double matCenterToConeStack = Params.HALF_MAT * 3 - Params.FLIP_ARM_LENGTH; // 25.5
+
+    //  adjust -2 ~ 2 inch if needed for below 5 variables
+    double backDistanceToThrowSleeve = Params.HALF_MAT - Params.CHASSIS_LENGTH / 2.0 + 1;
+    double movingDistBeforeDrop = matCenterToJunction;
+    double movingDistAfterDrop = matCenterToJunction - 1.5;
+    double movingToConeStack = matCenterToConeStack;
+    double MovingToMatCenter = matCenterToConeStack - Params.DISTANCE_PICK_UP - 1;
 
     // camera and sleeve color
     ObjectDetection.ParkingLot myParkingLot = ObjectDetection.ParkingLot.UNKNOWN;
@@ -170,7 +174,8 @@ public class AutonomousRight extends LinearOpMode {
             parkingLotDis = coneSleeveDetect.getParkingLotDistance();
             telemetry.addData("Parking position: ", myParkingLot);
             telemetry.addData("robot position: ", autonomousStartLocation > 0? "Right":"Left");
-            telemetry.addData("Mode", "waiting for start");
+            telemetry.addData("Front Center distance sensor", "%.2f", chassis.getFcDsValue());
+            telemetry.addData("Back center distance sensor", "%.2f", chassis.getBcDsValue());
             telemetry.update();
         }
 
@@ -209,11 +214,13 @@ public class AutonomousRight extends LinearOpMode {
      */
     public void autonomousCore() {
 
+        // lift slider
         slider.setInchPosition(Params.LOW_JUNCTION_POS);
 
         //move center of robot to the edge of 3rd mat
         chassis.runToPosition(6 * Params.HALF_MAT - Params.CHASSIS_LENGTH, true);
 
+        sleep(100);
         // turn robot to make sure it is at 0 degree before backing to mat center
         chassis.rotateIMUTargetAngle(0.0);
 
@@ -225,7 +232,6 @@ public class AutonomousRight extends LinearOpMode {
 
         chassis.rotateIMUTargetAngle(-45.0 * autonomousStartLocation);
         armClaw.armFlipBackUnload();
-        //slider.waitRunningComplete();
 
         //drive forward and let V to touch junction
         chassis.runToPosition(-movingDistBeforeDrop, true);
@@ -242,12 +248,16 @@ public class AutonomousRight extends LinearOpMode {
             chassis.rotateIMUTargetAngle(-90.0 * autonomousStartLocation);
 
             // drive robot to cone loading area.
-            chassis.runToPosition(matCenterToConeStack, true);
+            //chassis.runToPosition(movingToConeStack, true);
+            chassis.drivingWithSensor(movingToConeStack, true,
+                    chassis.frontCenterDS, Params.LOAD_DS_VALUE, true, true);
 
             // load cone
             autoLoadCone(Params.coneStack5th - Params.coneLoadStackGap * autoLoop);
 
-            chassis.runToPosition(-coneStackToMatCenter, true);
+            //chassis.runToPosition(-MovingToMatCenter, true);
+            chassis.drivingWithSensor(-MovingToMatCenter, true,
+                    chassis.backCenterDS, Params.UNLOAD_DS_VALUE, true, true);
 
             // lift slider during left turning 45 degree facing to junction.
             slider.setInchPosition(Params.MEDIUM_JUNCTION_POS);
@@ -255,9 +265,6 @@ public class AutonomousRight extends LinearOpMode {
 
             //Rotation for accurate 45 degrees
             //chassis.rotateIMUTargetAngle(-45.0 * autonomousStartLocation);
-
-            // make sure slider has been lifted
-            //slider.waitRunningComplete();
 
             // moving forward V to junction
             chassis.runToPosition(-movingDistBeforeDrop, true);
