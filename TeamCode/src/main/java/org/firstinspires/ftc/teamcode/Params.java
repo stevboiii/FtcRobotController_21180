@@ -45,14 +45,14 @@ public class Params {
     static final double CHASSIS_HALF_WIDTH = 14 / 2.0;
     static final double CHASSIS_LENGTH = 16;
     static final double SWING_ARM_LENGTH = 12;
-    static final double FLIP_ARM_LENGTH = 11;
+    static final double FLIP_ARM_LENGTH = 10.5;
     static final double ARM_LOCATION_BIAS = 2.0; // Arm joint location to the center of chassis.
-    static final double V_DISTANCE_TO_CENTER = 6.5; // distance from V to the center of the robot
+    static final double V_DISTANCE_TO_CENTER = 6; // distance from V to the center of the robot
     static final double INIT_POSITION_TO_MAT_CENTER = 5 * HALF_MAT - CHASSIS_HALF_WIDTH;
     static final double INIT_POSITION_TO_2ND_MAT_EDGE = 4 * HALF_MAT - CHASSIS_HALF_WIDTH;
     static final double HIGH_JUNCTION_TO_CONE_STACK = 4 * HALF_MAT - SWING_ARM_LENGTH;
-    static final double BASE_TO_JUNCTION = 2 * HALF_MAT - 3;
-    static final double UNLOAD_DS_VALUE= 10;
+    static final double BASE_TO_JUNCTION = 2 * HALF_MAT - 5;
+    static final double UNLOAD_DS_VALUE= 6;
     static final double LOAD_DS_VALUE = 7;
 
     // moving distance variables

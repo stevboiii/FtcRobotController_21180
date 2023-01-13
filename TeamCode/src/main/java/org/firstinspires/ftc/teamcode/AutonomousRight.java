@@ -93,8 +93,9 @@ public class AutonomousRight extends LinearOpMode {
     public final ArmClawUnit armClaw = new ArmClawUnit();
 
     // variables for autonomous
-    double movingDistBeforeDrop = Params.HALF_MAT * 1.4 - Params.V_DISTANCE_TO_CENTER - Params.CONE_WALL_THICKNESS; // in INCH
-    double movingDistAfterDrop = movingDistBeforeDrop + 0.5; //  adjust -2 ~ 2 inch if needed
+    double backDistanceToThrowSleeve = Params.HALF_MAT - Params.CHASSIS_LENGTH / 2.0 + 1.5;
+    double movingDistBeforeDrop = Params.HALF_MAT * 1.414 - Params.V_DISTANCE_TO_CENTER - Params.CONE_WALL_THICKNESS + 1.5; // in INCH
+    double movingDistAfterDrop = movingDistBeforeDrop - 1.5; //  adjust -2 ~ 2 inch if needed
     double matCenterToConeStack = Params.HALF_MAT * 3 - Params.FLIP_ARM_LENGTH; // 28; // inch
     double coneStackToMatCenter = matCenterToConeStack - Params.DISTANCE_PICK_UP - 1; // adjust -2 ~ 2 inch if needed
 
@@ -220,7 +221,7 @@ public class AutonomousRight extends LinearOpMode {
         slider.setInchPosition(Params.MEDIUM_JUNCTION_POS);
 
         // driving back to mat center
-        chassis.runToPosition(-(Params.HALF_MAT - Params.CHASSIS_LENGTH / 2.0), true);
+        chassis.runToPosition(-backDistanceToThrowSleeve, true);
 
         chassis.rotateIMUTargetAngle(-45.0 * autonomousStartLocation);
         armClaw.armFlipBackUnload();

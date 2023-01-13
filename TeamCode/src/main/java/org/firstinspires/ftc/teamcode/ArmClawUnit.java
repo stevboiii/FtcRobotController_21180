@@ -63,8 +63,8 @@ public class ArmClawUnit
 
     // claw servo motor variables
     private Servo clawServo = null;
-    final double CLAW_OPEN_POS = 0.5;
-    final double CLAW_CLOSE_POS = 0.75;
+    final double CLAW_OPEN_POS = 0.53;
+    final double CLAW_CLOSE_POS = 0.73;
     final double CLAW_MAX_POS = 1; // Maximum rotational position
     final double CLAW_MIN_POS = 0;  // Minimum rotational position
 
@@ -217,7 +217,7 @@ public class ArmClawUnit
      * @param updatePosition the value needed to add to current arm servo position value.
      */
     public void armManualMoving(double updatePosition) {
-        setArmPosition(armServo.getPosition() + updatePosition / 10);
+        setArmPosition(armServo.getPosition() + updatePosition / 40);
     }
 
 }

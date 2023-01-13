@@ -385,7 +385,7 @@ public class TeleopDualDrivers extends LinearOpMode {
         armClaw.armFlipCenter();
         chassis.drivingWithSensor(-Params.BASE_TO_JUNCTION, true,
                 chassis.backCenterDS, Params.UNLOAD_DS_VALUE, true, true);
-        //slider.waitRunningComplete();
+        slider.waitRunningComplete();
         armClaw.armFlipBackUnload();
     }
 
@@ -418,7 +418,8 @@ public class TeleopDualDrivers extends LinearOpMode {
 
         slider.setInchPosition(Params.WALL_POSITION - Params.coneLoadStackGap * 3);
 
-        chassis.drivingWithSensor(Params.BASE_TO_JUNCTION - moveOutJunctionDistance, true,
+        // 2 inch less moving to base for pick up
+        chassis.drivingWithSensor(Params.BASE_TO_JUNCTION - moveOutJunctionDistance - 2, true,
                 chassis.frontCenterDS, Params.LOAD_DS_VALUE, false, true);
     }
 }
