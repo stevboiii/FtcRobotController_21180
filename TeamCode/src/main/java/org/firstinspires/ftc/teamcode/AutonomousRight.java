@@ -271,6 +271,11 @@ public class AutonomousRight extends LinearOpMode {
 
             // unload cone & adjust, 0.2 inch for cone thickness adjust
             autoUnloadCone(movingDistAfterDrop);
+
+            //moving slider a little bit to save time during picking up cone
+            if (autoLoop > 0) {
+                slider.setInchPosition(Params.WALL_POSITION - Params.coneLoadStackGap * (autoLoop - 1));
+            }
         }
 
         //rotate 45 degrees to keep orientation at 90

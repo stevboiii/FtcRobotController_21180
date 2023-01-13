@@ -172,7 +172,7 @@ public class ChassisWith4Motors {
         // Set PID proportional value to start reducing power at about 50 degrees of rotation.
         // P by itself may stall before turn completed so we add a bit of I (integral) which
         // causes the PID controller to gently increase power if the turn is not completed.
-        pidRotate = new PIDController(.014, .0, 0);
+        pidRotate = new PIDController(.016, .0, 0);
 
         // Set PID proportional value to produce non-zero correction value when robot veers off
         // straight line. P value controls how sensitive the correction is.
@@ -728,7 +728,8 @@ public class ChassisWith4Motors {
     /**
      * driving distance controlled by distance sensor and motor encoders.
      * @param ds the distance sensor
-     * @param targetDis the total target distance, "+" forward, "-" back
+     * @param targetDis the total target distance, "+" forward, "-" back when driving,
+     *                  and "-" is right, and "+" is to left when strafe.
      * @param threshold driving stop when the distance sensor value less than threshold. Disable
      *                  distance sensor by setting it to zero.
      * @param rampUpOn driving power ramp up on / off
@@ -846,7 +847,7 @@ public class ChassisWith4Motors {
      *
      * @param drive power from drive button, "+" is forward, and "-" is back
      * @param turn power from turn button
-     * @param strafe power from strafe button
+     * @param strafe power from strafe button, "-" is right, and "+" is to left
      * @param PIDEnabled flag to enable/disable PID correction.
      */
     public void drivingWithPID(double drive, double turn, double strafe, boolean PIDEnabled) {

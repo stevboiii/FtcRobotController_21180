@@ -69,18 +69,87 @@ public class AutonomousTest extends AutonomousRight {
     @Override
     public void autonomousCore() {
 
-        loadCone();
-        sleep(300);
-        chassis.drivingWithSensor(-Params.HALF_MAT, true,
-                chassis.backCenterDS, 0, true, false);
+        // lift slider
+        slider.setInchPosition(Params.LOW_JUNCTION_POS);
 
-        while (chassis.getEncoderDistance() < Params.HALF_MAT * 2) {
-            chassis.drivingWithPID(-chassis.AUTO_MAX_POWER, 0.0, -chassis.AUTO_MAX_POWER, true);
+        //move center of robot to the edge of 3rd mat
+        chassis.drivingWithSensor(Params.INIT_POSITION_TO_2ND_MAT_EDGE, false,
+                chassis.frontCenterDS, 12, true, true);
+
+        // turn robot to make sure it is at 0 degree before backing to mat center
+        chassis.rotateIMUTargetAngle(0);
+
+
+        // lift slider during rotating robot 45 degrees left
+        slider.setInchPosition(Params.MEDIUM_JUNCTION_POS);
+
+        // driving back to mat center
+        chassis.drivingWithSensor(-Params.CHASSIS_HALF_WIDTH + Params.BACK_V_TO_CENTER, true,
+                chassis.backCenterDS, Params.UNLOAD_DS_VALUE, true, true);
+
+        // drop cone and back to the center of mat
+        armClaw.armFlipBackUnload();
+        slider.movingSliderInch(-Params.SLIDER_MOVE_DOWN_POSITION);
+        slider.waitRunningComplete();
+        armClaw.clawOpen();
+        sleep(Params.CLAW_OPEN_SLEEP); // 200
+        chassis.rotateIMUTargetAngle(0);
+        armClaw.armFlipFrontLoad();
+        chassis.runToPosition(Params.CHASSIS_HALF_WIDTH - Params.BACK_V_TO_CENTER, true); // move out from junction
+        slider.setInchPosition(Params.WALL_POSITION);
+        Logging.log("Auto unload - Cone has been unloaded.");
+
+        // driving back to mat center
+
+        chassis.runToPosition(-Params.CHASSIS_HALF_WIDTH, false);
+
+        for(int autoLoop = 0; autoLoop < 3; autoLoop++) {
+
+            // right turn 45 degree.
+            chassis.rotateIMUTargetAngle(0.0 * autonomousStartLocation);
+
+            // Rotation for accurate 45 degrees
+            chassis.rotateIMUTargetAngle(0.0 * autonomousStartLocation);
+
+            // drive robot to cone loading area.
+            //chassis.runToPosition(movingToConeStack, true);
+            chassis.drivingWithSensor(movingToConeStack, true,
+                    chassis.frontCenterDS, Params.LOAD_DS_VALUE, true, true);
+
+            // load cone
+            autoLoadCone(Params.coneStack5th - Params.coneLoadStackGap * autoLoop);
+
+            //chassis.runToPosition(-MovingToMatCenter, true);
+            chassis.drivingWithSensor(-MovingToMatCenter, true,
+                    chassis.backCenterDS, Params.UNLOAD_DS_VALUE, true, true);
+
+            // lift slider during left turning 45 degree facing to junction.
+            slider.setInchPosition(Params.MEDIUM_JUNCTION_POS);
+            chassis.rotateIMUTargetAngle(45.0 * autonomousStartLocation);
+
+            //Rotation for accurate 45 degrees
+            //chassis.rotateIMUTargetAngle(-45.0 * autonomousStartLocation);
+
+            // moving forward V to junction
+            chassis.runToPosition(-movingDistBeforeDrop, true);
+
+            // unload cone & adjust, 0.2 inch for cone thickness adjust
+            autoUnloadCone(movingDistAfterDrop);
         }
 
-        chassis.drivingWithSensor(-Params.HALF_MAT, true,
-                chassis.backCenterDS, 6, false, true);
-        sleep(2000);
+        //rotate 45 degrees to keep orientation at 90
+        chassis.rotateIMUTargetAngle(0.0 * autonomousStartLocation);
+
+        // lower slider in prep for tele-op
+        slider.setInchPosition(Params.GROUND_CONE_POSITION);
+        armClaw.armFlipFrontLoad();
+
+        // drive to final parking lot, -1 for arm extended out of chassis.
+        chassis.runToPosition(parkingLotDis * autonomousStartLocation - 1, true);
+        Logging.log("Autonomous - Arrived at parking lot Mat: %.2f", parkingLotDis);
+
+        slider.waitRunningComplete();
+        Logging.log("Autonomous - Autonomous complete.");
     }
 
 
