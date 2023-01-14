@@ -99,9 +99,9 @@ public class AutonomousRight extends LinearOpMode {
     //  adjust -2 ~ 2 inch if needed for below 5 variables
     double backDistanceToThrowSleeve = Params.HALF_MAT - Params.CHASSIS_LENGTH / 2.0 + 1;
     double movingDistBeforeDrop = matCenterToJunction;
-    double movingDistAfterDrop = matCenterToJunction - 1.5;
+    double movingDistAfterDrop = matCenterToJunction - 1;
     double movingToConeStack = matCenterToConeStack;
-    double MovingToMatCenter = matCenterToConeStack - Params.DISTANCE_PICK_UP - 1;
+    double MovingToMatCenter = matCenterToConeStack - Params.DISTANCE_PICK_UP - 2.5;
 
     // camera and sleeve color
     ObjectDetection.ParkingLot myParkingLot = ObjectDetection.ParkingLot.UNKNOWN;
@@ -236,6 +236,8 @@ public class AutonomousRight extends LinearOpMode {
         //drive forward and let V to touch junction
         chassis.runToPosition(-movingDistBeforeDrop, true);
 
+        sleep(100); // wait for junction stop shaking.
+
         // drop cone and back to the center of mat
         autoUnloadCone(movingDistAfterDrop);
 
@@ -300,12 +302,14 @@ public class AutonomousRight extends LinearOpMode {
     public void autoLoadCone(double coneLocation) {
         slider.setInchPosition(coneLocation);
         chassis.runToPosition(-Params.DISTANCE_PICK_UP, true); // moving to loading position
+        Logging.log("Wait before claw close.");
         slider.waitRunningComplete();
         armClaw.clawClose();
         sleep(Params.CLAW_CLOSE_SLEEP - 50);// subtract 50ms due to the following rotation function.
         chassis.rotateIMUTargetAngle(-90.0 * autonomousStartLocation);
         slider.movingSliderInch(Params.SLIDER_MOVE_OUT_CONE_STACK);
         armClaw.armFlipBackUnload();
+        Logging.log("Wait before moving out cone stack.");
         slider.waitRunningComplete(); // make sure slider has been lifted.
     }
 
@@ -314,7 +318,9 @@ public class AutonomousRight extends LinearOpMode {
      */
     public void autoUnloadCone(double moveDistanceAfterDrop) {
         armClaw.armFlipBackUnload();
+        sleep(Params.CLAW_OPEN_SLEEP);
         slider.movingSliderInch(-Params.SLIDER_MOVE_DOWN_POSITION);
+        Logging.log("Wait before unloading claw open.");
         slider.waitRunningComplete();
         armClaw.clawOpen();
         sleep(Params.CLAW_OPEN_SLEEP); // 200

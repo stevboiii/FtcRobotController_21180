@@ -78,7 +78,7 @@ public class ChassisWith4Motors {
     final double SHORT_DISTANCE_POWER = 0.5;
     final double RAMP_START_POWER = 0.4;
     final double RAMP_END_POWER = 0.25;
-    final double MIN_ROTATE_POWER = 0.21;
+    final double MIN_ROTATE_POWER = 0.24;
 
     // Position variables for autonomous
     final double COUNTS_PER_MOTOR_REV = 537.7;   // eg: GoBILDA 312 RPM Yellow Jacket
@@ -172,7 +172,7 @@ public class ChassisWith4Motors {
         // Set PID proportional value to start reducing power at about 50 degrees of rotation.
         // P by itself may stall before turn completed so we add a bit of I (integral) which
         // causes the PID controller to gently increase power if the turn is not completed.
-        pidRotate = new PIDController(.016, .0, 0);
+        pidRotate = new PIDController(.018, .0, 0);
 
         // Set PID proportional value to produce non-zero correction value when robot veers off
         // straight line. P value controls how sensitive the correction is.
