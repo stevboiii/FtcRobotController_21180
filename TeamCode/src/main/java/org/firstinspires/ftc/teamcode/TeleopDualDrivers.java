@@ -217,7 +217,8 @@ public class TeleopDualDrivers extends LinearOpMode {
             // use right stick_Y to lift or down slider continuously
             if (Math.abs(gpButtons.sliderUpDown) > 0) {
                 telemetry.addData("gamepad", "%.2f", gpButtons.sliderUpDown);
-                if (armClaw.getArmPosition() > armClaw.ARM_FLIP_CENTER) {
+                if ((armClaw.getArmPosition() > armClaw.ARM_FLIP_CENTER) &&
+                        (slider.getPosition() < Params.WALL_POSITION * slider.COUNTS_PER_INCH)) {
                     armClaw.armFlipCenter();
                 }
                 slider.manualControlPos(gpButtons.sliderUpDown);

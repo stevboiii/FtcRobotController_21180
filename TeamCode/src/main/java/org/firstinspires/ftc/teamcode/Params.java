@@ -57,6 +57,7 @@ public class Params {
 
     // moving distance variables
     static final double DISTANCE_PICK_UP = 1.0; // in INCH
+    static final double DISTANCE_DROP_OFF = 0.5; // in INCH
 
     // slider position variables
     static final double ARM_UNLOADING_LIFTING = 5; // Arm lifting from loading position to unloading position
@@ -73,5 +74,6 @@ public class Params {
     //claw action time
     static final int CLAW_CLOSE_SLEEP = 200; // ms
     static final int CLAW_OPEN_SLEEP = 100; // ms
+    static final int WAIT_SHAKING_SLEEP = 100;
 }
 

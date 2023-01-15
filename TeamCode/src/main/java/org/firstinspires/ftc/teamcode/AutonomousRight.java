@@ -239,7 +239,7 @@ public class AutonomousRight extends LinearOpMode {
         sleep(100); // wait for junction stop shaking.
 
         // drop cone and back to the center of mat
-        autoUnloadCone(movingDistAfterDrop);
+        autoUnloadCone(movingDistAfterDrop + Params.CONE_WALL_THICKNESS);
 
         for(int autoLoop = 0; autoLoop < 3; autoLoop++) {
 
@@ -318,7 +318,8 @@ public class AutonomousRight extends LinearOpMode {
      */
     public void autoUnloadCone(double moveDistanceAfterDrop) {
         armClaw.armFlipBackUnload();
-        sleep(Params.CLAW_OPEN_SLEEP);
+        chassis.runToPosition(Params.DISTANCE_DROP_OFF, true);
+        sleep(Params.WAIT_SHAKING_SLEEP);
         slider.movingSliderInch(-Params.SLIDER_MOVE_DOWN_POSITION);
         Logging.log("Wait before unloading claw open.");
         slider.waitRunningComplete();
@@ -326,7 +327,7 @@ public class AutonomousRight extends LinearOpMode {
         sleep(Params.CLAW_OPEN_SLEEP); // 200
         chassis.rotateIMUTargetAngle(-45.0 * autonomousStartLocation);
         armClaw.armFlipFrontLoad();
-        chassis.runToPosition(moveDistanceAfterDrop, true); // move out from junction
+        chassis.runToPosition(moveDistanceAfterDrop - Params.DISTANCE_DROP_OFF, true); // move out from junction
         slider.setInchPosition(Params.WALL_POSITION);
         Logging.log("Auto unload - Cone has been unloaded.");
     }
