@@ -100,7 +100,7 @@ public class AutonomousRight extends LinearOpMode {
     double backDistanceToThrowSleeve = Params.HALF_MAT - Params.CHASSIS_LENGTH / 2.0 + 1;
     double movingDistBeforeDrop = matCenterToJunction;
     double movingDistAfterDrop = matCenterToJunction - 1;
-    double movingToConeStack = matCenterToConeStack;
+    double movingToConeStack = matCenterToConeStack - 0.5;
     double MovingToMatCenter = matCenterToConeStack - Params.DISTANCE_PICK_UP - 2.5;
 
     // camera and sleeve color

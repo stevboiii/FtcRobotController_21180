@@ -102,7 +102,7 @@ public class TeleopDualDrivers extends LinearOpMode {
     double moveOutJunctionDistance = 5.0; // in INCH
 
     // debug flags, turn it off for formal version to save time of logging
-    boolean debugFlag = true;
+    boolean debugFlag = false;
 
     // voltage management
     LynxModule ctrlHub;
@@ -201,16 +201,25 @@ public class TeleopDualDrivers extends LinearOpMode {
             }
             // use dpad left to get to the ground junction position
             if (gpButtons.sliderGroundJunction) {
+                if (armClaw.getArmPosition() > armClaw.ARM_FLIP_CENTER) {
+                    armClaw.armFlipCenter();
+                }
                 slider.setInchPosition(Params.GROUND_JUNCTION_POS);
             }
 
             if (gpButtons.sliderGround) {
-                slider.setInchPosition(0);
+                if (armClaw.getArmPosition() > armClaw.ARM_FLIP_CENTER) {
+                    armClaw.armFlipCenter();
+                }
+                slider.setInchPosition(slider.SLIDER_MIN_POS);
             }
 
             // use right stick_Y to lift or down slider continuously
             if (Math.abs(gpButtons.sliderUpDown) > 0) {
                 telemetry.addData("gamepad", "%.2f", gpButtons.sliderUpDown);
+                if (armClaw.getArmPosition() > armClaw.ARM_FLIP_CENTER) {
+                    armClaw.armFlipCenter();
+                }
                 slider.manualControlPos(gpButtons.sliderUpDown);
             }
 
@@ -248,15 +257,24 @@ public class TeleopDualDrivers extends LinearOpMode {
             }
 
             if (gpButtons.armBackLoad) {
+                if (slider.getPosition() < Params.WALL_POSITION * slider.COUNTS_PER_INCH) {
+                    slider.setInchPosition(Params.WALL_POSITION);
+                }
                 armClaw.armFlipBackLoad();
             }
 
             if (gpButtons.armBackUnload) {
+                if (slider.getPosition() < Params.WALL_POSITION * slider.COUNTS_PER_INCH) {
+                    slider.setInchPosition(Params.WALL_POSITION);
+                }
                 armClaw.armFlipBackUnload();
             }
 
             // 0.2 is to avoid pressing button by mistake.
             if(Math.abs(gpButtons.armManualControl) > 0.2) {
+                if (slider.getPosition() < Params.WALL_POSITION * slider.COUNTS_PER_INCH) {
+                    slider.setInchPosition(Params.WALL_POSITION);
+                }
                 armClaw.armManualMoving(gpButtons.armManualControl);
             }
 
@@ -336,12 +354,6 @@ public class TeleopDualDrivers extends LinearOpMode {
                 // drive motors log
                 telemetry.addData("Max driving power ", "%.2f", maxDrivePower);
             }
-            telemetry.addData("Front Center distance sensor", "%.2f", chassis.getFcDsValue());
-            //telemetry.addData("Front left distance sensor", "%.2f", chassis.getFlDsValue());
-            //telemetry.addData("Front right distance sensor", "%.2f", chassis.getFrDsValue());
-            telemetry.addData("Back center distance sensor", "%.2f", chassis.getBcDsValue());
-            //telemetry.addData("Color sensor", "Red = %d, Green = %d, Blue = %d",
-            //        chassis.colorSensor.red(), chassis.colorSensor.green(), chassis.colorSensor.blue());
 
             // running time
             telemetry.addData("Status", "While loop Time in ms = ", "%.1f", deltaTime);

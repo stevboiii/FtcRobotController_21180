@@ -62,7 +62,7 @@ public class ChassisWith4Motors {
     HardwareMap hardwareMap = null;
     private final ElapsedTime runtime = new ElapsedTime();
     final double MAX_WAIT_TIME = 8.0; // in seconds
-    private final boolean debugFlag = true;
+    private final boolean debugFlag = false;
 
     // Motors variables
     public DcMotor FrontLeftDrive = null;
@@ -167,12 +167,12 @@ public class ChassisWith4Motors {
         // Note: if you choose two conflicting directions, this initialization will cause a code exception.
         imu.initialize(new IMU.Parameters(orientationOnRobot));
         imu.resetYaw(); // reset Yaw when start initialization
-        resetAngle(); // make sure lastangle is initialized.
+        resetAngle(); // make sure last angle is initialized.
 
         // Set PID proportional value to start reducing power at about 50 degrees of rotation.
         // P by itself may stall before turn completed so we add a bit of I (integral) which
         // causes the PID controller to gently increase power if the turn is not completed.
-        pidRotate = new PIDController(.018, .0, 0);
+        pidRotate = new PIDController(.019, .0, 0);
 
         // Set PID proportional value to produce non-zero correction value when robot veers off
         // straight line. P value controls how sensitive the correction is.
@@ -186,7 +186,7 @@ public class ChassisWith4Motors {
 
         // Distance sensors
         frontCenterDS = hardwareMap.get(DistanceSensor.class, "fcds");
-        backCenterDS = hardwareMap.get(DistanceSensor.class, "rcds");
+        backCenterDS = hardwareMap.get(DistanceSensor.class, "bcds");
 
         //frontLeftDS = hardwareMap.get(DistanceSensor.class, "flds");
         //frontRightDS = hardwareMap.get(DistanceSensor.class, "frds");
