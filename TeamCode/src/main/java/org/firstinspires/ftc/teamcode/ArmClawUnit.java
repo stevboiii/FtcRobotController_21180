@@ -73,6 +73,7 @@ public class ArmClawUnit
     final double ARM_FLIP_FRONT_LOAD_POS = 0.23;
     final double ARM_FLIP_FRONT_UNLOAD_POS = 0.35;
     final double ARM_FLIP_BACK_UNLOAD_POS = 0.75;
+    final double ARM_FLIP_BACK_UNLOAD_TELE = 0.85;
     final double ARM_FLIP_BACK_LOAD_POS = 0.9;
     final double ARM_FLIP_CENTER = 0.56;
 
@@ -192,6 +193,13 @@ public class ArmClawUnit
      */
     public void armFlipBackLoad() {
         setArmPosition(ARM_FLIP_BACK_LOAD_POS);
+    }
+
+    /**
+     * turn the Flip arm to back unloading position during Teleop, the art extend more farther.
+     */
+    public void armFlipBackUnloadTele() {
+        setArmPosition(ARM_FLIP_BACK_UNLOAD_TELE);
     }
 
     /**

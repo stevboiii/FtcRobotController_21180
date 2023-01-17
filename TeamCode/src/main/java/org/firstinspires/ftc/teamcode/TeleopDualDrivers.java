@@ -182,17 +182,17 @@ public class TeleopDualDrivers extends LinearOpMode {
 
             // use Y button to lift up the slider reaching high junction
             if (gpButtons.sliderHighJunction) {
-                slider.setInchPosition(Params.HIGH_JUNCTION_POS);
+                slider.setInchPosition(Params.HIGH_JUNCTION_POS_TELE);
             }
 
             // use B button to lift up the slider reaching medium junction
             if (gpButtons.sliderMediumJunction) {
-                slider.setInchPosition(Params.MEDIUM_JUNCTION_POS);
+                slider.setInchPosition(Params.MEDIUM_JUNCTION_POS_TELE);
             }
 
             // use A button to lift up the slider reaching low junction
             if (gpButtons.sliderLowJunction) {
-                slider.setInchPosition(Params.LOW_JUNCTION_POS);
+                slider.setInchPosition(Params.LOW_JUNCTION_POS_TELE);
             }
 
             // use X button to move the slider for wall position
@@ -268,7 +268,7 @@ public class TeleopDualDrivers extends LinearOpMode {
                 if (slider.getPosition() < Params.WALL_POSITION * slider.COUNTS_PER_INCH) {
                     slider.setInchPosition(Params.WALL_POSITION);
                 }
-                armClaw.armFlipBackUnload();
+                armClaw.armFlipBackUnloadTele();
             }
 
             // 0.2 is to avoid pressing button by mistake.
@@ -379,8 +379,8 @@ public class TeleopDualDrivers extends LinearOpMode {
         slider.waitRunningComplete();
         armClaw.clawClose();
         sleep(Params.CLAW_CLOSE_SLEEP); // wait to make sure clawServo is at grep position, 200 ms
-        slider.setInchPosition(Params.LOW_JUNCTION_POS);
-        armClaw.armFlipBackUnload();
+        slider.setInchPosition(Params.LOW_JUNCTION_POS_TELE);
+        armClaw.armFlipBackUnloadTele();
     }
 
     /**
@@ -394,12 +394,11 @@ public class TeleopDualDrivers extends LinearOpMode {
         slider.waitRunningComplete();
         armClaw.clawClose();
         sleep(Params.CLAW_CLOSE_SLEEP); // 200 ms
-        slider.setInchPosition(Params.HIGH_JUNCTION_POS);
+        slider.setInchPosition(Params.HIGH_JUNCTION_POS_TELE);
         armClaw.armFlipCenter();
-        chassis.drivingWithSensor(-Params.BASE_TO_JUNCTION, true,
-                chassis.backCenterDS, 0, true, true);
+        chassis.runToPosition(-Params.BASE_TO_JUNCTION, true);
         slider.waitRunningComplete();
-        armClaw.armFlipBackUnload();
+        armClaw.armFlipBackUnloadTele();
     }
 
     /**
@@ -426,13 +425,11 @@ public class TeleopDualDrivers extends LinearOpMode {
         armClaw.armFlipFrontLoad();
 
         // driving back to cone base
-        chassis.drivingWithSensor(moveOutJunctionDistance, true,
-                chassis.frontCenterDS, 0, true, false);
+        chassis.runToPosition(moveOutJunctionDistance, true); // move out from junction
 
         slider.setInchPosition(Params.WALL_POSITION - Params.coneLoadStackGap * 3);
 
-        // 2 inch less moving to base for pick up
-        chassis.drivingWithSensor(Params.BASE_TO_JUNCTION - moveOutJunctionDistance - 2,
-                true, chassis.frontCenterDS, 0, false, true);
+        // -2 ~ 2 inch adjust moving to base for pick up
+        chassis.runToPosition(Params.BASE_TO_JUNCTION - moveOutJunctionDistance, true);
     }
 }
