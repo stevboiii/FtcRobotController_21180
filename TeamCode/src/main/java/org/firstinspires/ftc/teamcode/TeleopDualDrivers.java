@@ -99,7 +99,7 @@ public class TeleopDualDrivers extends LinearOpMode {
     private final ArmClawUnit armClaw = new ArmClawUnit();
 
     // variables for auto load and unload cone
-    double moveOutJunctionDistance = 5.0; // in INCH
+    double moveOutJunctionDistance = 4.0; // in INCH
 
     // debug flags, turn it off for formal version to save time of logging
     boolean debugFlag = false;
@@ -387,10 +387,12 @@ public class TeleopDualDrivers extends LinearOpMode {
      * Special using case for loading cone from base, then driving to nearest high junction
      */
     private void loadConeThenDriving() {
+        double power_old = chassis.MAX_POWER;
         armClaw.armFlipFrontLoad();
         armClaw.clawOpen();
         slider.setInchPosition(Params.GROUND_CONE_POSITION);
         chassis.runToPosition(-Params.DISTANCE_PICK_UP, true); // moving to loading position
+        chassis.MAX_POWER = 0.35;
         slider.waitRunningComplete();
         armClaw.clawClose();
         sleep(Params.CLAW_CLOSE_SLEEP); // 200 ms
@@ -399,6 +401,7 @@ public class TeleopDualDrivers extends LinearOpMode {
         chassis.runToPosition(-Params.BASE_TO_JUNCTION, true);
         slider.waitRunningComplete();
         armClaw.armFlipBackUnloadTele();
+        chassis.MAX_POWER = power_old;
     }
 
     /**
@@ -418,10 +421,11 @@ public class TeleopDualDrivers extends LinearOpMode {
      * Special using case for unloading cone on high junction, then driving to cone base
      */
     private void unloadConeThenDriving() {
+        double power_old = chassis.MAX_POWER;
         slider.movingSliderInch(-Params.SLIDER_MOVE_DOWN_POSITION);
         armClaw.clawOpen();
         sleep(Params.CLAW_OPEN_SLEEP); // to make sure claw Servo is at open position
-
+        chassis.MAX_POWER = 0.35;
         armClaw.armFlipFrontLoad();
 
         // driving back to cone base
@@ -430,6 +434,7 @@ public class TeleopDualDrivers extends LinearOpMode {
         slider.setInchPosition(Params.WALL_POSITION - Params.coneLoadStackGap * 3);
 
         // -2 ~ 2 inch adjust moving to base for pick up
-        chassis.runToPosition(Params.BASE_TO_JUNCTION - moveOutJunctionDistance, true);
+        chassis.runToPosition(Params.BASE_TO_JUNCTION - moveOutJunctionDistance + 1.5, true);
+        chassis.MAX_POWER = power_old;
     }
 }

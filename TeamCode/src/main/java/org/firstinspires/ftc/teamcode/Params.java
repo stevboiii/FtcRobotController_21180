@@ -51,7 +51,7 @@ public class Params {
     static final double INIT_POSITION_TO_MAT_CENTER = 5 * HALF_MAT - CHASSIS_HALF_WIDTH;
     static final double INIT_POSITION_TO_2ND_MAT_EDGE = 4 * HALF_MAT - CHASSIS_HALF_WIDTH;
     static final double HIGH_JUNCTION_TO_CONE_STACK = 4 * HALF_MAT - SWING_ARM_LENGTH;
-    static final double BASE_TO_JUNCTION = 3 * HALF_MAT - FLIP_ARM_LENGTH * 2;
+    static final double BASE_TO_JUNCTION = 3 * HALF_MAT - 18;
     static final double UNLOAD_DS_VALUE = 4.5;
     static final double LOAD_DS_VALUE = 6;
 
