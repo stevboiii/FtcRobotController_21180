@@ -119,7 +119,9 @@ public class TeleopDualDrivers extends LinearOpMode {
         // to 'get' must correspond to the names assigned during the robot configuration
         // step (using the FTC Robot Controller app on the phone).
         slider.init(hardwareMap, "RightSlider", "LeftSlider");
-        slider.setInchPosition(Params.GROUND_CONE_POSITION);
+        // Reset slider motor encoder counts kept by the motor
+        slider.setCountPosition(slider.getPosition());
+        slider.runToPosition();
 
         chassis.init(hardwareMap, "FrontLeft", "FrontRight",
                 "BackLeft", "BackRight");
@@ -218,7 +220,7 @@ public class TeleopDualDrivers extends LinearOpMode {
             if (Math.abs(gpButtons.sliderUpDown) > 0) {
                 telemetry.addData("gamepad", "%.2f", gpButtons.sliderUpDown);
                 if ((armClaw.getArmPosition() > armClaw.ARM_FLIP_CENTER) &&
-                        (slider.getPosition() < Params.WALL_POSITION * slider.COUNTS_PER_INCH)) {
+                        (slider.getInchPosition() < Params.COVER_POSITION)) {
                     armClaw.armFlipCenter();
                 }
                 slider.manualControlPos(gpButtons.sliderUpDown);
@@ -258,23 +260,23 @@ public class TeleopDualDrivers extends LinearOpMode {
             }
 
             if (gpButtons.armBackLoad) {
-                if (slider.getPosition() < Params.WALL_POSITION * slider.COUNTS_PER_INCH) {
-                    slider.setInchPosition(Params.WALL_POSITION);
+                if (slider.getInchPosition() < Params.COVER_POSITION) {
+                    slider.setInchPosition(Params.COVER_POSITION);
                 }
                 armClaw.armFlipBackLoad();
             }
 
             if (gpButtons.armBackUnload) {
-                if (slider.getPosition() < Params.WALL_POSITION * slider.COUNTS_PER_INCH) {
-                    slider.setInchPosition(Params.WALL_POSITION);
+                if (slider.getInchPosition() < Params.COVER_POSITION) {
+                    slider.setInchPosition(Params.COVER_POSITION);
                 }
                 armClaw.armFlipBackUnloadTele();
             }
 
             // 0.2 is to avoid pressing button by mistake.
             if(Math.abs(gpButtons.armManualControl) > 0.2) {
-                if (slider.getPosition() < Params.WALL_POSITION * slider.COUNTS_PER_INCH) {
-                    slider.setInchPosition(Params.WALL_POSITION);
+                if (slider.getInchPosition() < Params.COVER_POSITION) {
+                    slider.setInchPosition(Params.COVER_POSITION);
                 }
                 armClaw.armManualMoving(gpButtons.armManualControl);
             }
@@ -395,7 +397,8 @@ public class TeleopDualDrivers extends LinearOpMode {
         chassis.MAX_POWER = 0.35;
         slider.waitRunningComplete();
         armClaw.clawClose();
-        sleep(Params.CLAW_CLOSE_SLEEP); // 200 ms
+        sleep(Params.CLAW_CLOSE_SLEEP - 50); // 200 ms
+        chassis.rotate(-chassis.getAngle());
         slider.setInchPosition(Params.HIGH_JUNCTION_POS_TELE);
         armClaw.armFlipCenter();
         chassis.runToPosition(-Params.BASE_TO_JUNCTION, true);
@@ -424,7 +427,8 @@ public class TeleopDualDrivers extends LinearOpMode {
         double power_old = chassis.MAX_POWER;
         slider.movingSliderInch(-Params.SLIDER_MOVE_DOWN_POSITION);
         armClaw.clawOpen();
-        sleep(Params.CLAW_OPEN_SLEEP); // to make sure claw Servo is at open position
+        sleep(Params.CLAW_OPEN_SLEEP - 50); // to make sure claw Servo is at open position
+        chassis.rotate(-chassis.getAngle());
         chassis.MAX_POWER = 0.35;
         armClaw.armFlipFrontLoad();
 

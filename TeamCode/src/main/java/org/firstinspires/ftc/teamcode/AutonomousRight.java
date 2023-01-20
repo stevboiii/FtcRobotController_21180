@@ -152,6 +152,9 @@ public class AutonomousRight extends LinearOpMode {
         // to 'get' must correspond to the names assigned during the robot configuration
         // step (using the FTC Robot Controller app on the phone).
         slider.init(hardwareMap, "RightSlider", "LeftSlider");
+        // Reset slider motor encoder counts kept by the motor
+        slider.resetEncoders();
+
         chassis.init(hardwareMap, "FrontLeft", "FrontRight",
                 "BackLeft", "BackRight");
 
@@ -239,7 +242,7 @@ public class AutonomousRight extends LinearOpMode {
         sleep(100); // wait for junction stop shaking.
 
         // drop cone and back to the center of mat
-        autoUnloadCone(movingDistAfterDrop + Params.CONE_WALL_THICKNESS);
+        autoUnloadCone(movingDistAfterDrop + Params.CONE_WALL_THICKNESS * 2);
 
         for(int autoLoop = 0; autoLoop < 3; autoLoop++) {
 
@@ -324,7 +327,7 @@ public class AutonomousRight extends LinearOpMode {
         Logging.log("Wait before unloading claw open.");
         slider.waitRunningComplete();
         armClaw.clawOpen();
-        sleep(Params.CLAW_OPEN_SLEEP); // 200
+        sleep(Params.CLAW_OPEN_SLEEP - 100); // 200
         chassis.rotateIMUTargetAngle(-45.0 * autonomousStartLocation);
         armClaw.armFlipFrontLoad();
         chassis.runToPosition(moveDistanceAfterDrop - Params.DISTANCE_DROP_OFF, true); // move out from junction

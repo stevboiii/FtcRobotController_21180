@@ -72,12 +72,13 @@ public class Params {
     static final double MEDIUM_JUNCTION_POS_TELE = 23.5 - ARM_UNLOADING_LIFT_TELE;
     static final double HIGH_JUNCTION_POS_TELE = 33 - ARM_UNLOADING_LIFT_TELE;
     static final double WALL_POSITION = 8;
+    static final double COVER_POSITION = 4.0;
     static final double SLIDER_MOVE_DOWN_POSITION = 3.0;
     static final double SLIDER_MOVE_OUT_CONE_STACK = WALL_POSITION - coneStack5th;
 
     //claw action time
     static final int CLAW_CLOSE_SLEEP = 200; // ms
-    static final int CLAW_OPEN_SLEEP = 100; // ms
+    static final int CLAW_OPEN_SLEEP = 200; // ms
     static final int WAIT_SHAKING_SLEEP = 100;
 }
 

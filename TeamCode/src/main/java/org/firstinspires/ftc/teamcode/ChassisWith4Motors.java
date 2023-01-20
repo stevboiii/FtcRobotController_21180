@@ -374,7 +374,7 @@ public class ChassisWith4Motors {
      *
      * @param degrees Degrees to turn, + is left - is right
      */
-    private void rotate(double degrees) {
+    public void rotate(double degrees) {
         resetAngle();
         runWithoutEncoders(); // make sure it is the mode of Run without encoder
 
