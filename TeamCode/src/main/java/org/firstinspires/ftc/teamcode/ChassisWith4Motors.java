@@ -786,7 +786,7 @@ public class ChassisWith4Motors {
         // driving with max power
         currDs = ds.getDistance(DistanceUnit.INCH);
         currPower = maxPower;
-        while (((currEn - startEn) < targetDis) && (currDs > threshold)) {
+        while ((currEn - startEn) < targetDis) {
             if (drivingOrStrafe) {
                 drivingWithPID(currPower * direct, 0.0, 0.0, true);
             }

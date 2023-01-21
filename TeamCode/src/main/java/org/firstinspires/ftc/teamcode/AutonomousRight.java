@@ -238,9 +238,7 @@ public class AutonomousRight extends LinearOpMode {
 
         //drive forward and let V to touch junction
         chassis.runToPosition(-movingDistBeforeDrop, true);
-
-        sleep(100); // wait for junction stop shaking.
-
+        
         // drop cone and back to the center of mat
         autoUnloadCone(movingDistAfterDrop + Params.CONE_WALL_THICKNESS * 2);
 

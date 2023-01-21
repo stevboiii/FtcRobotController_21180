@@ -275,7 +275,7 @@ public class TeleopDualDrivers extends LinearOpMode {
 
             // 0.2 is to avoid pressing button by mistake.
             if(Math.abs(gpButtons.armManualControl) > 0.2) {
-                if (slider.getInchPosition() < Params.COVER_POSITION) {
+                if ((slider.getInchPosition() < Params.COVER_POSITION) && (gpButtons.armManualControl > 0)) {
                     slider.setInchPosition(Params.COVER_POSITION);
                 }
                 armClaw.armManualMoving(gpButtons.armManualControl);
@@ -359,7 +359,7 @@ public class TeleopDualDrivers extends LinearOpMode {
             }
 
             // running time
-            telemetry.addData("Status", "While loop Time in ms = ", "%.1f", deltaTime);
+            telemetry.addData("Status", "While loop Time in ms = %.1f", deltaTime);
             telemetry.update(); // update message at the end of while loop
             Logging.log("While loop time in ms = %.1f.", deltaTime);
         }

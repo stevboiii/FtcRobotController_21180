@@ -58,7 +58,7 @@ public class SlidersWith2Motors
     // slider motor variables
     public DcMotor RightSliderMotor = null;
     public DcMotor LeftSliderMotor = null;
-    final double SLIDER_MOTOR_POWER = 0.95; // save some powers
+    final double SLIDER_MOTOR_POWER = 0.98; // save some powers
     final int COUNTS_PER_INCH = 120; // verified by testing.
     final double manualUpdatePos = COUNTS_PER_INCH / 2.0; // 0.5 inch
 
@@ -82,9 +82,6 @@ public class SlidersWith2Motors
         /* slider motor control */
         RightSliderMotor.setDirection(DcMotorSimple.Direction.REVERSE);
         LeftSliderMotor.setDirection(DcMotorSimple.Direction.FORWARD);
-
-        //set slider motor powers always on
-        setPowers(SLIDER_MOTOR_POWER);
     }
 
     /**
@@ -192,6 +189,7 @@ public class SlidersWith2Motors
     public void runToPosition() {
         RightSliderMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         LeftSliderMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        setPowers(SLIDER_MOTOR_POWER);
     }
 
     /**
