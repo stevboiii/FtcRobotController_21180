@@ -240,7 +240,7 @@ public class AutonomousRight extends LinearOpMode {
         chassis.runToPosition(-movingDistBeforeDrop, true);
         
         // drop cone and back to the center of mat
-        autoUnloadCone(movingDistAfterDrop + Params.CONE_WALL_THICKNESS * 2);
+        autoUnloadCone(movingDistAfterDrop + Params.CONE_WALL_THICKNESS * 3);
 
         for(int autoLoop = 0; autoLoop < 3; autoLoop++) {
 
