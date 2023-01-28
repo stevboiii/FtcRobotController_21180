@@ -31,7 +31,6 @@ package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
-import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 
 
@@ -47,9 +46,6 @@ import com.qualcomm.robotcore.util.Range;
  */
 public class ArmClawUnit
 {
-    private final ElapsedTime period  = new ElapsedTime();
-    final double ARM_MAX_WAIT_TIME = 1.0; // in seconds
-
     //private
     HardwareMap hardwareMap =  null;
 
@@ -64,7 +60,7 @@ public class ArmClawUnit
     // claw servo motor variables
     private Servo clawServo = null;
     final double CLAW_OPEN_POS = 0.5;
-    final double CLAW_CLOSE_POS = 0.75;
+    final double CLAW_CLOSE_POS = 0.71;
     final double CLAW_MAX_POS = 1; // Maximum rotational position
     final double CLAW_MIN_POS = 0;  // Minimum rotational position
 
@@ -77,8 +73,9 @@ public class ArmClawUnit
     final double ARM_FLIP_FRONT_LOAD_POS = 0.23;
     final double ARM_FLIP_FRONT_UNLOAD_POS = 0.35;
     final double ARM_FLIP_BACK_UNLOAD_POS = 0.75;
-    final double ARM_FLIP_BACK_LOAD_POS = 0.8;
-    final double ARM_FLIP_CENTER = 0.6;
+    final double ARM_FLIP_BACK_UNLOAD_TELE = 0.80;
+    final double ARM_FLIP_BACK_LOAD_POS = 0.9;
+    final double ARM_FLIP_CENTER = 0.56;
 
     /**
      * Init slider motors hardware, and set their behaviors.
@@ -122,6 +119,7 @@ public class ArmClawUnit
      * @param armPos the target position value for arm servo motor
      */
     public void setArmPosition(double armPos) {
+        armPos = Range.clip(armPos, ARM_FLIP_FRONT_LOAD_POS, ARM_FLIP_BACK_LOAD_POS);
         armServo.setPosition(armPos);
     }
 
@@ -198,6 +196,13 @@ public class ArmClawUnit
     }
 
     /**
+     * turn the Flip arm to back unloading position during Teleop, the art extend more farther.
+     */
+    public void armFlipBackUnloadTele() {
+        setArmPosition(ARM_FLIP_BACK_UNLOAD_TELE);
+    }
+
+    /**
      * turn the Flip arm to center position
      */
     public void armFlipCenter() {
@@ -209,6 +214,14 @@ public class ArmClawUnit
      */
     public void armFlipBackUnload() {
         setArmPosition(ARM_FLIP_BACK_UNLOAD_POS);
+    }
+
+    /**
+     * Manual control arm position
+     * @param updatePosition the value needed to add to current arm servo position value.
+     */
+    public void armManualMoving(double updatePosition) {
+        setArmPosition(armServo.getPosition() + updatePosition / 500);
     }
 
 }

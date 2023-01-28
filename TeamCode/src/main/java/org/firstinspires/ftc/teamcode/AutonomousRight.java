@@ -93,12 +93,15 @@ public class AutonomousRight extends LinearOpMode {
     public final ArmClawUnit armClaw = new ArmClawUnit();
 
     // variables for autonomous
-    double autoLoadMovingDistance = 1.0; // in INCH
-    double matCenterToJunctionDistance = 14.5;
-    double movingDistBeforeDrop = Params.HALF_MAT - Params.V_DISTANCE_TO_CENTER; // in INCH
-    double movingDistAfterDrop = Params.HALF_MAT - Params.V_DISTANCE_TO_CENTER + 1; // 1 inch for adjust
-    double matCenterToConeStack = 28; // inch
-    double moveToMatCenterAfterPick = matCenterToConeStack - autoLoadMovingDistance - 2.5; // 3 inch for inertia adjust
+    double matCenterToJunction = Params.HALF_MAT * 1.414 - Params.BACK_V_TO_CENTER - Params.CONE_WALL_THICKNESS; //12.468
+    double matCenterToConeStack = Params.HALF_MAT * 3 - Params.FLIP_ARM_LENGTH; // 25.5
+
+    //  adjust -2 ~ 2 inch if needed for below 5 variables
+    double backDistanceToThrowSleeve = Params.HALF_MAT - Params.CHASSIS_LENGTH / 2.0 + 1;
+    double movingDistBeforeDrop = matCenterToJunction;
+    double movingDistAfterDrop = matCenterToJunction - 1;
+    double movingToConeStack = matCenterToConeStack - 1.0;
+    double MovingToMatCenter = matCenterToConeStack - Params.DISTANCE_PICK_UP - 3;
 
     // camera and sleeve color
     ObjectDetection.ParkingLot myParkingLot = ObjectDetection.ParkingLot.UNKNOWN;
@@ -149,6 +152,9 @@ public class AutonomousRight extends LinearOpMode {
         // to 'get' must correspond to the names assigned during the robot configuration
         // step (using the FTC Robot Controller app on the phone).
         slider.init(hardwareMap, "RightSlider", "LeftSlider");
+        // Reset slider motor encoder counts kept by the motor
+        slider.resetEncoders();
+
         chassis.init(hardwareMap, "FrontLeft", "FrontRight",
                 "BackLeft", "BackRight");
 
@@ -171,7 +177,8 @@ public class AutonomousRight extends LinearOpMode {
             parkingLotDis = coneSleeveDetect.getParkingLotDistance();
             telemetry.addData("Parking position: ", myParkingLot);
             telemetry.addData("robot position: ", autonomousStartLocation > 0? "Right":"Left");
-            telemetry.addData("Mode", "waiting for start");
+            telemetry.addData("Front Center distance sensor", "%.2f", chassis.getFcDsValue());
+            telemetry.addData("Back center distance sensor", "%.2f", chassis.getBcDsValue());
             telemetry.update();
         }
 
@@ -195,7 +202,6 @@ public class AutonomousRight extends LinearOpMode {
 
             Logging.log("Autonomous - total Run Time: " + runtime);
         }
-
         // The motor stop on their own but power is still applied. Turn off motor.
         slider.stop();
         chassis.setPowers(0.0);
@@ -211,34 +217,32 @@ public class AutonomousRight extends LinearOpMode {
      */
     public void autonomousCore() {
 
+        // lift slider
         slider.setInchPosition(Params.LOW_JUNCTION_POS);
 
         //move center of robot to the edge of 3rd mat
         chassis.runToPosition(6 * Params.HALF_MAT - Params.CHASSIS_LENGTH, true);
 
+        sleep(100);
         // turn robot to make sure it is at 0 degree before backing to mat center
         chassis.rotateIMUTargetAngle(0.0);
 
-        // driving back to mat center
-        chassis.runToPosition(-(Params.HALF_MAT - Params.CHASSIS_LENGTH / 2.0), true);
-
         // lift slider during rotating robot 45 degrees left
         slider.setInchPosition(Params.MEDIUM_JUNCTION_POS);
+
+        // driving back to mat center
+        chassis.runToPosition(-backDistanceToThrowSleeve, true);
+
         chassis.rotateIMUTargetAngle(-45.0 * autonomousStartLocation);
-        Logging.log("fcDistance sensor value before moving V to junction: %.2f ", chassis.getFcDsValue());
         armClaw.armFlipBackUnload();
-        slider.waitRunningComplete();
 
         //drive forward and let V to touch junction
         chassis.runToPosition(-movingDistBeforeDrop, true);
-        //chassis.backWithEncoderAndSensor(movingDistBeforeDrop, 0);
-        Logging.log("Autonomous - Robot V reached junction.");
-
+        
         // drop cone and back to the center of mat
-        autoUnloadCone(movingDistAfterDrop);
+        autoUnloadCone(movingDistAfterDrop + Params.CONE_WALL_THICKNESS * 3);
 
         for(int autoLoop = 0; autoLoop < 3; autoLoop++) {
-            Logging.log("Autonomous - loop index: %d ", autoLoop);
 
             // right turn 45 degree.
             chassis.rotateIMUTargetAngle(-90.0 * autonomousStartLocation);
@@ -247,34 +251,34 @@ public class AutonomousRight extends LinearOpMode {
             chassis.rotateIMUTargetAngle(-90.0 * autonomousStartLocation);
 
             // drive robot to cone loading area.
-            chassis.runToConeStack(3 * Params.HALF_MAT - Params.V_DISTANCE_TO_CENTER, 12, 6);
+            //chassis.runToPosition(movingToConeStack, true);
+            chassis.drivingWithSensor(movingToConeStack, true,
+                    chassis.frontCenterDS, Params.LOAD_DS_VALUE, true, true);
 
-            Logging.log("fcDistance sensor value before loading: %.2f ", chassis.getFcDsValue());
             // load cone
             autoLoadCone(Params.coneStack5th - Params.coneLoadStackGap * autoLoop);
 
-            // lift slider during driving back to mat center.
-            chassis.runToPosition(-moveToMatCenterAfterPick, true);
-            Logging.log("Autonomous - Robot arrived the mat center near high junction.");
+            //chassis.runToPosition(-MovingToMatCenter, true);
+            chassis.drivingWithSensor(-MovingToMatCenter, true,
+                    chassis.backCenterDS, Params.UNLOAD_DS_VALUE, true, true);
 
-            // lift slider during left turning 135 degree facing to high junction.
+            // lift slider during left turning 45 degree facing to junction.
             slider.setInchPosition(Params.MEDIUM_JUNCTION_POS);
             chassis.rotateIMUTargetAngle(-45.0 * autonomousStartLocation);
 
             //Rotation for accurate 45 degrees
-            chassis.rotateIMUTargetAngle(-45.0 * autonomousStartLocation);
-
-            // make sure slider has been lifted
-            slider.waitRunningComplete();
-            Logging.log("Autonomous - slider is positioned to high junction.");
+            //chassis.rotateIMUTargetAngle(-45.0 * autonomousStartLocation);
 
             // moving forward V to junction
             chassis.runToPosition(-movingDistBeforeDrop, true);
-            //chassis.backWithEncoderAndSensor(movingDistBeforeDrop, 0);
 
             // unload cone & adjust, 0.2 inch for cone thickness adjust
             autoUnloadCone(movingDistAfterDrop);
-            Logging.log("Autonomous - cone %d has been unloaded.", autoLoop + 2);
+
+            //moving slider a little bit to save time during picking up cone
+            if (autoLoop > 0) {
+                slider.setInchPosition(Params.WALL_POSITION - Params.coneLoadStackGap * (autoLoop - 1));
+            }
         }
 
         //rotate 45 degrees to keep orientation at 90
@@ -282,10 +286,10 @@ public class AutonomousRight extends LinearOpMode {
 
         // lower slider in prep for tele-op
         slider.setInchPosition(Params.GROUND_CONE_POSITION);
-        armClaw.armFlipCenter();
+        armClaw.armFlipFrontLoad();
 
-        // drive to final parking lot
-        chassis.runToPosition(parkingLotDis * autonomousStartLocation, true);
+        // drive to final parking lot, -1 for arm extended out of chassis.
+        chassis.runToPosition(parkingLotDis * autonomousStartLocation - 1, true);
         Logging.log("Autonomous - Arrived at parking lot Mat: %.2f", parkingLotDis);
 
         slider.waitRunningComplete();
@@ -298,13 +302,15 @@ public class AutonomousRight extends LinearOpMode {
      */
     public void autoLoadCone(double coneLocation) {
         slider.setInchPosition(coneLocation);
-        chassis.runToPosition(-autoLoadMovingDistance, true); // moving to loading position
+        chassis.runToPosition(-Params.DISTANCE_PICK_UP, true); // moving to loading position
+        Logging.log("Wait before claw close.");
         slider.waitRunningComplete();
         armClaw.clawClose();
-        sleep(100); // wait to make sure clawServo is at grep position, 200 ms
+        sleep(Params.CLAW_CLOSE_SLEEP - 50);// subtract 50ms due to the following rotation function.
         chassis.rotateIMUTargetAngle(-90.0 * autonomousStartLocation);
-        slider.setInchPosition(Params.WALL_POSITION);
+        slider.movingSliderInch(Params.SLIDER_MOVE_OUT_CONE_STACK);
         armClaw.armFlipBackUnload();
+        Logging.log("Wait before moving out cone stack.");
         slider.waitRunningComplete(); // make sure slider has been lifted.
     }
 
@@ -313,12 +319,16 @@ public class AutonomousRight extends LinearOpMode {
      */
     public void autoUnloadCone(double moveDistanceAfterDrop) {
         armClaw.armFlipBackUnload();
+        chassis.runToPosition(Params.DISTANCE_DROP_OFF, true);
+        sleep(Params.WAIT_SHAKING_SLEEP);
+        slider.movingSliderInch(-Params.SLIDER_MOVE_DOWN_POSITION);
+        Logging.log("Wait before unloading claw open.");
+        slider.waitRunningComplete();
         armClaw.clawOpen();
-        // Make sure it is 45 degree before V leaving junction
+        sleep(Params.CLAW_OPEN_SLEEP - 100); // 200
         chassis.rotateIMUTargetAngle(-45.0 * autonomousStartLocation);
-        sleep(100); // to make sure claw Servo is at open position, 250 ms
         armClaw.armFlipFrontLoad();
-        chassis.runToPosition(moveDistanceAfterDrop, true); // move out from junction
+        chassis.runToPosition(moveDistanceAfterDrop - Params.DISTANCE_DROP_OFF, true); // move out from junction
         slider.setInchPosition(Params.WALL_POSITION);
         Logging.log("Auto unload - Cone has been unloaded.");
     }

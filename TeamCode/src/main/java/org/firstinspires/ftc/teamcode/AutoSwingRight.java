@@ -99,7 +99,7 @@ public class AutoSwingRight extends AutonomousRight {
         slider.waitRunningComplete();
 
         // drop cone and back to the center of mat
-        autoUnloadCone();
+        swingUnloadCone();
 
         for(int autoLoop = 0; autoLoop < 4; autoLoop++) {
             Logging.log("Autonomous - loop index: %d ", autoLoop);
@@ -110,12 +110,12 @@ public class AutoSwingRight extends AutonomousRight {
 
             Logging.log("fcDistance sensor value before loading: %.2f ", chassis.getFcDsValue());
             // load cone
-            autoLoadCone(Params.coneStack5th - Params.coneLoadStackGap * autoLoop);
+            swingLoadCone(Params.coneStack5th - Params.coneLoadStackGap * autoLoop);
 
             // lift slider during driving back to mat center.
             slider.setInchPosition(Params.HIGH_JUNCTION_POS);
 
-            chassis.strafeToJunction(Params.HIGH_JUNCTION_TO_CONE_STACK - 6.0, 6.0, 20);
+            chassis.strafeToJunction(Params.HIGH_JUNCTION_TO_CONE_STACK - 6.0, 20);
 
             Logging.log("Autonomous - Robot arrived the high junction.");
 
@@ -132,7 +132,7 @@ public class AutoSwingRight extends AutonomousRight {
             sleep(100); // wait arm action complete
 
             // drop cone and back to the center of mat
-            autoUnloadCone();
+            swingUnloadCone();
             Logging.log("Autonomous - cone %d has been unloaded.", autoLoop + 2);
         }
 
@@ -158,10 +158,10 @@ public class AutoSwingRight extends AutonomousRight {
      * 6. Slider moving down to get ready to grip another cone
      * @param coneLocation: the target cone high location.
      */
-    private void autoLoadCone(double coneLocation) {
+    private void swingLoadCone(double coneLocation) {
         armClaw.clawOpen();
         slider.setInchPosition(coneLocation);
-        chassis.runToPosition(autoLoadMovingDistance, true); // back a little bit to avoid stuck.
+        chassis.runToPosition(-Params.DISTANCE_PICK_UP, true); // back a little bit to avoid stuck.
         slider.waitRunningComplete();
         armClaw.clawClose();
         Logging.log("Auto load - Cone has been loaded.");
@@ -179,7 +179,7 @@ public class AutoSwingRight extends AutonomousRight {
      * Lift slider from junction pole during the robot moving back to leave junction
      * Slider moving down to get ready to grip another cone
      */
-    private void autoUnloadCone() {
+    private void swingUnloadCone() {
         // move down slider a little bit to unload cone
         double sliderInchPos = slider.getPosition() / (double)slider.COUNTS_PER_INCH;
         slider.setInchPosition(sliderInchPos - Params.SLIDER_MOVE_DOWN_POSITION);

@@ -58,12 +58,12 @@ public class SlidersWith2Motors
     // slider motor variables
     public DcMotor RightSliderMotor = null;
     public DcMotor LeftSliderMotor = null;
-    final double SLIDER_MOTOR_POWER = 0.95; // save some powers
+    final double SLIDER_MOTOR_POWER = 0.98; // save some powers
     final int COUNTS_PER_INCH = 120; // verified by testing.
     final double manualUpdatePos = COUNTS_PER_INCH / 2.0; // 0.5 inch
 
     // slider position variables
-    final int FOUR_STAGE_SLIDER_MAX_POS = 4200;  // with 312 RPM motor.
+    final int FOUR_STAGE_SLIDER_MAX_POS = 3800;  // with 312 RPM motor.
     final int SLIDER_MIN_POS = 0;
 
     /**
@@ -82,19 +82,13 @@ public class SlidersWith2Motors
         /* slider motor control */
         RightSliderMotor.setDirection(DcMotorSimple.Direction.REVERSE);
         LeftSliderMotor.setDirection(DcMotorSimple.Direction.FORWARD);
-
-        // Reset slider motor encoder counts kept by the motor
-        resetEncoders();
-
-        //set slider motor powers always on
-        setPowers(SLIDER_MOTOR_POWER);
     }
 
     /**
      * Set slider motors position.
      * @param sliderMotorPosition the target position for slider left motor and right motor.
      */
-    private void setCountPosition(int sliderMotorPosition) {
+    public void setCountPosition(int sliderMotorPosition) {
         sliderMotorPosition = Range.clip(sliderMotorPosition, SLIDER_MIN_POS, FOUR_STAGE_SLIDER_MAX_POS);
         RightSliderMotor.setTargetPosition(sliderMotorPosition);
         LeftSliderMotor.setTargetPosition(sliderMotorPosition);
@@ -130,6 +124,16 @@ public class SlidersWith2Motors
     }
 
     /**
+     * Read current slider motors position in Inch. Return the mean value of left and right motor positions.
+     * return slider motor position in Inch.
+     */
+    public double getInchPosition() {
+        int r = RightSliderMotor.getCurrentPosition();
+        int l = LeftSliderMotor.getCurrentPosition();
+        return (r+l) / 2.0 / COUNTS_PER_INCH;
+    }
+
+    /**
      * Wait until slider motors complete actions.
      */
     public void waitRunningComplete() {
@@ -140,6 +144,7 @@ public class SlidersWith2Motors
                 ((period.seconds() - curTime) < SLIDER_MAX_WAIT_TIME)) {
             Thread.yield(); // idle
         }
+        Logging.log("Slider waiting time = %.2f sec", (period.seconds() - curTime));
     }
 
     /**
@@ -162,7 +167,7 @@ public class SlidersWith2Motors
     /**
      * Reset slider motor encoder counts kept by the motor
      */
-    private void resetEncoders() {
+    public void resetEncoders() {
         stop();
         RightSliderMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         LeftSliderMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -181,9 +186,10 @@ public class SlidersWith2Motors
     /**
      * Set slider motor mode with using encoders
      */
-    private void runToPosition() {
+    public void runToPosition() {
         RightSliderMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         LeftSliderMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        setPowers(SLIDER_MOTOR_POWER);
     }
 
     /**
